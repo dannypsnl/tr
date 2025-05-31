@@ -6,9 +6,8 @@
 
 (define (tr-title text)
   (define current-scrbl-path (find-system-path 'run-file))
-  (define self-url (path-replace-extension current-scrbl-path ".html"))
   (define id (path->string (path-replace-extension current-scrbl-path "")))
-  (define link-self (a 'href: (path->string self-url) 'target: "_parent" "[" id "]"))
+  (define link-self (a 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
   (h2 text " " link-self))
 
 (define toc-list (mutable-set))
@@ -18,12 +17,11 @@
     (ul
       (for/list ([entry (set->list toc-list)]) (li entry)))))
 
-
 (define (tree #:title title-text #:taxon [taxon #f] . content)
   (html
    (head
     (title title-text)
-    (link 'rel: "stylesheet" 'href: "style.css")
+    (link 'rel: "stylesheet" 'href: "/style.css")
     )
    (body
     (article
@@ -39,4 +37,4 @@
   ; output
   (details 'open: "open"
     "<summary>" address "</summary>"
-    (embed 'type: "text/html" 'src: (string-append address ".html"))))
+    (embed 'type: "text/html" 'src: (string-append "/" address "/embed.html"))))
