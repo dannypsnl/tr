@@ -1,6 +1,8 @@
 #lang racket
 (provide tree transclude p)
-(require scribble/html/html)
+(require scribble/html/html
+         scribble/html/extra
+         scribble/html/xml)
 
 (define (tr-title text)
   (define current-scrbl-path (find-system-path 'run-file))
@@ -9,12 +11,25 @@
   (define link-self (a 'href: (path->string self-url) 'target: "_parent" "[" id "]"))
   (h2 text " " link-self))
 
+(define toc-list (mutable-set))
+(define (generate-toc)
+  ; (for/set ([entry toc-list])
+  ;   )
+  (element 'nav 'id: "toc"
+    (h2 "Table of Contents")
+    )
+  )
+
 (define (tree #:title title-text #:taxon [taxon #f] . content)
   (html
-   (head (title title-text))
+   (head
+    (title title-text)
+    (link 'rel: "stylesheet" 'href: "style.css"))
    (body
-    (tr-title title-text)
-    content)))
+    (article
+      (tr-title title-text)
+      content)
+    (generate-toc))))
 
 (define (transclude address)
   (details 'open: "open"
