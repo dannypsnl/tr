@@ -3,11 +3,16 @@ WHITESPACE = _{ " " | "\t" | "\n" | "\r\n" }
 single_line_comment = @{ "%" ~ (!NEWLINE ~ ANY)* }
 COMMENT = _{ single_line_comment }
 
-title = { "\\title{" ~ (!"}" ~ ANY)* ~ "}" }
-p = { "\\p{" ~ (!"}" ~ ANY)* ~ "}" }
-ol = { "\\ol{" ~ (!"}" ~ ANY)* ~ "}" }
-ul = { "\\ul{" ~ (!"}" ~ ANY)* ~ "}" }
-li = { "\\li{" ~ (!"}" ~ ANY)* ~ "}" }
+text = { (!"}" ~ ANY)* }
+
+title = { "\\title{" ~ text ~ "}" }
+
+math = { "#{" ~ text ~ "}" }
+p = { "\\p{" ~ text ~ "}" }
+ol = { "\\ol{" ~ text ~ "}" }
+ul = { "\\ul{" ~ text ~ "}" }
+li = { "\\li{" ~ text ~ "}" }
+
 top = {
   title
   | p
