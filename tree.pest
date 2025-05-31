@@ -1,3 +1,5 @@
+WHITESPACE = _{ " " | "\t" | "\n" | "\r\n" }
+
 single_line_comment = @{ "%" ~ (!NEWLINE ~ ANY)* }
 COMMENT = _{ single_line_comment }
 
