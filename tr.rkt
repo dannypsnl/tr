@@ -13,18 +13,18 @@
 
 (define toc-list (mutable-set))
 (define (generate-toc)
-  ; (for/set ([entry toc-list])
-  ;   )
   (element 'nav 'id: "toc"
     (h2 "Table of Contents")
-    )
-  )
+    (ul
+      (for/list ([entry (set->list toc-list)]) (li entry)))))
+
 
 (define (tree #:title title-text #:taxon [taxon #f] . content)
   (html
    (head
     (title title-text)
-    (link 'rel: "stylesheet" 'href: "style.css"))
+    (link 'rel: "stylesheet" 'href: "style.css")
+    (script 'src: "embed.js"))
    (body
     (article
       (tr-title title-text)
@@ -32,6 +32,11 @@
     (generate-toc))))
 
 (define (transclude address)
+  ; side effect
+  (define gen-id "#tree-1")
+  (set-add! toc-list (span 'data-target: gen-id address))
+
+  ; output
   (details 'open: "open"
     "<summary>" address "</summary>"
-    (embed 'type: "text/html" 'src: (string-append address ".html"))))
+    (iframe 'src: (string-append address ".html"))))
