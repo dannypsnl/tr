@@ -5,9 +5,8 @@
   (define output-dir (build-path "output/" addr))
   (make-directory* output-dir)
 
-  (define f (open-output-file
-    (build-path output-dir "embed.html")
-    #:exists 'replace))
+  (define f (open-output-file #:exists 'replace
+    (build-path output-dir "embed.html")))
 
   (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") (path-add-extension addr ".scrbl"))
 
@@ -17,9 +16,8 @@
   (define output-dir (build-path "output/" addr))
   (build-path output-dir "embed.html")
 
-  (define f (open-output-file
-    (build-path output-dir "index.html")
-    #:exists 'replace))
+  (define f (open-output-file #:exists 'replace
+    (build-path output-dir "index.html")))
   (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") (path-add-extension addr ".scrbl"))
 
   (printf "index ~s\n" addr)
