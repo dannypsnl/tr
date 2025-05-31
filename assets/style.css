@@ -1,6 +1,11 @@
 article {
   float: left;
 }
-.toc {
+
+#toc {
   float: right;
+}
+
+.taxon {
+  color: #8c8c8c;
 }

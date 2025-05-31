@@ -4,11 +4,13 @@
          scribble/html/extra
          scribble/html/xml)
 
-(define (tr-title text)
+(define (tr-title text taxon)
   (define current-scrbl-path (find-system-path 'run-file))
   (define id (path->string (path-replace-extension current-scrbl-path "")))
   (define link-self (a 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
-  (h2 text " " link-self))
+  (if taxon
+    (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
+    (h2 text " " link-self)))
 
 (define toc-list (mutable-set))
 (define (generate-toc)
@@ -25,7 +27,7 @@
     )
    (body
     (article
-      (tr-title title-text)
+      (tr-title title-text taxon)
       content)
     )))
 
