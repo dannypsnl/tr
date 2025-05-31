@@ -24,12 +24,12 @@
    (head
     (title title-text)
     (link 'rel: "stylesheet" 'href: "style.css")
-    (script 'src: "embed.js"))
+    )
    (body
     (article
       (tr-title title-text)
       content)
-    (generate-toc))))
+    )))
 
 (define (transclude address)
   ; side effect
@@ -39,4 +39,4 @@
   ; output
   (details 'open: "open"
     "<summary>" address "</summary>"
-    (iframe 'src: (string-append address ".html"))))
+    (embed 'type: "text/html" 'src: (string-append address ".html"))))
