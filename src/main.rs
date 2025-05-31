@@ -1,7 +1,7 @@
 use from_pest::FromPest;
 use pest::Parser;
 use std::fs;
-use tr::parser::{EFile, Rule, TreeParser};
+use tr::*;
 
 fn main() {
     let input = fs::read_to_string("trees/xxx-0001.tree").unwrap();

@@ -8,10 +8,9 @@ p = { "\\p{" ~ (!"}" ~ ANY)* ~ "}" }
 ol = { "\\ol{" ~ (!"}" ~ ANY)* ~ "}" }
 ul = { "\\ul{" ~ (!"}" ~ ANY)* ~ "}" }
 li = { "\\li{" ~ (!"}" ~ ANY)* ~ "}" }
-top_ = {
+top = {
   title
   | p
   | ol | ul | li
 }
-top = { top_ }
 file = { SOI ~ top* ~ EOI }
