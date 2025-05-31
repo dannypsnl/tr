@@ -1,0 +1,15 @@
+single_line_comment = @{ "%" ~ (!NEWLINE ~ ANY)* }
+COMMENT = _{ single_line_comment }
+
+title = { "\\title{" ~ (!"}" ~ ANY)* ~ "}" }
+p = { "\\p{" ~ (!"}" ~ ANY)* ~ "}" }
+ol = { "\\ol{" ~ (!"}" ~ ANY)* ~ "}" }
+ul = { "\\ul{" ~ (!"}" ~ ANY)* ~ "}" }
+li = { "\\li{" ~ (!"}" ~ ANY)* ~ "}" }
+top_ = {
+  title
+  | p
+  | ol | ul | li
+}
+top = { top_ }
+file = { SOI ~ top* ~ EOI }
