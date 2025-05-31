@@ -1,2 +1,2 @@
 serve:
-	typst watch --format=html *.typst
+	typst watch --format=html second.typ
