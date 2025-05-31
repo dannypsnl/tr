@@ -1,13 +1,7 @@
 #lang scribble/text
-@(require scribble/html/html
-          "tr.rkt")
+@(require "tr.rkt")
 
-@html{
-  @body{
-    @tr-title{Second}
-
-    @p{second tree}
-
-    @embed['type: "text/html" 'src: "xxx-0001.html"]
-  }
+@tree[#:title "Second"]{
+  @p{second tree}
+  @transclude{xxx-0001}
 }

@@ -1,11 +1,6 @@
 #lang scribble/text
-@(require scribble/html/html
-          "tr.rkt")
+@(require "tr.rkt")
 
-@html{
-  @body{
-    @tr-title{First}
-
-    @p{hi everyone}
-  }
+@tree[#:title "First"]{
+  @p{hi everyone}
 }
