@@ -1,2 +1,2 @@
 serve:
-	python3 -m http.server
+	typst watch --format=html *.typst
