@@ -3,5 +3,9 @@
           "tr.rkt")
 
 @html{
-  @tr-title{First}
+  @body{
+    @tr-title{First}
+
+    @p{hi everyone}
+  }
 }
