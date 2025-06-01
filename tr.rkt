@@ -45,12 +45,11 @@
     (cond [(generate-root) ""]
           [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else ""])
-    (article
-      (tr-title title-text taxon)
-      content)
-    (if (generate-index)
-      (generate-toc)
-      "")
+    (div 'class: "top-wrapper"
+      (article
+        (tr-title title-text taxon)
+        content)
+      (if (generate-index) (generate-toc) (void)))
     (script 'src: "/embedded.js")
     (script 'type: "text/javascript" (if (queue-empty? katex-queue) "" (string-join (queue->list katex-queue) "\n")))
     )))

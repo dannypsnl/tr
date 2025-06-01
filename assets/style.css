@@ -1,3 +1,8 @@
+.top-wrapper {
+  display: block;
+  padding: 1em;
+}
+
 article {
   display: block;
   float: left;
@@ -30,8 +35,8 @@ a.link-self {
 }
 a.link-home {
   display: block;
-  float: left;
   color: #8c8c8c;
+  margin-top: 3em;
   margin-left: 1em;
 }
 
