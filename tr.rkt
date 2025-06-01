@@ -17,7 +17,7 @@
   (define current-scrbl-path (find-system-path 'run-file))
   (define self-path (path->string (path-replace-extension current-scrbl-path "")))
   (define id (string-trim (basename self-path) #px"\\.index|\\.embed"))
-  (define link-self (a 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
+  (define link-self (a 'class: "link-self" 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
   (if taxon
     (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
     (h2 text " " link-self)))
@@ -42,9 +42,9 @@
       'crossorigin: "anonymous")
     )
    (body
-    (if (generate-root)
-      ""
-      (a 'class: "link-home" 'href: "/" "<< Home"))
+    (cond [(generate-root) ""]
+          [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
+          [else ""])
     (article
       (tr-title title-text taxon)
       content)

@@ -24,10 +24,15 @@ nav#toc a {
   color: #555;
 }
 
+a.link-self {
+  color: #8c8c8c;
+  text-decoration: underline dotted;
+}
 a.link-home {
   display: block;
   float: left;
   color: #8c8c8c;
+  margin-left: 1em;
 }
 
 .taxon {
