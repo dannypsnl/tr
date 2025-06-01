@@ -21,9 +21,12 @@
 (define (tr-title addr text taxon)
   (define link-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
   (summary
-    (if taxon
-      (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
-      (h2 text " " link-self))))
+    (header
+      (if taxon
+        (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
+        (h2 text " " link-self))
+      (div 'class: "metadata"
+        ))))
 
 (define (generate-toc)
   (element 'nav 'id: "toc"

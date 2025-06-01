@@ -3,6 +3,14 @@
   padding: 1em;
 }
 
+/* 不顯示 summary 的標記 */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
 article {
   display: block;
   float: left;
@@ -11,6 +19,7 @@ article {
 
 iframe {
   width: 100%;
+  height: auto;
   border: none;
 }
 
