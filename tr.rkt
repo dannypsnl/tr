@@ -56,7 +56,7 @@
           [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else ""])
     (div 'class: "top-wrapper"
-      (details 'open: "open"
+      (details 'open: #t
         (tr-title addr title-text taxon)
         (article
           content))
