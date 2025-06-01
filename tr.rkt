@@ -78,10 +78,6 @@
 
 (define (tikzcd . formula)
   (define job-id (symbol->string (gensym 'tex)))
-  #| TODO
-  2. produce _tmp/<job-id>/job.dvi
-  2. produce _build/<job-id>.svg
-  |#
   (make-directory* (build-path "_tmp" job-id))
   (define tex-path (build-path "_tmp" job-id "job.tex"))
   (define tex (open-output-file #:exists 'replace tex-path))
@@ -92,5 +88,4 @@
 
   (img 'class: "center"
     'src: (string-append "/" job-id ".svg")
-    'alt: (string-append "figure " job-id))
-  )
+    'alt: (string-append "figure " job-id)))
