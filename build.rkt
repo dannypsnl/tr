@@ -5,12 +5,10 @@
 (define embed-header "#lang scribble/text
 @(require \"tr.rkt\")
 ")
-
 (define index-header "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
 ")
-
 
 (struct card (addr path) #:transparent)
 (struct final-card (addr path target-path) #:transparent)
@@ -33,12 +31,10 @@
   (define src (final-card-path c))
   (define target (final-card-target-path c))
 
-
   (define f (open-output-file #:exists 'replace target))
   (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") src)
 
-  (printf "build ~s\n" addr)
-  )
+  (printf "build ~s\n" addr))
 
 (define (search-and-build dir)
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
@@ -47,7 +43,7 @@
       (define addr (compute-addr path))
       (card addr path)))
 
-  (copy-file "tr.rkt" "_tmp/tr.rkt")
+  (copy-file "tr.rkt" "_tmp/tr.rkt" #t)
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)

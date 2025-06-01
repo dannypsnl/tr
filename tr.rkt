@@ -4,12 +4,14 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
+(require dirname)
 
 (define generate-index (make-parameter #f))
 
 (define (tr-title text taxon)
   (define current-scrbl-path (find-system-path 'run-file))
-  (define id (path->string (path-replace-extension current-scrbl-path "")))
+  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
+  (define id (string-trim (basename self-path) #px"\\.index|\\.embed"))
   (define link-self (a 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
   (if taxon
     (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
