@@ -70,4 +70,4 @@
   (define katex-id ((compose symbol->string gensym) 'mm))
   (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros, displayMode: true });" formula katex-id))
   (enqueue! katex-queue js-code)
-  (span 'id: katex-id "formula"))
+  (span 'id: katex-id formula))
