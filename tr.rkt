@@ -1,6 +1,6 @@
 #lang racket
 (provide generate-index
-  tree transclude m
+  tree transclude m mm
   doctype p)
 (require scribble/html/html
          scribble/html/extra
@@ -63,5 +63,11 @@
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
   (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros });" formula katex-id))
+  (enqueue! katex-queue js-code)
+  (span 'class: "katex" 'id: katex-id "formula"))
+
+(define (mm formula)
+  (define katex-id ((compose symbol->string gensym) 'mm))
+  (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros, displayMode: true });" formula katex-id))
   (enqueue! katex-queue js-code)
   (span 'class: "katex" 'id: katex-id "formula"))
