@@ -81,7 +81,7 @@
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
   (for ([tex-path tex-list])
-    (displayln (format "latex ~a" (path->string tex-path)) out)
+    (displayln (format "(cd ~a && latex job.tex)" (dirname tex-path)) out)
     (displayln (format "dvisvgm -o _build/~a.svg ~a" (basename (dirname tex-path)) (path->string (path-replace-extension tex-path ".dvi"))) out))
 
   (close-output-port out)
