@@ -56,9 +56,9 @@
           [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else ""])
     (div 'class: "top-wrapper"
-      (details 'open: #t
-        (tr-title addr title-text taxon)
-        (article
+      (article
+        (details 'open: #t
+          (tr-title addr title-text taxon)
           content))
       (if (generate-index) (generate-toc) (void)))
     (script 'src: "/embedded.js")
