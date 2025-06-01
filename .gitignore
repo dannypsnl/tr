@@ -3,3 +3,4 @@
 *.pdf
 _build/
 _tmp/
+_tmp.sh

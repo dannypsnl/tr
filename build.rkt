@@ -52,11 +52,19 @@
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))
 
-  (define out (open-output-file #:exists 'replace ".tmp.sh"))
+  (define out (open-output-file #:exists 'replace "_tmp.sh"))
   (for ([c embed-cards])
     (displayln (build-shell c) out))
   (for ([c index-cards])
     (displayln (build-shell c) out))
+
+  (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
+  (for ([tex-path tex-list])
+    (displayln (format "latex ~a" (path->string tex-path)) out)
+    (displayln (format "dvisvgm -o _build/~a.svg ~a" (basename (dirname tex-path)) (path->string (path-replace-extension tex-path ".dvi"))) out))
+
+  (close-output-port out)
+  
   )
 
 (search-and-build "content")

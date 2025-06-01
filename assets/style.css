@@ -25,3 +25,10 @@ nav#toc a {
 .taxon {
   color: #8c8c8c;
 }
+
+.center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
