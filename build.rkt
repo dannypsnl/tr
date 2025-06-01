@@ -31,6 +31,9 @@
   (define src (final-card-path c))
   (define target (final-card-target-path c))
 
+  (define output-dir (build-path "_build/" addr))
+  (make-directory* output-dir)
+
   (define f (open-output-file #:exists 'replace target))
   (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") src)
 
@@ -43,14 +46,10 @@
       (define addr (compute-addr path))
       (card addr path)))
 
-  (copy-file "tr.rkt" "_tmp/tr.rkt" #t)
-
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
+  (copy-file "tr.rkt" "_tmp/tr.rkt" #t)
   (define embed-cards (produce-scrbl card-list "embed"))
-
-  (define output-dir (build-path "_build/"))
-  (make-directory* output-dir)
 
   (for ([c embed-cards])
     (build c))
