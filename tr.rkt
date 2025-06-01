@@ -4,7 +4,8 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
-(require dirname)
+(require dirname
+         data/queue)
 
 (define generate-index (make-parameter #f))
 
@@ -17,12 +18,12 @@
     (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
     (h2 text " " link-self)))
 
-(define toc-list (mutable-set))
+(define toc-queue (make-queue))
 (define (generate-toc)
   (element 'nav 'id: "toc"
     (h2 "Table of Contents")
     (ul
-      (for/list ([entry (set->list toc-list)]) (li entry)))))
+      (for/list ([entry (queue->list toc-queue)]) (li entry)))))
 
 (define (tree #:title title-text #:taxon [taxon #f] . content)
   (html
@@ -34,12 +35,15 @@
     (article
       (tr-title title-text taxon)
       content)
+    (if (generate-index)
+      (generate-toc)
+      "")
     )))
 
 (define (transclude address)
   ; side effect
   (define gen-id "#tree-1")
-  (set-add! toc-list (span 'data-target: gen-id address))
+  (enqueue! toc-queue (span 'data-target: gen-id address))
 
   ; output
   (details 'open: "open"
