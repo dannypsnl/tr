@@ -51,6 +51,7 @@
     (if (generate-index)
       (generate-toc)
       "")
+    (script 'src: "/embedded.js")
     (script 'type: "text/javascript" (if (queue-empty? katex-queue) "" (string-join (queue->list katex-queue) "\n")))
     )))
 
@@ -62,7 +63,7 @@
   ; output
   (details 'open: "open"
     "<summary>" address "</summary>"
-    (embed 'type: "text/html" 'src: (string-append "/" address "/embed.html"))))
+    (iframe 'class: "embedded" 'scrolling: "no" 'src: (string-append "/" address "/embed.html"))))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
