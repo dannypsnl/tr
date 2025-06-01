@@ -56,13 +56,15 @@
 
 (define (transclude address)
   ; side effect
-  (define gen-id "#tree-1")
-  (enqueue! toc-queue (span 'data-target: gen-id address))
+  (define table-id (symbol->string (gensym 'table)))
+  (enqueue! toc-queue (a 'href: (string-append "#" table-id) address))
 
   ; output
   (details 'open: "open"
     "<summary>" address "</summary>"
-    (iframe 'class: "embedded" 'scrolling: "no" 'src: (string-append "/" address "/embed.html"))))
+    (iframe 'id: table-id 'class: "embedded"
+      'scrolling: "no"
+      'src: (string-append "/" address "/embed.html"))))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
