@@ -8,8 +8,18 @@ embed {
   height: auto;
 }
 
-#toc {
-  float: right;
+nav#toc {
+  margin-left: 1em;
+}
+
+nav#toc h1 {
+  margin-top: 0;
+  font-size: 16pt;
+}
+
+nav#toc,
+nav#toc a {
+  color: #555;
 }
 
 .taxon {
