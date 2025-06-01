@@ -1,7 +1,7 @@
 #lang racket
-(provide generate-index
+(provide generate-index generate-root
   tree transclude m mm tikzcd
-  doctype p)
+  doctype p code ol ul li)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -9,6 +9,7 @@
          data/queue)
 
 (define generate-index (make-parameter #f))
+(define generate-root (make-parameter #f))
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
@@ -41,6 +42,9 @@
       'crossorigin: "anonymous")
     )
    (body
+    (if (generate-root)
+      ""
+      (a 'class: "link-home" 'href: "/" "<< Home"))
     (article
       (tr-title title-text taxon)
       content)

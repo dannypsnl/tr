@@ -24,6 +24,12 @@ nav#toc a {
   color: #555;
 }
 
+a.link-home {
+  display: block;
+  float: left;
+  color: #8c8c8c;
+}
+
 .taxon {
   color: #8c8c8c;
 }

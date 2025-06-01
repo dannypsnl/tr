@@ -11,6 +11,12 @@
 @(generate-index #t)
 @(doctype 'html)
 ")
+(define root-header "#lang scribble/text
+@(require \"tr.rkt\")
+@(generate-index #t)
+@(generate-root #t)
+@(doctype 'html)
+")
 
 (struct card (addr path) #:transparent)
 (struct final-card (addr path target-path) #:transparent)
@@ -18,15 +24,30 @@
 (define (compute-addr path)
   (basename (path-replace-extension path "")))
 
+(define (root? addr)
+  (string=? addr "index"))
+
 (define (produce-scrbl card-list mode)
   (for/list ([c card-list])
-    (define tmp-path (build-path "_tmp" (string-append (card-addr c) "." mode ".scrbl")))
+    (define addr (card-addr c))
+    (define tmp-path
+      (if (root? addr)
+        (build-path "_tmp" (string-append addr ".scrbl"))
+        (build-path "_tmp" (string-append addr "." mode ".scrbl"))))
     (define f (open-output-file #:exists 'replace tmp-path))
     (define in (open-input-file (card-path c)))
-    (define header (if (string=? mode "embed") embed-header index-header))
+    (define header (cond
+      [(root? addr) root-header]
+      [(string=? mode "embed") embed-header]
+      [else index-header]))
     (displayln header f)
     (copy-port in f)
-    (final-card (card-addr c) tmp-path (build-path "_build" (card-addr c) (string-append mode ".html")))))
+
+    (define output-path
+      (if (root? addr)
+        (build-path "_build" (string-append mode ".html"))
+        (build-path "_build" addr (string-append mode ".html"))))
+    (final-card addr tmp-path output-path)))
 
 (define (build-shell c)
   (define addr (final-card-addr c))
