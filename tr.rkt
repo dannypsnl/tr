@@ -60,9 +60,9 @@
   (enqueue! toc-queue (a 'href: (string-append "#" table-id) address))
 
   ; output
-  (details 'open: "open"
+  (details 'open: "open" 'id: table-id
     "<summary>" address "</summary>"
-    (iframe 'id: table-id 'class: "embedded"
+    (iframe 'class: "embedded"
       'scrolling: "no"
       'src: (string-append "/" address "/embed.html"))))
 
