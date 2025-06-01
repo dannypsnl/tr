@@ -1,4 +1,5 @@
-/target
+.vscode/
 *.html
 *.pdf
-output/
+_build/
+_tmp/

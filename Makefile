@@ -1,7 +1,7 @@
 build:
-	@mkdir -p output
-	cp assets/* output/
-	racket build.rkt
-	
+	@mkdir -p _build
+	cp assets/* _build
+	@racket build.rkt
+
 serve:
-	python3 -m http.server -d output
+	python3 -m http.server -d _build

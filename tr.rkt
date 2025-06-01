@@ -1,8 +1,11 @@
 #lang racket
-(provide tree transclude p)
+(provide generate-index
+  tree transclude p)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
+
+(define generate-index (make-parameter #f))
 
 (define (tr-title text taxon)
   (define current-scrbl-path (find-system-path 'run-file))

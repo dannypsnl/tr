@@ -1,33 +1,68 @@
 #lang racket
-(require racket/system)
+(require racket/system
+        dirname)
 
-(define (build-embed addr)
-  (define output-dir (build-path "output/" addr))
-  (make-directory* output-dir)
+(define embed-header "#lang scribble/text
+@(require \"tr.rkt\")
+")
 
-  (define f (open-output-file #:exists 'replace
-    (build-path output-dir "embed.html")))
+(define index-header "#lang scribble/text
+@(require \"tr.rkt\")
+@(generate-index #t)
+")
 
-  (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") (path-add-extension addr ".scrbl"))
 
-  (printf "embed ~s\n" addr))
+(struct card (addr path) #:transparent)
+(struct final-card (addr path target-path) #:transparent)
 
-(define (build-index addr)
-  (define output-dir (build-path "output/" addr))
-  (build-path output-dir "embed.html")
+(define (compute-addr path)
+  (basename (path-replace-extension path "")))
 
-  (define f (open-output-file #:exists 'replace
-    (build-path output-dir "index.html")))
-  (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") (path-add-extension addr ".scrbl"))
+(define (produce-scrbl card-list mode)
+  (for/list ([c card-list])
+    (define tmp-path (build-path "_tmp" (string-append (card-addr c) "." mode ".scrbl")))
+    (define f (open-output-file #:exists 'replace tmp-path))
+    (define in (open-input-file (card-path c)))
+    (define header (if (string=? mode "embed") embed-header index-header))
+    (displayln header f)
+    (copy-port in f)
+    (final-card (card-addr c) tmp-path (build-path "_build" (card-addr c) (string-append mode ".html")))))
 
-  (printf "index ~s\n" addr)
+(define (build c)
+  (define addr (final-card-addr c))
+  (define src (final-card-path c))
+  (define target (final-card-target-path c))
+
+
+  (define f (open-output-file #:exists 'replace target))
+  (process*/ports f (current-input-port) (current-output-port) (find-executable-path "racket") src)
+
+  (printf "build ~s\n" addr)
   )
 
-(define addr-list
- '("xxx-0001"
-    "xxx-0002"))
+(define (search-and-build dir)
+  (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
+  (define card-list
+    (for/list ([path scrbl-list])
+      (define addr (compute-addr path))
+      (card addr path)))
 
-(for ([addr addr-list])
-  (build-embed addr))
-(for ([addr addr-list])
-  (build-index addr))
+  (copy-file "tr.rkt" "_tmp/tr.rkt")
+
+  (define tmp (build-path "_tmp"))
+  (make-directory* tmp)
+  (define embed-cards (produce-scrbl card-list "embed"))
+
+  (define output-dir (build-path "_build/"))
+  (make-directory* output-dir)
+
+  (for ([c embed-cards])
+    (build c))
+
+  (define index-cards (produce-scrbl card-list "index"))
+
+  (for ([c index-cards])
+    (build c))
+  )
+
+(search-and-build "content")
