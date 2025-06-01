@@ -1,5 +1,11 @@
 article {
   float: left;
+  width: 50%;
+}
+
+embed {
+  width: 100%;
+  height: auto;
 }
 
 #toc {
