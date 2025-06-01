@@ -8,19 +8,22 @@
 (require dirname
          data/queue)
 
+(define-syntax-rule (define/provide-elements/not-empty tag ...)
+  (begin (provide tag ...)
+         (define (tag . args) (apply element/not-empty 'tag args)) ...))
+(define/provide-elements/not-empty summary)
+
 (define generate-index (make-parameter #f))
 (define generate-root (make-parameter #f))
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
-(define (tr-title text taxon)
-  (define current-scrbl-path (find-system-path 'run-file))
-  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
-  (define id (string-trim (basename self-path) #px"\\.index|\\.embed"))
-  (define link-self (a 'class: "link-self" 'href: (string-append "/" id) 'target: "_parent" "[" id "]"))
-  (if taxon
-    (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
-    (h2 text " " link-self)))
+(define (tr-title addr text taxon)
+  (define link-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
+  (summary
+    (if taxon
+      (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
+      (h2 text " " link-self))))
 
 (define (generate-toc)
   (element 'nav 'id: "toc"
@@ -29,6 +32,10 @@
       (for/list ([entry (queue->list toc-queue)]) (li entry)))))
 
 (define (tree #:title title-text #:taxon [taxon #f] . content)
+  (define current-scrbl-path (find-system-path 'run-file))
+  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
+  (define addr (string-trim (basename self-path) #px"\\.index|\\.embed"))
+
   (html
    (head
     (title title-text)
@@ -46,25 +53,23 @@
           [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else ""])
     (div 'class: "top-wrapper"
-      (article
-        (tr-title title-text taxon)
-        content)
+      (details 'open: "open"
+        (tr-title addr title-text taxon)
+        (article
+          content))
       (if (generate-index) (generate-toc) (void)))
     (script 'src: "/embedded.js")
     (script 'type: "text/javascript" (if (queue-empty? katex-queue) "" (string-join (queue->list katex-queue) "\n")))
     )))
 
-(define (transclude address)
+(define (transclude addr)
   ; side effect
-  (define table-id (symbol->string (gensym 'table)))
-  (enqueue! toc-queue (a 'href: (string-append "#" table-id) address))
+  (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
 
   ; output
-  (details 'open: "open" 'id: table-id
-    "<summary>" address "</summary>"
-    (iframe 'class: "embedded"
-      'scrolling: "no"
-      'src: (string-append "/" address "/embed.html"))))
+  (iframe 'class: "embedded" 'id: addr
+    'scrolling: "no"
+    'src: (string-append "/" addr "/embed.html")))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
