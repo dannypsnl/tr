@@ -1,6 +1,7 @@
 #lang racket
 (provide generate-index
-  tree transclude p)
+  tree transclude m
+  doctype p)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -8,6 +9,8 @@
          data/queue)
 
 (define generate-index (make-parameter #f))
+(define toc-queue (make-queue))
+(define katex-queue (make-queue))
 
 (define (tr-title text taxon)
   (define current-scrbl-path (find-system-path 'run-file))
@@ -18,7 +21,6 @@
     (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
     (h2 text " " link-self)))
 
-(define toc-queue (make-queue))
 (define (generate-toc)
   (element 'nav 'id: "toc"
     (h2 "Table of Contents")
@@ -30,6 +32,13 @@
    (head
     (title title-text)
     (link 'rel: "stylesheet" 'href: "/style.css")
+    (link 'rel: "stylesheet" 'href: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+      'integrity: "sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP"
+      'crossorigin: "anonymous")
+    (script 'src: "/math.js")
+    (script 'src: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"
+      'integrity: "sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6"
+      'crossorigin: "anonymous")
     )
    (body
     (article
@@ -38,6 +47,7 @@
     (if (generate-index)
       (generate-toc)
       "")
+    (script 'type: "text/javascript" (if (queue-empty? katex-queue) "" (string-join (queue->list katex-queue) "\n")))
     )))
 
 (define (transclude address)
@@ -49,3 +59,9 @@
   (details 'open: "open"
     "<summary>" address "</summary>"
     (embed 'type: "text/html" 'src: (string-append "/" address "/embed.html"))))
+
+(define (m formula)
+  (define katex-id ((compose symbol->string gensym) 'm))
+  (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros });" formula katex-id))
+  (enqueue! katex-queue js-code)
+  (span 'class: "katex" 'id: katex-id "formula"))
