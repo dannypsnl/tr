@@ -68,19 +68,19 @@
    (body
       (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else (void)])
-      content
+      (div 'class: "top-wrapper"
+        content
+        (generate-toc))
       (script 'src: "/embedded.js")
       (if (queue-empty? katex-queue)
         (void)
         (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
 
 (define (tree . content)
-  (div 'class: "top-wrapper"
-      (article
-        (details 'open: #t
-          (tr-title (self-addr) (self-title) (self-taxon))
-          content))
-      (generate-toc)))
+  (article
+    (details 'open: #t
+      (tr-title (self-addr) (self-title) (self-taxon))
+      content)))
 
 (define (transclude addr)
   ; side effect

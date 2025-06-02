@@ -5,6 +5,7 @@
 
 .context {
   float: left;
+  width: 50%;
 }
 
 /* 不顯示 summary 的標記 */
