@@ -65,3 +65,8 @@ a.link-home {
   margin-right: auto;
   width: 50%;
 }
+
+#backlinks > h2,
+#context > h2 {
+  margin-left: 0.5rem;
+}
