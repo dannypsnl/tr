@@ -44,11 +44,13 @@
 
 (define (generate-toc)
   (define entries (queue->list toc-queue))
-  (if (empty? entries)
-    (void)
-    (element 'nav 'id: "toc"
-      (h2 "Table of Contents")
-        (ul (for/list ([e entries]) (li e))))))
+  (cond
+    [(generate-index) (void)]
+    [(empty? entries) (void)]
+    [else
+      (element 'nav 'id: "toc"
+        (h2 "Table of Contents")
+          (ul (for/list ([e entries]) (li e))))]))
 
 (define (tree . content)
   (html
@@ -71,7 +73,7 @@
         (details 'open: #t
           (tr-title (self-addr) (self-title) (self-taxon))
           content))
-      (if (generate-index) (generate-toc) (void)))
+      (generate-toc))
     (script 'src: "/embedded.js")
     (if (queue-empty? katex-queue)
       (void)
