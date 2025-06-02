@@ -25,8 +25,13 @@
       @summary{@h2{Context}}
       @include{~a.context.scrbl}
     }
+    @details['open: #t 'id: \"backlinks\"]{
+      @summary{@h2{Backlinks}}
+      @include{~a.backlinks.scrbl}
+    }
+    @generate-related[]
   }
-}" content addr))
+}" content addr addr))
 (define (root-header _ content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
@@ -97,13 +102,17 @@
 
   (define out (open-output-file #:exists 'replace "_tmp.sh"))
   (for ([c embed-cards])
-    ; before run xxx.embed.scrbl, we create xxx.context.scrbl (use `touch`) for each address xxx
     (define ctx-path (build-path "_tmp" (string-append (final-card-addr c) "." "context" ".scrbl")))
+    (define backlink-path (build-path "_tmp" (string-append (final-card-addr c) "." "backlinks" ".scrbl")))
+    ; before run xxx.embed.scrbl, we create xxx.context.scrbl (use `touch`) for each address xxx
     (displayln (string-append "touch " (path->string ctx-path)) out)
+    ; before run xxx.embed.scrbl, we create xxx.backlinks.scrbl (use `touch`) for each address xxx
+    (displayln (string-append "touch " (path->string backlink-path)) out))
+  (for ([c embed-cards])
     #|
       run `xxx.embed.scrbl` will create a series of side effects
       1. update yyy.context.scrbl if it transclude{yyy}
-      2. update yyy.backlink.scrbl if it link{yyy} (TODO)
+      2. update yyy.backlinks.scrbl if it link{yyy} (TODO)
       to help we create final output (index.html)
 
       It also create embed.html that others card can use iframe to refer them.

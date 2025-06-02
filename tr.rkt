@@ -1,5 +1,7 @@
 #lang racket
-(provide generate-index generate-root generate-toc
+(provide generate-index generate-root
+  generate-toc
+  generate-related
   common-share tree
   (rename-out [self-title title]
               [self-taxon taxon])
@@ -43,6 +45,10 @@
     (header
       (tr-h2 addr text taxon)
       (div 'class: "metadata"))))
+
+(define (generate-related)
+  ; TODO: list related cards
+  (void))
 
 (define (generate-toc)
   (define entries (queue->list toc-queue))
