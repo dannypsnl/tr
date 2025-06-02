@@ -4,7 +4,9 @@
   (rename-out [self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
-  doctype p code ol ul li
+  doctype p ol ul li
+  em strong
+  code pre
   details summary h2)
 (require scribble/html/html
          scribble/html/extra
