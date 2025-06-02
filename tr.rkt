@@ -18,15 +18,16 @@
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
-(define (tr-title addr text taxon)
+(define (tr-h2 addr text taxon)
   (define link-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
+  (if taxon
+    (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
+    (h2 text " " link-self)))
+(define (tr-title addr text taxon)
   (summary
     (header
-      (if taxon
-        (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
-        (h2 text " " link-self))
-      (div 'class: "metadata"
-        ))))
+      (tr-h2 addr text taxon)
+      (div 'class: "metadata"))))
 
 (define (generate-toc)
   (element 'nav 'id: "toc"
