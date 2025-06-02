@@ -4,7 +4,8 @@
   (rename-out [self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
-  doctype p ol ul li
+  doctype div
+  p ol ul li
   em strong
   code pre
   footer details summary
@@ -46,7 +47,6 @@
 (define (generate-toc)
   (define entries (queue->list toc-queue))
   (cond
-    [(not (generate-index)) (void)]
     [(empty? entries) (void)]
     [else
       (element 'nav 'id: "toc"
@@ -69,8 +69,7 @@
    (body
       (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else (void)])
-      (div 'class: "top-wrapper"
-        content)
+      content
       (script 'src: "/embedded.js")
       (if (queue-empty? katex-queue)
         (void)

@@ -6,7 +6,9 @@
 @(require \"tr.rkt\")
 @(doctype 'html)
 @common-share{
-  @tree{~a}
+  @div['class: \"top-wrapper\"]{
+    @tree{~a}
+  }
 }" content))
 (define (index-header addr content)
   (format "#lang scribble/text
@@ -14,7 +16,9 @@
 @(generate-index #t)
 @(doctype 'html)
 @common-share{
-  @tree{~a}
+  @div['class: \"top-wrapper\"]{
+    @tree{~a}
+  }
   @generate-toc[]
   @footer{
     @details['open: #t 'id: \"context\"]{
@@ -30,7 +34,9 @@
 @(generate-root #t)
 @(doctype 'html)
 @common-share{
-  @tree{~a}
+  @div['class: \"top-wrapper\"]{
+    @tree{~a}
+  }
 }" content))
 
 (struct card (addr path) #:transparent)
