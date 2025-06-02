@@ -1,6 +1,6 @@
 #lang racket
 (provide generate-index generate-root
-  tree
+  common-share tree
   (rename-out [self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
@@ -45,14 +45,14 @@
 (define (generate-toc)
   (define entries (queue->list toc-queue))
   (cond
-    [(generate-index) (void)]
+    [(not (generate-index)) (void)]
     [(empty? entries) (void)]
     [else
       (element 'nav 'id: "toc"
         (h2 "Table of Contents")
           (ul (for/list ([e entries]) (li e))))]))
 
-(define (tree . content)
+(define (common-share . content)
   (html
    (head
     (title (self-title))
@@ -66,19 +66,21 @@
       'crossorigin: "anonymous")
     )
    (body
-    (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
+      (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else (void)])
-    (div 'class: "top-wrapper"
+      content
+      (script 'src: "/embedded.js")
+      (if (queue-empty? katex-queue)
+        (void)
+        (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
+
+(define (tree . content)
+  (div 'class: "top-wrapper"
       (article
         (details 'open: #t
           (tr-title (self-addr) (self-title) (self-taxon))
           content))
-      (generate-toc))
-    (script 'src: "/embedded.js")
-    (if (queue-empty? katex-queue)
-      (void)
-      (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n")))
-    )))
+      (generate-toc)))
 
 (define (transclude addr)
   ; side effect

@@ -5,17 +5,20 @@
   (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(doctype 'html)
-@tree{~a}" content))
+@common-share{
+  @tree{~a}
+}" content))
 (define (index-header addr content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
 @(doctype 'html)
-@tree{
-  ~a
-  @details['open: #t]{
+@common-share{
+  @tree{~a}
+  @details['open: #t 'id: \"context\"]{
     @summary{@h2{Context}}
-    @include{~a.context.scrbl}}
+    @include{~a.context.scrbl}
+  }
 }" content addr))
 (define (root-header _ content)
   (format "#lang scribble/text
@@ -23,7 +26,9 @@
 @(generate-index #t)
 @(generate-root #t)
 @(doctype 'html)
-@tree{~a}" content))
+@common-share{
+  @tree{~a}
+}" content))
 
 (struct card (addr path) #:transparent)
 (struct final-card (addr path target-path) #:transparent)
