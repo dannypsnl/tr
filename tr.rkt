@@ -1,5 +1,5 @@
 #lang racket
-(provide generate-index generate-root
+(provide generate-index generate-root generate-toc
   common-share tree
   (rename-out [self-title title]
               [self-taxon taxon])
@@ -7,7 +7,8 @@
   doctype p ol ul li
   em strong
   code pre
-  details summary h2)
+  footer details summary
+  h2)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -69,8 +70,7 @@
       (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
           [else (void)])
       (div 'class: "top-wrapper"
-        content
-        (generate-toc))
+        content)
       (script 'src: "/embedded.js")
       (if (queue-empty? katex-queue)
         (void)

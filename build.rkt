@@ -15,9 +15,12 @@
 @(doctype 'html)
 @common-share{
   @tree{~a}
-  @details['open: #t 'id: \"context\"]{
-    @summary{@h2{Context}}
-    @include{~a.context.scrbl}
+  @generate-toc[]
+  @footer{
+    @details['open: #t 'id: \"context\"]{
+      @summary{@h2{Context}}
+      @include{~a.context.scrbl}
+    }
   }
 }" content addr))
 (define (root-header _ content)

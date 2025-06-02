@@ -3,7 +3,8 @@
   padding: 0;
 }
 
-.context {
+footer {
+  display: block;
   float: left;
   width: 50%;
 }
