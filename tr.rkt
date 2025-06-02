@@ -92,8 +92,10 @@
       'crossorigin: "anonymous")
     )
    (body
-      (cond [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
-          [else (void)])
+      (cond
+        [(generate-root) (void)]
+        [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
+        [else (void)])
       content
       (script 'src: "/embedded.js")
       (unless (queue-empty? katex-queue)
