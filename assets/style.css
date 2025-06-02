@@ -1,5 +1,6 @@
 .top-wrapper {
-  display: block;
+  display: grid;
+  grid-template-columns: 90ex;
   padding: 0;
 }
 
@@ -29,17 +30,20 @@ iframe {
   border: none;
 }
 
+.top-wrapper > article {
+  grid-column: 1;
+}
+.top-wrapper > nav {
+  grid-column: 2;
+}
 nav#toc {
   display: block;
   margin-left: 1em;
 }
-
 nav#toc > h1 {
   margin-top: 0;
   font-size: 16pt;
 }
-
-nav#toc,
 nav#toc a {
   color: #555;
 }

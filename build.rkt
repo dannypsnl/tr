@@ -18,8 +18,8 @@
 @common-share{
   @div['class: \"top-wrapper\"]{
     @tree{~a}
+    @generate-toc[]
   }
-  @generate-toc[]
   @footer{
     @details['open: #t 'id: \"context\"]{
       @summary{@h2{Context}}
