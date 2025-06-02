@@ -93,8 +93,7 @@
           [else (void)])
       content
       (script 'src: "/embedded.js")
-      (if (queue-empty? katex-queue)
-        (void)
+      (unless (queue-empty? katex-queue)
         (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
 
 (define (tree . content)
