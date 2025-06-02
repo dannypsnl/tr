@@ -1,4 +1,5 @@
-@tree[#:title "Second" #:taxon "Example"]{
-  @p{second tree}
-  @transclude{xxx-0001}
-}
+@title{Second}
+@taxon{Example}
+
+@p{second tree}
+@transclude{xxx-0001}

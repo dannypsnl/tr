@@ -1,22 +1,24 @@
 #lang racket
-(require racket/system
-        dirname)
+(require dirname)
 
-(define embed-header "#lang scribble/text
+(define (embed-header content)
+  (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(doctype 'html)
-")
-(define index-header "#lang scribble/text
+@tree{~a}" content))
+(define (index-header content)
+  (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
 @(doctype 'html)
-")
-(define root-header "#lang scribble/text
+@tree{~a}" content))
+(define (root-header content)
+  (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
 @(generate-root #t)
 @(doctype 'html)
-")
+@tree{~a}" content))
 
 (struct card (addr path) #:transparent)
 (struct final-card (addr path target-path) #:transparent)
@@ -40,8 +42,9 @@
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
-    (displayln header f)
-    (copy-port in f)
+    (displayln (header (port->string in)) f)
+    (close-input-port in)
+    (close-output-port f)
 
     (define output-path
       (if (root? addr)

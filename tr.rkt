@@ -1,6 +1,9 @@
 #lang racket
 (provide generate-index generate-root
-  tree transclude m mm tikzcd
+  tree
+  (rename-out [self-title title]
+              [self-taxon taxon])
+  transclude m mm tikzcd
   doctype p code ol ul li)
 (require scribble/html/html
          scribble/html/extra
@@ -15,6 +18,13 @@
 
 (define generate-index (make-parameter #f))
 (define generate-root (make-parameter #f))
+(define (self-addr)
+  (define current-scrbl-path (find-system-path 'run-file))
+  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
+  (string-trim (basename self-path) #px"\\.index|\\.embed"))
+(define self-title (make-parameter #f))
+(define self-taxon (make-parameter #f))
+
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
@@ -35,14 +45,10 @@
     (ul
       (for/list ([entry (queue->list toc-queue)]) (li entry)))))
 
-(define (tree #:title title-text #:taxon [taxon #f] . content)
-  (define current-scrbl-path (find-system-path 'run-file))
-  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
-  (define addr (string-trim (basename self-path) #px"\\.index|\\.embed"))
-
+(define (tree . content)
   (html
    (head
-    (title title-text)
+    (title (self-title))
     (link 'rel: "stylesheet" 'href: "/style.css")
     (link 'rel: "stylesheet" 'href: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
       'integrity: "sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP"
@@ -58,7 +64,7 @@
     (div 'class: "top-wrapper"
       (article
         (details 'open: #t
-          (tr-title addr title-text taxon)
+          (tr-title (self-addr) (self-title) (self-taxon))
           content))
       (if (generate-index) (generate-toc) (void)))
     (script 'src: "/embedded.js")
@@ -70,6 +76,13 @@
 (define (transclude addr)
   ; side effect
   (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
+  
+  ; add _tmp/<addr>/context.scrbl
+  (define dir (build-path "_tmp" addr))
+  (make-directory* dir)
+  (define addr-ctx (open-output-file #:exists 'append (path-add-extension (build-path dir "context") ".scrbl")))
+  (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
+  (close-output-port addr-ctx)
 
   ; output
   (iframe 'class: "embedded" 'id: addr

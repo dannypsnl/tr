@@ -1,3 +1,3 @@
-@tree[#:title "First"]{
-  @p{hi everyone}
-}
+@title{First}
+
+@p{hi everyone}
