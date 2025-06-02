@@ -6,8 +6,10 @@
   (rename-out [self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
+  mention
   doctype div
   p ol ul li
+  a
   em strong
   code pre
   footer details summary
@@ -45,6 +47,20 @@
     (header
       (tr-h2 addr text taxon)
       (div 'class: "metadata"))))
+
+(define (mention addr [title #f])
+  ; side effect
+  #| TODO:
+    1. update backlinks
+    2. update here related
+    3. update here references
+
+    Notice that 2 and 3 are distinguish by taxon, and hence, we will need to produce metadata when embed build
+  |#
+
+  ; output
+  (define url (string-append "/" addr))
+  (a 'href: url title))
 
 (define (generate-related)
   ; TODO: list related cards
