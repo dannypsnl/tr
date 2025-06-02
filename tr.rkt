@@ -4,7 +4,8 @@
   (rename-out [self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
-  doctype p code ol ul li)
+  doctype p code ol ul li
+  details summary h2)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -77,12 +78,11 @@
   ; side effect
   (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
   
-  ; add _tmp/<addr>/context.scrbl
-  (define dir (build-path "_tmp" addr))
-  (make-directory* dir)
-  (define addr-ctx (open-output-file #:exists 'append (path-add-extension (build-path dir "context") ".scrbl")))
-  (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
-  (close-output-port addr-ctx)
+  ; add _tmp/<addr>.context.scrbl, but only when first time build embed.html
+  (unless (generate-index)
+    (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "context" ".scrbl"))))
+    (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
+    (close-output-port addr-ctx))
 
   ; output
   (iframe 'class: "embedded" 'id: addr

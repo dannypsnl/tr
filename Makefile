@@ -1,9 +1,11 @@
 build:
 	@mkdir -p _build
 	cp assets/* _build
+	# we have to remove contexts/backlinks left last time, because we will only append new content to it
+	@rm -f _tmp/*.context.scrbl
 	@racket build.rkt
 	sh _tmp.sh
-	rm _tmp.sh
+	rm -f _tmp.sh
 
 serve:
 	python3 -m http.server -d _build

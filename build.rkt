@@ -1,18 +1,23 @@
 #lang racket
 (require dirname)
 
-(define (embed-header content)
+(define (embed-header _ content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(doctype 'html)
 @tree{~a}" content))
-(define (index-header content)
+(define (index-header addr content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
 @(doctype 'html)
-@tree{~a}" content))
-(define (root-header content)
+@tree{
+  ~a
+  @details['open: #t]{
+    @summary{@h2{Context}}
+    @include{~a.context.scrbl}}
+}" content addr))
+(define (root-header _ content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
 @(generate-index #t)
@@ -42,7 +47,7 @@
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
-    (displayln (header (port->string in)) f)
+    (displayln (header addr (port->string in)) f)
     (close-input-port in)
     (close-output-port f)
 
@@ -78,6 +83,17 @@
 
   (define out (open-output-file #:exists 'replace "_tmp.sh"))
   (for ([c embed-cards])
+    ; before run xxx.embed.scrbl, we create xxx.context.scrbl (use `touch`) for each address xxx
+    (define ctx-path (build-path "_tmp" (string-append (final-card-addr c) "." "context" ".scrbl")))
+    (displayln (string-append "touch " (path->string ctx-path)) out)
+    #|
+      run `xxx.embed.scrbl` will create a series of side effects
+      1. update yyy.context.scrbl if it transclude{yyy}
+      2. update yyy.backlink.scrbl if it link{yyy} (TODO)
+      to help we create final output (index.html)
+
+      It also create embed.html that others card can use iframe to refer them.
+    |#
     (displayln (build-shell c) out))
   (for ([c index-cards])
     (displayln (build-shell c) out))
