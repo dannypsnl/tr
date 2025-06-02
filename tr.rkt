@@ -3,7 +3,7 @@
   generate-toc
   generate-related
   common-share tree
-  (rename-out [self-title title]
+  (rename-out [set-self-title title]
               [self-taxon taxon])
   transclude m mm tikzcd
   mention
@@ -31,7 +31,10 @@
   (define current-scrbl-path (find-system-path 'run-file))
   (define self-path (path->string (path-replace-extension current-scrbl-path "")))
   (string-trim (basename self-path) #px"\\.index|\\.embed"))
+
 (define self-title (make-parameter #f))
+(define (set-self-title . forms)
+  (self-title forms))
 (define self-taxon (make-parameter #f))
 
 (define toc-queue (make-queue))
