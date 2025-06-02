@@ -41,10 +41,12 @@
       (div 'class: "metadata"))))
 
 (define (generate-toc)
-  (element 'nav 'id: "toc"
-    (h2 "Table of Contents")
-    (ul
-      (for/list ([entry (queue->list toc-queue)]) (li entry)))))
+  (define entries (queue->list toc-queue))
+  (if (empty? entries)
+    (void)
+    (element 'nav 'id: "toc"
+      (h2 "Table of Contents")
+        (ul (for/list ([e entries]) (li e))))))
 
 (define (tree . content)
   (html
