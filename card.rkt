@@ -13,7 +13,8 @@
   (rename-out [set-self-title title]
               [set-self-taxon taxon]
               [self-date date]
-              [self-author author])
+              [ignore author]
+              [ignore author/literal])
   transclude m mm tikzcd
   mention
   doctype
@@ -42,7 +43,7 @@
 (define (set-self-taxon t)
   (self-taxon t))
 (define self-date (make-parameter #f))
-(define self-author (make-parameter #f))
+(define (ignore _) (void))
 
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
@@ -113,11 +114,12 @@
   (details 'open: #t
     (summary
       (header
-        (tr-h2 (self-addr) (self-title) (self-taxon))
+        (tr-h2 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
-            (when (self-date) (li (self-date)))
-            (when (self-author) (li (self-author)))))))
+            (li (fetch-metadata (self-addr) 'date))
+            (li (fetch-metadata (self-addr) 'authors))
+            (li (fetch-metadata (self-addr) 'name-authors))))))
     content))
 
 (define (transclude addr)
