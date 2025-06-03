@@ -4,6 +4,11 @@
   padding: 0;
 }
 
+body {
+  margin-top: 2em;
+  margin-left: 2em;
+}
+
 footer {
   display: block;
   float: left;
