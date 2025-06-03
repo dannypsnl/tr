@@ -13,6 +13,6 @@
   @li{Run @code{raco pkg install --auto} in the project}
   @li{Correct site information in @code{rss.scrbl}}
   @li{Update @code{*.scrbl} in @code{content/} directory}
-  @li{Run @{make build} to build HTMLs}
-  @li{Run @{make serve} to view result}
+  @li{Run @code{make build} to build HTMLs}
+  @li{Run @code{make serve} to view result}
 }
