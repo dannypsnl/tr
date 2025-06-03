@@ -10,11 +10,12 @@
 
   generate-index?
   generate-root?
-  (rename-out [set-self-title title]
-              [set-self-taxon taxon]
-              [self-date date]
+  (rename-out [set-title title]
+              [ignore taxon]
+              [ignore date]
               [ignore author]
-              [ignore author/literal])
+              [ignore author/literal]
+              [m tm])
   transclude m mm tikzcd
   mention
   doctype
@@ -37,13 +38,9 @@
 (define generate-root? (make-parameter #f))
 
 (define self-title (make-parameter #f))
-(define (set-self-title . forms)
+(define (set-title . forms)
   (self-title forms))
-(define self-taxon (make-parameter #f))
-(define (set-self-taxon t)
-  (self-taxon t))
-(define self-date (make-parameter #f))
-(define (ignore _) (void))
+(define (ignore . _) (void))
 
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
@@ -108,7 +105,7 @@
       content
       (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
       (unless (queue-empty? katex-queue)
-        (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
+        (script 'type: "text/javascript" (add-between (queue->list katex-queue) "\n"))))))
 
 (define (tree . content)
   (details 'open: #t
@@ -133,6 +130,9 @@
   (enqueue! toc-queue
     (li (a 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
 
+  (for ([js-code (fetch-metadata addr 'title-formulas)])
+    (enqueue! katex-queue js-code))
+
   ; output
   (details 'open: #t
     (summary
@@ -155,13 +155,13 @@
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
-  (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros });" formula katex-id))
+  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros });" formula katex-id))
   (enqueue! katex-queue js-code)
-  (span 'id: katex-id "formula"))
+  (span 'id: katex-id formula))
 
 (define (mm formula)
   (define katex-id ((compose symbol->string gensym) 'mm))
-  (define js-code (format "katex.render(~s, document.getElementById(~s), { throwOnError: false, macros: document.macros, displayMode: true });" formula katex-id))
+  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros, displayMode: true });" formula katex-id))
   (enqueue! katex-queue js-code)
   (span 'id: katex-id formula))
 

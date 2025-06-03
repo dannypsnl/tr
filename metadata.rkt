@@ -8,8 +8,7 @@
               [add-literal-author author/literal]
               [collect-p p]
               [collect-p tikzcd])
-  m
-  mm
+  tm m mm
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
@@ -37,7 +36,13 @@
 (define related-queue (make-queue))
 (define transclude-queue (make-queue))
 (define content-queue (make-queue))
+(define katex-queue (make-queue))
 
+(define (tm formula)
+  (define katex-id ((compose symbol->string gensym) 'tm))
+  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros });" formula katex-id))
+  (enqueue! katex-queue js-code)
+  (span 'id: katex-id formula))
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
   (span 'id: katex-id formula))
@@ -70,6 +75,7 @@
       (cons 'authors (queue->list author-queue))
       (cons 'name-authors (queue->list literal-author-queue))
       (cons 'title (xml->string title))
+      (cons 'title-formulas (queue->list katex-queue))
       (cons 'taxon taxon)
       (cons 'text collected-text)
       ; a list of addresses, later we should update context of these addresses
