@@ -1,6 +1,5 @@
 #lang racket
 (provide
-  generate-metadata
   generate-toc
   generate-context
   generate-references
@@ -18,8 +17,7 @@
   transclude m mm tikzcd
   mention
   doctype div
-  (rename-out [collect-p p])
-  ol ul li
+  p ol ul li
   a
   em strong
   code pre
@@ -28,8 +26,7 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
-(require json
-         data/queue)
+(require data/queue)
 (require "private/common.rkt")
 
 (define-syntax-rule (define/provide-elements/not-empty tag ...)
@@ -39,33 +36,6 @@
 
 (define generate-index? (make-parameter #f))
 (define generate-root? (make-parameter #f))
-
-(define content-queue (make-queue))
-(define (collect-p . content)
-  (for ([t content]
-        #:when (string? t))
-    (enqueue! content-queue t))
-
-  (p content))
-; This is a side effect procedure creates <addr>.metadata.json, will produce no HTML
-; This file can be lookup and build fullText search
-(define (generate-metadata)
-  (define addr (self-addr))
-  (define taxon (self-taxon))
-  (define title (self-title))
-
-  (define collected-text (string-join (queue->list content-queue) " "))
-
-  (define metadata
-    (make-hasheq (list
-      (cons 'id addr)
-      (cons 'title (xml->string title))
-      (cons 'taxon taxon)
-      (cons 'text collected-text))))
-
-  (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-  (write-json	metadata out)
-  (close-output-port out))
 
 (define self-title (make-parameter #f))
 (define (set-self-title . forms)
