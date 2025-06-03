@@ -16,13 +16,11 @@
               [self-author author])
   transclude m mm tikzcd
   mention
-  doctype div
-  p ol ul li
-  a
-  em strong
-  code pre
-  footer details summary
-  h2)
+  doctype
+  (except-out (all-from-out scribble/html/html) title)
+  (all-from-out scribble/html/extra)
+  summary
+  article)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -108,30 +106,36 @@
         [else (void)])
       content
       (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
-      (script 'src: "/embedded.js")
       (unless (queue-empty? katex-queue)
         (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
 
 (define (tree . content)
-  (article
-    (details 'open: #t
-      (summary
-        (header
-          (tr-h2 (self-addr) (self-title) (self-taxon))
-          (div 'class: "metadata"
-            (ul
-              (when (self-date) (li (self-date)))
-              (when (self-author) (li (self-author)))))))
-      content)))
+  (details 'open: #t
+    (summary
+      (header
+        (tr-h2 (self-addr) (self-title) (self-taxon))
+        (div 'class: "metadata"
+          (ul
+            (when (self-date) (li (self-date)))
+            (when (self-author) (li (self-author)))))))
+    content))
 
 (define (transclude addr)
   ; side effect
   (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
 
   ; output
-  (iframe 'class: "embedded" 'id: addr
-    'scrolling: "no"
-    'src: (string-append "/" addr "/embed.html")))
+  (details 'open: #t
+    (summary
+      (header
+        (tr-h2 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
+        (div 'class: "metadata"
+          (ul
+            (li (fetch-metadata addr 'date))
+            (li (fetch-metadata addr 'author))))))
+    (iframe 'class: "embedded" 'id: addr
+      'scrolling: "no"
+      'src: (string-append "/" addr "/embed.html"))))
 
 (define (mention addr [title #f])
   (define url (string-append "/" addr))

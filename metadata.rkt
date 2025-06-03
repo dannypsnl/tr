@@ -52,6 +52,7 @@
   (define metadata
     (make-hasheq (list
       (cons 'id addr)
+      (cons 'date (self-date))
       (cons 'title (xml->string title))
       (cons 'taxon taxon)
       (cons 'text collected-text)

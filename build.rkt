@@ -13,9 +13,7 @@
 @(require tr/card)
 @(doctype 'html)
 @common-share{
-  @div['class: \"top-wrapper\"]{
-    @tree{~a}
-  }
+  @article{~a}
 }" content))
 (define (index-header content)
   (format "#lang scribble/text
@@ -24,7 +22,7 @@
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
-    @tree{~a}
+    @tree{@article{~a}}
     @generate-toc[]
   }
   @footer{
