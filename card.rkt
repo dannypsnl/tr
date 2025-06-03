@@ -77,7 +77,7 @@
     [else
       (element 'nav 'id: "toc"
         (h2 "Table of Contents")
-          (ul (for/list ([e entries]) (li e))))]))
+          (ul (for/list ([e entries]) e)))]))
 
 (define (common-share . content)
   (html
@@ -122,7 +122,8 @@
 
 (define (transclude addr)
   ; side effect
-  (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
+  (enqueue! toc-queue
+    (li (a 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
 
   ; output
   (details 'open: #t
