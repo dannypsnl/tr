@@ -46,9 +46,8 @@ iframe {
 }
 nav#toc {
   display: block;
-  margin-left: 1em;
 }
-nav#toc > h1 {
+nav#toc > h2 {
   margin-top: 0;
   font-size: 16pt;
 }
