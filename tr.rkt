@@ -90,9 +90,9 @@
     link-to-self))
 
 (define (generate-related)
-  ; TODO: list related cards
-  (queue->list related-queue)
-  (void))
+  (details 'open: #t 'id: "related"
+    (summary (h2 "Related"))
+    (queue->list related-queue)))
 
 (define (generate-toc)
   (define entries (queue->list toc-queue))
@@ -155,16 +155,16 @@
     'scrolling: "no"
     'src: (string-append "/" addr "/embed.html")))
 
+(define (get-metadata addr)
+  (define in (open-input-file (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+  (read-json in))
 (define (mention addr [title #f])
   ; side effect
-  #| TODO:
-    1. update backlinks
-    2. update here related
-    3. update here references
+  #| TODO: distinguish references from related |#
+  (define meta-object (get-metadata addr))
+  (enqueue! related-queue
+    (tr-h2 addr (if title title (hash-ref meta-object 'title)) (hash-ref meta-object 'taxon)))
 
-    Notice that 2 and 3 are distinguish by taxon, and hence, we will need to produce metadata when embed build
-  |#
-  (enqueue! related-queue (a 'href: (string-append "#" addr) addr))
   (unless (or (generate-index?) (generate-root?))
     (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "backlinks" ".scrbl"))))
     (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)

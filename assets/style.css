@@ -83,6 +83,7 @@ a.link-home {
   width: 50%;
 }
 
+#related > h2,
 #backlinks > h2,
 #context > h2 {
   margin-left: 0.5rem;
