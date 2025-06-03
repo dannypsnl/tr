@@ -10,7 +10,7 @@
 
 (define (embed-header _ content)
   (format "#lang scribble/text
-@(require \"../tr.rkt\")
+@(require tr/card)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
@@ -19,7 +19,7 @@
 }" content))
 (define (index-header addr content)
   (format "#lang scribble/text
-@(require \"../tr.rkt\")
+@(require tr/card)
 @(generate-index? #t)
 @(doctype 'html)
 @common-share{
@@ -42,7 +42,7 @@
 }" content addr addr))
 (define (root-header _ content)
   (format "#lang scribble/text
-@(require \"../tr.rkt\")
+@(require tr/card)
 @(generate-index? #t)
 @(generate-root? #t)
 @(doctype 'html)
