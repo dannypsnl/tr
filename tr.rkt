@@ -1,8 +1,10 @@
 #lang racket
 (provide
+  generate-metadata
   generate-toc
   generate-related
-  generate-metadata
+  generate-references
+
   common-share tree
 
   generate-index?
@@ -78,6 +80,7 @@
 
 (define toc-queue (make-queue))
 (define related-queue (make-queue))
+(define references-queue (make-queue))
 (define katex-queue (make-queue))
 
 (define (tr-h2 addr text taxon)
@@ -92,6 +95,10 @@
 (define (generate-related)
   (details 'open: #t 'id: "related"
     (summary (h2 "Related"))
+    (queue->list related-queue)))
+(define (generate-references)
+  (details 'open: #t 'id: "references"
+    (summary (h2 "References"))
     (queue->list related-queue)))
 
 (define (generate-toc)
@@ -160,10 +167,11 @@
   (read-json in))
 (define (mention addr [title #f])
   ; side effect
-  #| TODO: distinguish references from related |#
   (define meta-object (get-metadata addr))
-  (enqueue! related-queue
-    (tr-h2 addr (if title title (hash-ref meta-object 'title)) (hash-ref meta-object 'taxon)))
+  (define v (tr-h2 addr (if title title (hash-ref meta-object 'title)) (hash-ref meta-object 'taxon)))
+  (if (and (hash-ref meta-object 'taxon) (string=? (hash-ref meta-object 'taxon) "Reference"))
+    (enqueue! references-queue v)
+    (enqueue! related-queue v))
 
   (unless (or (generate-index?) (generate-root?))
     (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "backlinks" ".scrbl"))))

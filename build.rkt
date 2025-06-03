@@ -25,6 +25,7 @@
       @summary{@h2{Context}}
       @include{~a.context.scrbl}
     }
+    @generate-references[]
     @details['open: #t 'id: \"backlinks\"]{
       @summary{@h2{Backlinks}}
       @include{~a.backlinks.scrbl}
