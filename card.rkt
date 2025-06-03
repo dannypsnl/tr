@@ -118,8 +118,7 @@
         (div 'class: "metadata"
           (ul
             (li (fetch-metadata (self-addr) 'date))
-            (li (fetch-metadata (self-addr) 'authors))
-            (li (fetch-metadata (self-addr) 'name-authors))))))
+            (li (add-between (append (fetch-metadata (self-addr) 'authors) (fetch-metadata (self-addr) 'name-authors)) ","))))))
     content))
 
 (define (transclude addr)
