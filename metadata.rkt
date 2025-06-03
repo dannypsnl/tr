@@ -6,9 +6,9 @@
               [self-date date]
               [self-author author]
               [collect-p p]
-              [collect-p m]
-              [collect-p mm]
               [collect-p tikzcd])
+  m
+  mm
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
@@ -30,6 +30,13 @@
 (define related-queue (make-queue))
 (define transclude-queue (make-queue))
 (define content-queue (make-queue))
+
+(define (m formula)
+  (define katex-id ((compose symbol->string gensym) 'm))
+  (span 'id: katex-id formula))
+(define (mm formula)
+  (define katex-id ((compose symbol->string gensym) 'mm))
+  (span 'id: katex-id formula))
 
 (define (collect-p . content)
   (for ([t content]
