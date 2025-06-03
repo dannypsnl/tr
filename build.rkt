@@ -113,8 +113,8 @@
     #|
       run `xxx.embed.scrbl` will create a series of side effects
       1. update yyy.context.scrbl if it transclude{yyy}
-      2. update yyy.backlinks.scrbl if it link{yyy} (TODO)
-      to help we create final output (index.html)
+      2. update yyy.backlinks.scrbl if it link{yyy}
+      to help us create final output (index.html)
 
       It also create embed.html that others card can use iframe to refer them.
     |#
