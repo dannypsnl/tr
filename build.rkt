@@ -1,5 +1,12 @@
 #lang racket
-(require dirname)
+(require dirname json data/queue)
+(require "private/common.rkt")
+
+(define (meta-header _ content)
+  (format "#lang scribble/text
+@(require tr/metadata)
+~a
+@generate-metadata[]" content))
 
 (define (embed-header _ content)
   (format "#lang scribble/text
@@ -9,7 +16,6 @@
   @div['class: \"top-wrapper\"]{
     @tree{~a}
   }
-  @generate-metadata[]
 }" content))
 (define (index-header addr content)
   (format "#lang scribble/text
@@ -65,6 +71,7 @@
     (define f (open-output-file #:exists 'replace tmp-path))
     (define in (open-input-file (card-path c)))
     (define header (cond
+      [(string=? mode "meta") meta-header]
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
@@ -73,9 +80,10 @@
     (close-output-port f)
 
     (define output-path
-      (if (root? addr)
-        (build-path "_build" (string-append mode ".html"))
-        (build-path "_build" addr (string-append mode ".html"))))
+      (cond
+        [(string=? mode "meta") (build-path "_tmp" (string-append addr "." "metadata" ".json"))]
+        [(root? addr) (build-path "_build" (string-append mode ".html"))]
+        [else (build-path "_build" addr (string-append mode ".html"))]))
     (final-card addr tmp-path output-path)))
 
 (define (build-shell c)
@@ -97,6 +105,39 @@
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
+
+  (define meta-cards (produce-scrbl card-list "meta"))
+  ; produces basic <addr>.metadata.json
+  (for ([c meta-cards])
+    (printf "generate ~a.metadata.json ~n" (final-card-addr c))
+    (parameterize ([current-output-port (open-output-string "")])
+      (system* (find-executable-path "racket") (final-card-path c))))
+  ; compute relations
+  (for ([c meta-cards])
+    (define meta-obj (file->json (final-card-target-path c)))
+    (define related-queue (make-queue))
+    (define references-queue (make-queue))
+    
+    (for ([addr (hash-ref meta-obj 'transclude)])
+      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define new-ctx (cons (final-card-addr c) (hash-ref obj 'context '())))
+      (write-json (hash-set obj 'context new-ctx) out)
+      (close-output-port out))
+    (for ([addr (hash-ref meta-obj 'related)])
+      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define new-backlinks (cons (final-card-addr c) (hash-ref obj 'backlinks '())))
+      (write-json (hash-set obj 'backlinks new-backlinks) out)
+      (close-output-port out)
+
+      (match (hash-ref obj 'taxon)
+        ["Reference" (enqueue! references-queue addr)]
+        [_ (enqueue! related-queue addr)]))
+
+    (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append (final-card-addr c) "." "metadata" ".json"))))
+    (write-json	(hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue)) out)
+    (close-output-port out))
 
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))

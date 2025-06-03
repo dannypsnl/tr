@@ -26,9 +26,9 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
-(require dirname
-         json
+(require json
          data/queue)
+(require "private/common.rkt")
 
 (define-syntax-rule (define/provide-elements/not-empty tag ...)
   (begin (provide tag ...)
@@ -65,10 +65,6 @@
   (write-json	metadata out)
   (close-output-port out))
 
-(define (self-addr)
-  (define current-scrbl-path (find-system-path 'run-file))
-  (define self-path (path->string (path-replace-extension current-scrbl-path "")))
-  (string-trim (basename self-path) #px"\\.index|\\.embed"))
 (define self-title (make-parameter #f))
 (define (set-self-title . forms)
   (self-title forms))
