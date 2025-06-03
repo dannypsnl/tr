@@ -2,8 +2,10 @@
 (provide
   generate-metadata
   generate-toc
-  generate-related
+  generate-context
   generate-references
+  generate-backlinks
+  generate-related
 
   common-share tree
 
@@ -75,8 +77,6 @@
 (define self-author (make-parameter #f))
 
 (define toc-queue (make-queue))
-(define related-queue (make-queue))
-(define references-queue (make-queue))
 (define katex-queue (make-queue))
 
 (define (tr-h2 addr text taxon)
@@ -88,14 +88,19 @@
     " "
     link-to-self))
 
-(define (generate-related)
-  (details 'open: #t 'id: "related"
-    (summary (h2 "Related"))
-    (queue->list related-queue)))
-(define (generate-references)
-  (details 'open: #t 'id: "references"
-    (summary (h2 "References"))
-    (queue->list references-queue)))
+(define (fetch-metadata addr key [default #f])
+  (hash-ref (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))) key default))
+(define (footer-common title key)
+  (define addr-list (fetch-metadata (self-addr) key '()))
+  (unless (empty? addr-list)
+    (details 'open: #t 'id: (symbol->string key)
+      (summary (h2 title))
+      (for/list ([addr addr-list])
+        (tr-h2 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))))))
+(define (generate-context) (footer-common "Context" 'context))
+(define (generate-references) (footer-common "References" 'references))
+(define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
+(define (generate-related) (footer-common "Related" 'related))
 
 (define (generate-toc)
   (define entries (queue->list toc-queue))
@@ -152,35 +157,13 @@
 (define (transclude addr)
   ; side effect
   (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
-  
-  ; add _tmp/<addr>.context.scrbl, but only when first time build embed.html
-  (unless (generate-index?)
-    (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "context" ".scrbl"))))
-    (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
-    (close-output-port addr-ctx))
 
   ; output
   (iframe 'class: "embedded" 'id: addr
     'scrolling: "no"
     'src: (string-append "/" addr "/embed.html")))
 
-(define (get-metadata addr)
-  (define in (open-input-file (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-  (read-json in))
 (define (mention addr [title #f])
-  ; side effect
-  (define meta-object (get-metadata addr))
-  (define v (tr-h2 addr (if title title (hash-ref meta-object 'title)) (hash-ref meta-object 'taxon)))
-  (if (and (hash-ref meta-object 'taxon) (string=? (hash-ref meta-object 'taxon) "Reference"))
-    (enqueue! references-queue v)
-    (enqueue! related-queue v))
-
-  (unless (or (generate-index?) (generate-root?))
-    (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "backlinks" ".scrbl"))))
-    (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
-    (close-output-port addr-ctx))
-
-  ; output
   (define url (string-append "/" addr))
   (a 'class: "mention"
      'target: "_parent"

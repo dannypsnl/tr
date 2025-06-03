@@ -2,13 +2,13 @@
 (require dirname json data/queue)
 (require "private/common.rkt")
 
-(define (meta-header _ content)
+(define (meta-header content)
   (format "#lang scribble/text
 @(require tr/metadata)
 ~a
 @generate-metadata[]" content))
 
-(define (embed-header _ content)
+(define (embed-header content)
   (format "#lang scribble/text
 @(require tr/card)
 @(doctype 'html)
@@ -17,7 +17,7 @@
     @tree{~a}
   }
 }" content))
-(define (index-header addr content)
+(define (index-header content)
   (format "#lang scribble/text
 @(require tr/card)
 @(generate-index? #t)
@@ -28,19 +28,13 @@
     @generate-toc[]
   }
   @footer{
-    @details['open: #t 'id: \"context\"]{
-      @summary{@h2{Context}}
-      @include{~a.context.scrbl}
-    }
+    @generate-context[]
     @generate-references[]
-    @details['open: #t 'id: \"backlinks\"]{
-      @summary{@h2{Backlinks}}
-      @include{~a.backlinks.scrbl}
-    }
+    @generate-backlinks[]
     @generate-related[]
   }
-}" content addr addr))
-(define (root-header _ content)
+}" content))
+(define (root-header content)
   (format "#lang scribble/text
 @(require tr/card)
 @(generate-index? #t)
@@ -75,7 +69,7 @@
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
-    (displayln (header addr (port->string in)) f)
+    (displayln (header (port->string in)) f)
     (close-input-port in)
     (close-output-port f)
 
@@ -143,13 +137,6 @@
   (define index-cards (produce-scrbl card-list "index"))
 
   (define out (open-output-file #:exists 'replace "_tmp.sh"))
-  (for ([c embed-cards])
-    (define ctx-path (build-path "_tmp" (string-append (final-card-addr c) "." "context" ".scrbl")))
-    (define backlink-path (build-path "_tmp" (string-append (final-card-addr c) "." "backlinks" ".scrbl")))
-    ; before run xxx.embed.scrbl, we create xxx.context.scrbl (use `touch`) for each address xxx
-    (displayln (string-append "touch " (path->string ctx-path)) out)
-    ; before run xxx.embed.scrbl, we create xxx.backlinks.scrbl (use `touch`) for each address xxx
-    (displayln (string-append "touch " (path->string backlink-path)) out))
   (for ([c embed-cards])
     #|
       run `xxx.embed.scrbl` will create a series of side effects
