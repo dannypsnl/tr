@@ -15,7 +15,7 @@
               [ignore date]
               [ignore author]
               [ignore author/literal]
-              [m tm])
+              [ignore tm])
   transclude m mm tikzcd
   mention
   doctype
@@ -78,6 +78,10 @@
           (ul (for/list ([e entries]) e)))]))
 
 (define (common-share . content)
+  (when (generate-index?)
+    (for ([js-code (fetch-metadata (self-addr) 'title-formulas)])
+      (enqueue! katex-queue js-code)))
+
   (html
    (head
     (title (self-title))
