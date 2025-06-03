@@ -7,3 +7,12 @@
   @li{MacTex}
   @li{dvisvgm}
 }
+@p{Steps to use this project:}
+@ol{
+  @li{@code{git clone https://github.com/dannypsnl/tr.git}}
+  @li{Run @code{raco pkg install --auto} in the project}
+  @li{Correct site information in @code{rss.scrbl}}
+  @li{Update @code{*.scrbl} in @code{content/} directory}
+  @li{Run @{make build} to build HTMLs}
+  @li{Run @{make serve} to view result}
+}
