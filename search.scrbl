@@ -7,5 +7,5 @@
                ","))
 @(define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
 [
-  @itemize[@json-list]  
+  @itemize[@json-list]
 ]
