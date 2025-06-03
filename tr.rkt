@@ -8,7 +8,9 @@
   generate-index?
   generate-root?
   (rename-out [set-self-title title]
-              [set-self-taxon taxon])
+              [set-self-taxon taxon]
+              [self-date date]
+              [self-author author])
   transclude m mm tikzcd
   mention
   doctype div
@@ -72,16 +74,21 @@
   (self-title forms))
 (define self-taxon (make-parameter #f))
 (define (set-self-taxon t)
-  (self-title t))
+  (self-taxon t))
+(define self-date (make-parameter #f))
+(define self-author (make-parameter #f))
 
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
 (define (tr-h2 addr text taxon)
-  (define link-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
-  (if taxon
-    (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
-    (h2 text " " link-self)))
+  (define link-to-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
+  (h2
+    (when taxon
+      (list (span 'class: "taxon" (string-append taxon ".")) " "))
+    text
+    " "
+    link-to-self))
 
 (define (mention addr [title #f])
   ; side effect
@@ -141,7 +148,10 @@
       (summary
         (header
           (tr-h2 (self-addr) (self-title) (self-taxon))
-          (div 'class: "metadata")))
+          (div 'class: "metadata"
+            (ul
+              (when (self-date) (li (self-date)))
+              (when (self-author) (li (self-author)))))))
       content)))
 
 (define (transclude addr)

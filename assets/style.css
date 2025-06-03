@@ -18,6 +18,10 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
+details > summary > header > h2 {
+  display: inline;
+}
+
 article {
   display: block;
   float: left;
@@ -73,4 +77,13 @@ a.link-home {
 #backlinks > h2,
 #context > h2 {
   margin-left: 0.5rem;
+}
+
+.metadata ul {
+  padding: 0;
+  list-style-type: disc;
+}
+.metadata ul,
+.metadata ul li {
+  display: inline;
 }
