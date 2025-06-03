@@ -45,9 +45,9 @@
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
 
-(define (tr-h2 addr text taxon)
+(define (tr-h1 addr text taxon)
   (define link-to-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
-  (h2
+  (h1
     (when taxon
       (list (span 'class: "taxon" (string-append taxon ".")) " "))
     text
@@ -60,9 +60,9 @@
   (define addr-list (fetch-metadata (self-addr) key '()))
   (unless (empty? addr-list)
     (details 'open: #t 'id: (symbol->string key)
-      (summary (h2 title))
+      (summary (h1 title))
       (for/list ([addr addr-list])
-        (tr-h2 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))))))
+        (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))))))
 (define (generate-context) (footer-common "Context" 'context))
 (define (generate-references) (footer-common "References" 'references))
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
@@ -74,7 +74,7 @@
     [(empty? entries) (void)]
     [else
       (element 'nav 'id: "toc"
-        (h2 "Table of Contents")
+        (h1 "Table of Contents")
           (ul (for/list ([e entries]) e)))]))
 
 (define (common-share . content)
@@ -115,7 +115,7 @@
   (details 'open: #t
     (summary
       (header
-        (tr-h2 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
+        (tr-h1 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
             (add-between
@@ -141,7 +141,7 @@
   (details 'open: #t
     (summary
       (header
-        (tr-h2 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
+        (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
         (div 'class: "metadata"
           (ul
             (li (fetch-metadata addr 'date))

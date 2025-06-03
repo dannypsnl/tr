@@ -15,7 +15,7 @@ footer {
   width: 50%;
 }
 
-h2 {
+h1 {
   margin: 0;
 }
 
@@ -27,7 +27,7 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
-details > summary > header > h2 {
+details > summary > header > h1 {
   display: inline;
 }
 
@@ -50,7 +50,7 @@ iframe {
 nav#toc {
   display: block;
 }
-nav#toc > h2 {
+nav#toc > h1 {
   margin-top: 0;
   font-size: 16pt;
 }
@@ -84,10 +84,10 @@ a.link-home {
   margin-right: auto;
 }
 
-#references > h2,
-#related > h2,
-#backlinks > h2,
-#context > h2 {
+#references > h1,
+#related > h1,
+#backlinks > h1,
+#context > h1 {
   margin-left: 0.5rem;
 }
 

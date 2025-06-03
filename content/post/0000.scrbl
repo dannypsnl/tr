@@ -1,4 +1,4 @@
-@title{first post}
+@title{First post}
 @date{2025-06-03}
 @author{dannypsnl}
 
