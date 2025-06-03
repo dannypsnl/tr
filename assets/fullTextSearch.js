@@ -1,3 +1,10 @@
+const frames = $$(".embedded");
+for (const f of frames) {
+  f.onload = function () {
+    f.style.height = f.contentWindow.document.body.scrollHeight + 50 + "px";
+  };
+}
+
 // `MiniSearch` is already in global
 window.miniSearch = new MiniSearch({
   fields: ["title", "text"], // fields to index for full-text search
