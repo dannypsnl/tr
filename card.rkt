@@ -13,7 +13,8 @@
   (rename-out [set-self-title title]
               [set-self-taxon taxon]
               [self-date date]
-              [self-author author])
+              [ignore author]
+              [ignore author/literal])
   transclude m mm tikzcd
   mention
   doctype
@@ -42,7 +43,7 @@
 (define (set-self-taxon t)
   (self-taxon t))
 (define self-date (make-parameter #f))
-(define self-author (make-parameter #f))
+(define (ignore _) (void))
 
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
@@ -102,7 +103,7 @@
         (div 'id: "search-result"))
       (cond
         [(generate-root?) (void)]
-        [(generate-index?) (a 'class: "link-home" 'href: "/" "<< Home")]
+        [(generate-index?) (a 'class: "link-home" 'href: "/" "&#171; Home")]
         [else (void)])
       content
       (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
@@ -113,11 +114,18 @@
   (details 'open: #t
     (summary
       (header
-        (tr-h2 (self-addr) (self-title) (self-taxon))
+        (tr-h2 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
-            (when (self-date) (li (self-date)))
-            (when (self-author) (li (self-author)))))))
+            (add-between
+              (list
+                (li (fetch-metadata (self-addr) 'date))
+                (li (add-between
+                      (append (for/list ([addr (fetch-metadata (self-addr) 'authors)])
+                                (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title)))
+                              (fetch-metadata (self-addr) 'name-authors))
+                      ",")))
+              " &#149; ")))))
     content))
 
 (define (transclude addr)

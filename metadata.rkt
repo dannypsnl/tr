@@ -4,7 +4,8 @@
   (rename-out [set-self-title title]
               [set-self-taxon taxon]
               [self-date date]
-              [self-author author]
+              [add-author author]
+              [add-literal-author author/literal]
               [collect-p p]
               [collect-p tikzcd])
   m
@@ -25,7 +26,13 @@
 (define (set-self-taxon t)
   (self-taxon t))
 (define self-date (make-parameter #f))
-(define self-author (make-parameter #f))
+
+(define literal-author-queue (make-queue))
+(define author-queue (make-queue))
+(define (add-literal-author name)
+  (enqueue! literal-author-queue name))
+(define (add-author addr)
+  (enqueue! author-queue addr))
 
 (define related-queue (make-queue))
 (define transclude-queue (make-queue))
@@ -60,6 +67,8 @@
     (make-hasheq (list
       (cons 'id addr)
       (cons 'date (self-date))
+      (cons 'authors (queue->list author-queue))
+      (cons 'name-authors (queue->list literal-author-queue))
       (cons 'title (xml->string title))
       (cons 'taxon taxon)
       (cons 'text collected-text)

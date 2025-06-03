@@ -1,5 +1,6 @@
 @title{first post}
 @date{2025-06-03}
+@author{dannypsnl}
 
 @p{post brabrabra}
 @transclude{math-0001}
