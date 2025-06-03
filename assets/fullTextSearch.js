@@ -39,15 +39,17 @@ document.addEventListener(
   false
 );
 
-const input = document.querySelector("input");
+const input = $("#search-bar");
 input.addEventListener(
   "input",
   function (evt) {
     let results = window.miniSearch.search(evt.target.value, {
       fields: ["addr", "taxon", "title"],
     });
-    console.log({ results });
-    document.getElementById("search-result");
+    const search_result = $("#search-result");
+    for (const obj of results) {
+      search_result.appendChild(span({}, a({ href: `/${obj.id}` }, obj.title)));
+    }
   },
   false
 );
