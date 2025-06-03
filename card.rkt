@@ -103,7 +103,7 @@
         (div 'id: "search-result"))
       (cond
         [(generate-root?) (void)]
-        [(generate-index?) (a 'class: "link-home" 'href: "/" "<< Home")]
+        [(generate-index?) (a 'class: "link-home" 'href: "/" "&#171; Home")]
         [else (void)])
       content
       (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
@@ -117,8 +117,15 @@
         (tr-h2 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
-            (li (fetch-metadata (self-addr) 'date))
-            (li (add-between (append (fetch-metadata (self-addr) 'authors) (fetch-metadata (self-addr) 'name-authors)) ","))))))
+            (add-between
+              (list
+                (li (fetch-metadata (self-addr) 'date))
+                (li (add-between
+                      (append (for/list ([addr (fetch-metadata (self-addr) 'authors)])
+                                (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title)))
+                              (fetch-metadata (self-addr) 'name-authors))
+                      ",")))
+              " &#149; ")))))
     content))
 
 (define (transclude addr)
