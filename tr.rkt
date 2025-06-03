@@ -123,6 +123,7 @@
     (script 'src: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"
       'integrity: "sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6"
       'crossorigin: "anonymous")
+    (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
     (script 'src: "/math.js"))
    (body
       (cond
