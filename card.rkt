@@ -126,7 +126,7 @@
                                 (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title)))
                               (fetch-metadata (self-addr) 'name-authors))
                       ",")))
-              " &#149; ")))))
+              " &#183; ")))))
     content))
 
 (define (transclude addr)

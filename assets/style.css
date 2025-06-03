@@ -68,7 +68,9 @@ a.link-self {
 }
 a.link-home {
   display: block;
-  color: #8c8c8c;
+  color: #666;
+  font-size: 24px;
+  text-decoration: none;
   margin-bottom: 2em;
 }
 
