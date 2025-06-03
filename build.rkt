@@ -9,6 +9,7 @@
   @div['class: \"top-wrapper\"]{
     @tree{~a}
   }
+  @generate-metadata[]
 }" content))
 (define (index-header addr content)
   (format "#lang scribble/text
@@ -32,7 +33,6 @@
     }
     @generate-related[]
   }
-  @generate-metadata[]
 }" content addr addr))
 (define (root-header _ content)
   (format "#lang scribble/text
