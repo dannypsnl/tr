@@ -24,15 +24,15 @@ document.addEventListener(
     }
 
     if ((event.metaKey || event.ctrlKey) && keyName === "k") {
-      const dialog = document.getElementById("search-dialog");
+      const dialog = $("#search-dialog");
       if (dialogOpen) {
-        document.getElementById("whole").classList.remove("blur");
+        $("#whole").classList.remove("blur");
         dialog.close();
         dialogOpen = !dialogOpen;
       } else {
         dialog.showModal();
         dialogOpen = !dialogOpen;
-        document.getElementById("whole").classList.add("blur");
+        $("#whole").classList.add("blur");
       }
     }
   },
