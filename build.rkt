@@ -3,7 +3,7 @@
 
 (define (embed-header _ content)
   (format "#lang scribble/text
-@(require \"tr.rkt\")
+@(require \"../tr.rkt\")
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
@@ -12,7 +12,7 @@
 }" content))
 (define (index-header addr content)
   (format "#lang scribble/text
-@(require \"tr.rkt\")
+@(require \"../tr.rkt\")
 @(generate-index? #t)
 @(doctype 'html)
 @common-share{
@@ -36,7 +36,7 @@
 }" content addr addr))
 (define (root-header _ content)
   (format "#lang scribble/text
-@(require \"tr.rkt\")
+@(require \"../tr.rkt\")
 @(generate-index? #t)
 @(generate-root? #t)
 @(doctype 'html)
@@ -97,7 +97,6 @@
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
-  (copy-file "tr.rkt" "_tmp/tr.rkt" #t)
 
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))
