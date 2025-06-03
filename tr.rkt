@@ -181,8 +181,9 @@
   ; output
   (define url (string-append "/" addr))
   (a 'class: "mention"
-    'href: url
-    (if title title addr)))
+     'target: "_parent"
+     'href: url
+     (if title title addr)))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
