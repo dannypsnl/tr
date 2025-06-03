@@ -1,14 +1,19 @@
 #lang racket
-(provide generate-index generate-root
+(provide
   generate-toc
   generate-related
+  generate-metadata
   common-share tree
+
+  generate-index?
+  generate-root?
   (rename-out [set-self-title title]
-              [self-taxon taxon])
+              [set-self-taxon taxon])
   transclude m mm tikzcd
   mention
   doctype div
-  p ol ul li
+  (rename-out [collect-p p])
+  ol ul li
   a
   em strong
   code pre
@@ -18,6 +23,7 @@
          scribble/html/extra
          scribble/html/xml)
 (require dirname
+         json
          data/queue)
 
 (define-syntax-rule (define/provide-elements/not-empty tag ...)
@@ -25,17 +31,48 @@
          (define (tag . args) (apply element/not-empty 'tag args)) ...))
 (define/provide-elements/not-empty summary)
 
-(define generate-index (make-parameter #f))
-(define generate-root (make-parameter #f))
+(define generate-index? (make-parameter #f))
+(define generate-root? (make-parameter #f))
+
+(define content-queue (make-queue))
+(define (collect-p . content)
+  (for ([t content]
+        #:when (string? t))
+    (enqueue! content-queue t))
+
+  (p content))
+; This is a side effect procedure creates <addr>.metadata.json, will produce no HTML
+; This file can be lookup and build fullText search
+(define (generate-metadata)
+  (define addr (self-addr))
+  (define taxon (self-taxon))
+  (define title (self-title))
+
+  (define collected-text (string-join (queue->list content-queue) " "))
+
+  (define metadata
+    (make-hasheq (list
+      (cons 'id addr)
+      (cons 'title (xml->string title))
+      (cons 'taxon taxon)
+      (cons 'text collected-text))))
+
+  (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+  (write-json	metadata out)
+  (close-output-port out)
+
+  (void))
+
 (define (self-addr)
   (define current-scrbl-path (find-system-path 'run-file))
   (define self-path (path->string (path-replace-extension current-scrbl-path "")))
   (string-trim (basename self-path) #px"\\.index|\\.embed"))
-
 (define self-title (make-parameter #f))
 (define (set-self-title . forms)
   (self-title forms))
 (define self-taxon (make-parameter #f))
+(define (set-self-taxon t)
+  (self-title t))
 
 (define toc-queue (make-queue))
 (define katex-queue (make-queue))
@@ -93,8 +130,8 @@
     )
    (body
       (cond
-        [(generate-root) (void)]
-        [(generate-index) (a 'class: "link-home" 'href: "/" "<< Home")]
+        [(generate-root?) (void)]
+        [(generate-index?) (a 'class: "link-home" 'href: "/" "<< Home")]
         [else (void)])
       content
       (script 'src: "/embedded.js")
@@ -112,7 +149,7 @@
   (enqueue! toc-queue (a 'href: (string-append "#" addr) addr))
   
   ; add _tmp/<addr>.context.scrbl, but only when first time build embed.html
-  (unless (generate-index)
+  (unless (generate-index?)
     (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "context" ".scrbl"))))
     (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
     (close-output-port addr-ctx))

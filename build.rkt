@@ -13,7 +13,7 @@
 (define (index-header addr content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
-@(generate-index #t)
+@(generate-index? #t)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
@@ -31,12 +31,13 @@
     }
     @generate-related[]
   }
+  @generate-metadata[]
 }" content addr addr))
 (define (root-header _ content)
   (format "#lang scribble/text
 @(require \"tr.rkt\")
-@(generate-index #t)
-@(generate-root #t)
+@(generate-index? #t)
+@(generate-root? #t)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
