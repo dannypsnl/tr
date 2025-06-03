@@ -95,7 +95,7 @@
       'crossorigin: "anonymous")
     (script 'src: "/tiny.js")
     (script 'src: "/math.js"))
-   (body 'id: "whole"
+   (body 'id: (if (generate-index?) "whole" "embed-whole")
       (dialog 'id: "search-dialog"
         (input 'type: "text" 'id: "search-bar"
           'spellcheck: "false" 'autocomplete: "off"
