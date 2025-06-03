@@ -16,3 +16,21 @@ fetch("/search.json")
     });
   })
   .catch((err) => console.error(err));
+
+document.addEventListener(
+  "keydown",
+  (event) => {
+    const keyName = event.key;
+
+    if (keyName === "Control" || keyName === "Meta") {
+      // do not alert when only Control key is pressed.
+      return;
+    }
+
+    if (event.metaKey || event.ctrlKey) {
+      // TODO:
+      // 1. toggle search bar (if OPEN => CLOSE, else CLOSE => OPEN)
+    }
+  },
+  false
+);
