@@ -8,15 +8,11 @@ fetch("/search.json")
   .then((value) => {
     value.json().then((documents) => {
       window.miniSearch.addAll(documents);
-
-      let results = window.miniSearch.search("first", {
-        fields: ["addr", "taxon", "title"],
-      });
-      console.log({ results });
     });
   })
   .catch((err) => console.error(err));
 
+let dialogOpen = false;
 document.addEventListener(
   "keydown",
   (event) => {
@@ -27,10 +23,31 @@ document.addEventListener(
       return;
     }
 
-    if (event.metaKey || event.ctrlKey) {
-      // TODO:
-      // 1. toggle search bar (if OPEN => CLOSE, else CLOSE => OPEN)
+    if ((event.metaKey || event.ctrlKey) && keyName === "k") {
+      const dialog = document.getElementById("search-dialog");
+      if (dialogOpen) {
+        document.getElementById("whole").classList.remove("blur");
+        dialog.close();
+        dialogOpen = !dialogOpen;
+      } else {
+        dialog.showModal();
+        dialogOpen = !dialogOpen;
+        document.getElementById("whole").classList.add("blur");
+      }
     }
+  },
+  false
+);
+
+const input = document.querySelector("input");
+input.addEventListener(
+  "input",
+  function (evt) {
+    let results = window.miniSearch.search(evt.target.value, {
+      fields: ["addr", "taxon", "title"],
+    });
+    console.log({ results });
+    document.getElementById("search-result");
   },
   false
 );

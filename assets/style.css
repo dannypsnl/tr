@@ -100,3 +100,23 @@ a.link-home {
 .metadata ul li {
   display: inline;
 }
+
+/* parent element with `display: flex`
+  with child element `margin: auto`
+  can put the child in the middle of screen
+*/
+body {
+  display: flex;
+  transition: 0.3s filter;
+}
+body.blur {
+  filter: blur(3px) contrast(0.8) brightness(0.8);
+}
+#search-dialog {
+  margin: auto;
+  width: 50%;
+  border: none;
+}
+#search-bar {
+  width: 100%;
+}

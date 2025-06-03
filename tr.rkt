@@ -123,14 +123,19 @@
     (script 'src: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"
       'integrity: "sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6"
       'crossorigin: "anonymous")
-    (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
     (script 'src: "/math.js"))
-   (body
+   (body 'id: "whole"
+      (dialog 'id: "search-dialog"
+        (input 'type: "text" 'id: "search-bar"
+          'spellcheck: "false" 'autocomplete: "off"
+          'placeholder: "Start typing a note title or ID")
+        (div 'id: "search-result"))
       (cond
         [(generate-root?) (void)]
         [(generate-index?) (a 'class: "link-home" 'href: "/" "<< Home")]
         [else (void)])
       content
+      (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
       (script 'src: "/embedded.js")
       (unless (queue-empty? katex-queue)
         (script 'type: "text/javascript" (string-join (queue->list katex-queue) "\n"))))))
