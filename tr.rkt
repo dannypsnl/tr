@@ -99,7 +99,7 @@
 (define (generate-references)
   (details 'open: #t 'id: "references"
     (summary (h2 "References"))
-    (queue->list related-queue)))
+    (queue->list references-queue)))
 
 (define (generate-toc)
   (define entries (queue->list toc-queue))
