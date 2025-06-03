@@ -82,11 +82,6 @@
   (if taxon
     (h2 (span 'class: "taxon" (string-append taxon ".")) "\n" text " " link-self)
     (h2 text " " link-self)))
-(define (tr-title addr text taxon)
-  (summary
-    (header
-      (tr-h2 addr text taxon)
-      (div 'class: "metadata"))))
 
 (define (mention addr [title #f])
   ; side effect
@@ -141,7 +136,10 @@
 (define (tree . content)
   (article
     (details 'open: #t
-      (tr-title (self-addr) (self-title) (self-taxon))
+      (summary
+        (header
+          (tr-h2 (self-addr) (self-title) (self-taxon))
+          (div 'class: "metadata")))
       content)))
 
 (define (transclude addr)
