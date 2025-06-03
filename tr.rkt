@@ -61,9 +61,7 @@
 
   (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
   (write-json	metadata out)
-  (close-output-port out)
-
-  (void))
+  (close-output-port out))
 
 (define (self-addr)
   (define current-scrbl-path (find-system-path 'run-file))
