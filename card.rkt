@@ -168,7 +168,7 @@
   (a 'class: "mention"
      'target: "_parent"
      'href: url
-     (if title title addr)))
+     (if title title (fetch-metadata addr 'title))))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))
