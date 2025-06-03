@@ -8,6 +8,7 @@ build:
 	sh _tmp.sh
 	rm -f _tmp.sh
 	racket search.scrbl > _build/search.json
+	racket rss.scrbl > _build/rss.xml
 
 serve:
 	python3 -m http.server -d _build
