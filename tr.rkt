@@ -77,6 +77,7 @@
 (define self-author (make-parameter #f))
 
 (define toc-queue (make-queue))
+(define related-queue (make-queue))
 (define katex-queue (make-queue))
 
 (define (tr-h2 addr text taxon)
@@ -88,22 +89,9 @@
     " "
     link-to-self))
 
-(define (mention addr [title #f])
-  ; side effect
-  #| TODO:
-    1. update backlinks
-    2. update here related
-    3. update here references
-
-    Notice that 2 and 3 are distinguish by taxon, and hence, we will need to produce metadata when embed build
-  |#
-
-  ; output
-  (define url (string-append "/" addr))
-  (a 'href: url title))
-
 (define (generate-related)
   ; TODO: list related cards
+  (queue->list related-queue)
   (void))
 
 (define (generate-toc)
@@ -166,6 +154,27 @@
   (iframe 'class: "embedded" 'id: addr
     'scrolling: "no"
     'src: (string-append "/" addr "/embed.html")))
+
+(define (mention addr [title #f])
+  ; side effect
+  #| TODO:
+    1. update backlinks
+    2. update here related
+    3. update here references
+
+    Notice that 2 and 3 are distinguish by taxon, and hence, we will need to produce metadata when embed build
+  |#
+  (enqueue! related-queue (a 'href: (string-append "#" addr) addr))
+  (unless (or (generate-index?) (generate-root?))
+    (define addr-ctx (open-output-file #:exists 'append (build-path "_tmp" (string-append addr "." "backlinks" ".scrbl"))))
+    (displayln (xml->string (tr-h2 (self-addr) (self-title) (self-taxon))) addr-ctx)
+    (close-output-port addr-ctx))
+
+  ; output
+  (define url (string-append "/" addr))
+  (a 'class: "mention"
+    'href: url
+    (if title title addr)))
 
 (define (m formula)
   (define katex-id ((compose symbol->string gensym) 'm))

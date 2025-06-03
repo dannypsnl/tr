@@ -52,6 +52,10 @@ nav#toc a {
   color: #555;
 }
 
+a.mention {
+  color: #8c8c8c;
+  text-decoration: underline dotted;
+}
 a.link-self {
   color: #8c8c8c;
   text-decoration: underline dotted;
