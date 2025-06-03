@@ -4,3 +4,7 @@
 _build/
 _tmp/
 _tmp.sh
+# racket package
+compiled/
+scribblings/compiled/
+doc/
