@@ -70,7 +70,6 @@ a.link-self {
 a.link-home {
   display: block;
   color: #8c8c8c;
-  margin-top: 3em;
   margin-bottom: 2em;
 }
 
@@ -101,17 +100,13 @@ a.link-home {
   display: inline;
 }
 
-/* parent element with `display: flex`
-  with child element `margin: auto`
-  can put the child in the middle of screen
-*/
 body {
-  display: flex;
   transition: 0.3s filter;
 }
 body.blur {
   filter: blur(3px) contrast(0.8) brightness(0.8);
 }
+/* `margin: auto` can put a dialog in the middle of screen */
 #search-dialog {
   margin: auto;
   width: 50%;
