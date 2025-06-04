@@ -6,15 +6,16 @@
               [self-date date]
               [add-author author]
               [add-literal-author author/literal]
-              [collect-p p]
-              [collect-p code]
-              [collect-p pre]
-              [collect-p tikzcd])
+              [collect-text p]
+              [collect-text li]
+              [collect-text code]
+              [collect-text pre]
+              [collect-text tikzcd])
   tm m mm
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
-    p code pre title))
+    p li code pre title))
 (require scribble/html/html
          scribble/html/xml)
 (require json data/queue)
@@ -52,7 +53,7 @@
   (define katex-id ((compose symbol->string gensym) 'mm))
   (span 'id: katex-id formula))
 
-(define (collect-p . content)
+(define (collect-text . content)
   (for ([t content]
         #:when (string? t))
     (enqueue! content-queue t)))
