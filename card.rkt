@@ -112,21 +112,23 @@
         (script 'type: "text/javascript" (add-between (queue->list katex-queue) "\n"))))))
 
 (define (tree . content)
+  (define meta-queue (make-queue))
+  (when (fetch-metadata (self-addr) 'date)
+    (enqueue! meta-queue (li (fetch-metadata (self-addr) 'date))))
+  (define authors
+    (for/list ([addr (fetch-metadata (self-addr) 'authors)])
+      (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title))))
+  (define name-authors (fetch-metadata (self-addr) 'name-authors))
+  (unless (empty? (append authors name-authors))
+    (enqueue! meta-queue (li (add-between (append authors name-authors) ","))))
+
   (details 'open: #t
     (summary
       (header
         (tr-h1 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
-            (add-between
-              (list
-                (li (fetch-metadata (self-addr) 'date))
-                (li (add-between
-                      (append (for/list ([addr (fetch-metadata (self-addr) 'authors)])
-                                (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title)))
-                              (fetch-metadata (self-addr) 'name-authors))
-                      ",")))
-              " &#183; ")))))
+            (add-between (queue->list meta-queue) " &#183; ")))))
     content))
 
 (define (transclude addr)
