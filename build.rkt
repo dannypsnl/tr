@@ -118,23 +118,22 @@
     (parameterize ([current-output-port (open-output-string "")])
       (system* (find-executable-path "racket") (final-card-path c))))
   ; compute relations
-  (for/async ([c meta-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
+  (for/async ([c meta-cards])
     (define meta-obj (file->json (final-card-target-path c)))
     (define related-queue (make-queue))
     (define references-queue (make-queue))
-    
-    (for ([addr (hash-ref meta-obj 'transclude)])
+
+    (for/async ([addr (hash-ref meta-obj 'transclude)])
       (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
       (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (define new-ctx (cons (final-card-addr c) (hash-ref obj 'context '())))
-      (write-json (hash-set obj 'context new-ctx) out)
+      (define ctx-set (list->set (hash-ref obj 'context '())))
+      (write-json (hash-set obj 'context (set->list (set-add ctx-set (final-card-addr c)))) out)
       (close-output-port out))
-    (for ([addr (hash-ref meta-obj 'related)])
+    (for/async ([addr (hash-ref meta-obj 'related)])
       (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
       (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (define new-backlinks (cons (final-card-addr c) (hash-ref obj 'backlinks '())))
-      (write-json (hash-set obj 'backlinks new-backlinks) out)
+      (define links-set (list->set (hash-ref obj 'backlinks '())))
+      (write-json (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))) out)
       (close-output-port out)
 
       (match (hash-ref obj 'taxon)
