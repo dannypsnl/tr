@@ -7,12 +7,14 @@
               [add-author author]
               [add-literal-author author/literal]
               [collect-p p]
+              [collect-p code]
+              [collect-p pre]
               [collect-p tikzcd])
   tm m mm
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
-    p title))
+    p code pre title))
 (require scribble/html/html
          scribble/html/xml)
 (require json data/queue)

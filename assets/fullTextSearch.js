@@ -55,9 +55,16 @@ input.addEventListener(
     });
     const search_result = $("#search-result");
     for (const obj of results) {
-      search_result.appendChild(
-        span({}, `[${obj.id}] `, a({ href: `/${obj.id}` }, obj.title))
-      );
+      if (obj.id === "index") {
+        search_result.appendChild(
+          span({}, `[${obj.id}] `, a({ href: `/` }, obj.title))
+        );
+      } else {
+        search_result.appendChild(
+          span({}, `[${obj.id}] `, a({ href: `/${obj.id}` }, obj.title))
+        );
+      }
+
       search_result.appendChild(br({}));
     }
     if (results.length === 0) {
