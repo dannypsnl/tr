@@ -86,7 +86,10 @@
   (define output-dir (build-path "_build/" addr))
   (make-directory* output-dir)
 
-  (format "racket ~a > ~a" (path->string src) (path->string target)))
+  (define out (open-output-file #:exists 'replace target))
+  (parameterize ([current-output-port out])
+    (system* (find-executable-path "racket") src))
+  (close-output-port out))
 
 (define (search-and-build dir)
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
@@ -100,12 +103,12 @@
 
   (define meta-cards (produce-scrbl card-list "meta"))
   ; produces basic <addr>.metadata.json
-  (for ([c meta-cards])
+  (for/async ([c meta-cards])
     (printf "generate ~a.metadata.json ~n" (final-card-addr c))
     (parameterize ([current-output-port (open-output-string "")])
       (system* (find-executable-path "racket") (final-card-path c))))
   ; compute relations
-  (for ([c meta-cards])
+  (for/async ([c meta-cards])
     (define meta-obj (file->json (final-card-target-path c)))
     (define related-queue (make-queue))
     (define references-queue (make-queue))
@@ -134,27 +137,22 @@
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))
 
-  (define out (open-output-file #:exists 'replace "_tmp.sh"))
-  (for ([c embed-cards])
-    #|
-      run `xxx.embed.scrbl` will create a series of side effects
-      1. update yyy.context.scrbl if it transclude{yyy}
-      2. update yyy.backlinks.scrbl if it link{yyy}
-      to help us create final output (index.html)
-
-      It also create embed.html that others card can use iframe to refer them.
-    |#
-    (displayln (build-shell c) out))
-  (for ([c index-cards])
-    (displayln (build-shell c) out))
+  (for/async ([c embed-cards])
+    (printf "generate ~a.embed.html ~n" (final-card-addr c))
+    (build-shell c))
+  (for/async ([c index-cards])
+    (printf "generate ~a.index.html ~n" (final-card-addr c))
+    (build-shell c))
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
-  (for ([tex-path tex-list])
-    (displayln (format "(cd ~a && latex job.tex)" (dirname tex-path)) out)
-    (displayln (format "dvisvgm -o _build/~a.svg ~a" (basename (dirname tex-path)) (path->string (path-replace-extension tex-path ".dvi"))) out))
-
-  (close-output-port out)
-  
+  (for/async ([tex-path tex-list])
+    (printf "compile ~a ~n" (path->string tex-path))
+    (parameterize ([current-directory (dirname tex-path)]
+                   [current-output-port (open-output-string "")])
+      (system* (find-executable-path "latex") "job.tex"))
+    (system* (find-executable-path "dvisvgm")
+      "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
+      (path->string (path-replace-extension tex-path ".dvi"))))
   )
 
 (search-and-build "content")
