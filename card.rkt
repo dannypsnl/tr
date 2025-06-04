@@ -85,8 +85,7 @@
     (link 'rel: "stylesheet" 'href: "/style.css")
 
     (script 'src: "/minisearch/index.min.js")
-    (script 'src: "/tiny.js")
-    )
+    (script 'src: "/tiny.js"))
    (body 'id: (if (generate-index?) "whole" "embed-whole")
       (dialog 'id: "search-dialog"
         (input 'type: "text" 'id: "search-bar"
@@ -98,8 +97,7 @@
         [(generate-index?) (a 'class: "link-home" 'href: "/" "&#171; Home")]
         [else (void)])
       content
-      (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
-      )))
+      (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js")))))
 
 (define (tree . content)
   (define meta-queue (make-queue))
