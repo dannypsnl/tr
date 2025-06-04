@@ -39,7 +39,6 @@
 (define related-queue (make-queue))
 (define transclude-queue (make-queue))
 (define content-queue (make-queue))
-(define katex-queue (make-queue))
 
 (define (collect-text . content)
   (for ([t content]
@@ -65,8 +64,7 @@
       (cons 'date (self-date))
       (cons 'authors (queue->list author-queue))
       (cons 'name-authors (queue->list literal-author-queue))
-      (cons 'title (xml->string title))
-      (cons 'title-formulas (queue->list katex-queue))
+      (cons 'title title)
       (cons 'taxon taxon)
       (cons 'text collected-text)
       ; a list of addresses, later we should update context of these addresses
