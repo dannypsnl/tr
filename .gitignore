@@ -3,7 +3,9 @@
 *.pdf
 _build/
 _tmp/
-_tmp.sh
+
+.envrc
+*.tar.gz
 # racket package
 compiled/
 scribblings/compiled/

@@ -1,5 +1,5 @@
 {
-  "domain": "https://dannypsnl.github.io/tr",
+  "domain": "https://tr-notes.srht.site/",
   "title": "tr",
-  "description": "tr is a site generator based on a collection of scribbles & racket programs."
+  "description": "tr is a site generator based on a collection of racket/scribble programs."
 }
