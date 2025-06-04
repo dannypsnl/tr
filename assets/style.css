@@ -39,9 +39,13 @@ article {
   display: block;
 }
 
-iframe {
+.embbeded {
   width: 100%;
   height: auto;
+  border: none;
+}
+iframe {
+  width: 100%;
   border: none;
 }
 
