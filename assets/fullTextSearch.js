@@ -7,8 +7,8 @@ for (const f of frames) {
 
 // `MiniSearch` is already in global
 window.miniSearch = new MiniSearch({
-  fields: ["title", "text"], // fields to index for full-text search
-  storeFields: ["title", "category"], // fields to return with search results
+  fields: ["taxon", "title", "text"], // fields to index for full-text search
+  storeFields: ["taxon", "title"], // fields to return with search results
 });
 
 fetch("/search.json")
@@ -51,7 +51,7 @@ input.addEventListener(
   "input",
   function (evt) {
     let results = window.miniSearch.search(evt.target.value, {
-      fields: ["addr", "taxon", "title"],
+      fields: ["taxon", "title"],
     });
     const search_result = $("#search-result");
     for (const obj of results) {
