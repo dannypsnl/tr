@@ -19,6 +19,10 @@ h1 {
   margin: 0;
 }
 
+details:hover {
+  box-shadow: 0 0 20px #9094fbff;
+  border-radius: 8px;
+}
 /* 不顯示 summary 的標記 */
 details > summary {
   list-style: none;
@@ -26,7 +30,6 @@ details > summary {
 details > summary::-webkit-details-marker {
   display: none;
 }
-
 details > summary > header > h1 {
   display: inline;
 }
@@ -58,6 +61,12 @@ nav#toc a {
   color: #555;
 }
 
+a.toc:hover {
+  background-color: #9094fbff;
+}
+a.mention:hover {
+  background-color: #9094fbff;
+}
 a.mention {
   color: #8c8c8c;
   text-decoration: underline dotted;

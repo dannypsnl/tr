@@ -106,9 +106,11 @@
   (define meta-cards (produce-scrbl card-list "meta"))
   ; exclude files those no change
   (for ([c meta-cards])
-    (when (< (file-or-directory-modify-seconds (final-card-src-path c))
-             (file-or-directory-modify-seconds (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c)))))
-      (set-add! excludes (final-card-addr c))))
+    (define meta-path (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c))))
+    (when (file-exists? meta-path)
+      (when (< (file-or-directory-modify-seconds (final-card-src-path c))
+               (file-or-directory-modify-seconds meta-path))
+        (set-add! excludes (final-card-addr c)))))
   ; produces basic <addr>.metadata.json
   (for/async ([c meta-cards]
               #:unless (set-member? excludes (final-card-addr c)))

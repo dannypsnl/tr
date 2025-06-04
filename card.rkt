@@ -134,7 +134,7 @@
 (define (transclude addr)
   ; side effect
   (enqueue! toc-queue
-    (li (a 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
+    (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
 
   (for ([js-code (fetch-metadata addr 'title-formulas)])
     (enqueue! katex-queue js-code))
