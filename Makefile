@@ -1,6 +1,6 @@
 build:
 	@mkdir -p _build
-	cp assets/* _build
+	cp -r assets/* _build
 	@racket build.rkt
 	racket search.scrbl > _build/search.json
 	racket rss.scrbl > _build/rss.xml

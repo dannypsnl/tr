@@ -11,7 +11,7 @@
               [collect-text code]
               [collect-text pre]
               [collect-text tikzcd])
-  tm m mm
+  m mm
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
@@ -40,18 +40,6 @@
 (define transclude-queue (make-queue))
 (define content-queue (make-queue))
 (define katex-queue (make-queue))
-
-(define (tm formula)
-  (define katex-id ((compose symbol->string gensym) 'tm))
-  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros });" formula katex-id))
-  (enqueue! katex-queue js-code)
-  (span 'id: katex-id formula))
-(define (m formula)
-  (define katex-id ((compose symbol->string gensym) 'm))
-  (span 'id: katex-id formula))
-(define (mm formula)
-  (define katex-id ((compose symbol->string gensym) 'mm))
-  (span 'id: katex-id formula))
 
 (define (collect-text . content)
   (for ([t content]

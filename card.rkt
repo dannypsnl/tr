@@ -43,7 +43,6 @@
 (define (ignore . _) (void))
 
 (define toc-queue (make-queue))
-(define katex-queue (make-queue))
 
 (define (tr-h1 addr text taxon)
   (define link-to-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
@@ -78,24 +77,15 @@
           (ul (for/list ([e entries]) e)))]))
 
 (define (common-share . content)
-  (when (generate-index?)
-    (for ([js-code (fetch-metadata (self-addr) 'title-formulas)])
-      (enqueue! katex-queue js-code)))
-
   (html
    (head
     (title (self-title))
-    (link 'rel: "stylesheet" 'href: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
-      'integrity: "sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP"
-      'crossorigin: "anonymous")
+    (link 'rel: "stylesheet" 'href: "/katex.min.css")
     (link 'rel: "stylesheet" 'href: "/style.css")
 
-    (script 'src: "https://cdn.jsdelivr.net/npm/minisearch@7.1.2/dist/umd/index.min.js")
-    (script 'src: "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"
-      'integrity: "sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6"
-      'crossorigin: "anonymous")
+    (script 'src: "/minisearch/index.min.js")
     (script 'src: "/tiny.js")
-    (script 'src: "/math.js"))
+    )
    (body 'id: (if (generate-index?) "whole" "embed-whole")
       (dialog 'id: "search-dialog"
         (input 'type: "text" 'id: "search-bar"
@@ -108,8 +98,7 @@
         [else (void)])
       content
       (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js"))
-      (unless (queue-empty? katex-queue)
-        (script 'type: "text/javascript" (add-between (queue->list katex-queue) "\n"))))))
+      )))
 
 (define (tree . content)
   (define meta-queue (make-queue))
@@ -136,9 +125,6 @@
   (enqueue! toc-queue
     (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
 
-  (for ([js-code (fetch-metadata addr 'title-formulas)])
-    (enqueue! katex-queue js-code))
-
   ; output
   (details 'open: #t
     (summary
@@ -158,18 +144,6 @@
      'target: "_parent"
      'href: url
      (if title title (fetch-metadata addr 'title))))
-
-(define (m formula)
-  (define katex-id ((compose symbol->string gensym) 'm))
-  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros });" formula katex-id))
-  (enqueue! katex-queue js-code)
-  (span 'id: katex-id formula))
-
-(define (mm formula)
-  (define katex-id ((compose symbol->string gensym) 'mm))
-  (define js-code (format "katex.render(~s, $(\"#~a\"), { throwOnError: false, macros: document.macros, displayMode: true });" formula katex-id))
-  (enqueue! katex-queue js-code)
-  (span 'id: katex-id formula))
 
 (define (tikzcd . formula)
   (define job-id (symbol->string (gensym 'tex)))

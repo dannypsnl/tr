@@ -1,6 +1,8 @@
 #lang racket
-(provide self-addr
-  file->json)
+(provide
+  self-addr
+  file->json
+  m mm)
 (require dirname json)
 
 (define (self-addr)
@@ -13,3 +15,19 @@
   (define obj (read-json in))
   (close-input-port in)
   obj)
+
+(define (m formula)
+  (define js-code
+    (format "import katex from \"npm:katex\"; let html = katex.renderToString(~s, { throwOnError: false }); console.log(html)" formula))
+  (define out (open-output-string))
+  (parameterize ([current-output-port out])
+    (system* (find-executable-path "deno") "eval" js-code))
+  (get-output-string out))
+
+(define (mm formula)
+  (define js-code
+    (format "import katex from \"npm:katex\"; let html = katex.renderToString(~s, { throwOnError: false, displayMode: true }); console.log(html)" formula))
+  (define out (open-output-string))
+  (parameterize ([current-output-port out])
+    (system* (find-executable-path "deno") "eval" js-code))
+  (get-output-string out))
