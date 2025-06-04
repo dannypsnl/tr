@@ -29,9 +29,6 @@
 (require data/queue)
 (require "private/common.rkt")
 
-(define-syntax-rule (define/provide-elements/not-empty tag ...)
-  (begin (provide tag ...)
-         (define (tag . args) (apply element/not-empty 'tag args)) ...))
 (define/provide-elements/not-empty summary)
 
 (define generate-index? (make-parameter #f))
