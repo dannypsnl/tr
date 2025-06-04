@@ -110,6 +110,7 @@ body.blur {
 #search-dialog {
   margin: auto;
   width: 50%;
+  height: 50%;
   border: none;
 }
 #search-bar {
