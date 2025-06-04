@@ -79,6 +79,7 @@
 (define (common-share . content)
   (html
    (head
+    (meta 'http-equiv: "Content-Type" 'content: "text/html; charset=utf-8")
     (title (self-title))
     (link 'rel: "stylesheet" 'href: "/katex.min.css")
     (link 'rel: "stylesheet" 'href: "/style.css")
