@@ -1,11 +1,11 @@
 #lang scribble/text
-@(require json)
+@(require json "private/common.rkt")
 @(define (get-metadata addr)
-  (define in (open-input-file (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-  (read-json in))
-@(define site-title "tr")
-@(define site-url "https://dannypsnl.github.io/tr")
-@(define site-description "tr is a site generator based on a collection of scribbles & racket programs.")
+  (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+@(define site-obj (file->json "site.json"))
+@(define site-url (hash-ref site-obj 'domain))
+@(define site-title (hash-ref site-obj 'title))
+@(define site-description (hash-ref site-obj 'description))
 
 @(define (itemize items)
   (add-between (map (lambda (addr)
