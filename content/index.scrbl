@@ -16,4 +16,4 @@
   @li{Run @code{make build} to build HTMLs}
   @li{Run @code{make serve} to view result}
 }
-@p{You can use @kbd{Ctrl} + @kbd{K} to toggle search bar.}
+@p{You can use @kbd{Ctrl} (or @kbd{Meta} on MacOS) + @kbd{K} to toggle search bar.}
