@@ -45,7 +45,7 @@
 }" content))
 
 (struct card (addr path) #:transparent)
-(struct final-card (addr path target-path) #:transparent)
+(struct final-card (src-path addr path target-path) #:transparent)
 
 (define (compute-addr path)
   (basename (path-replace-extension path "")))
@@ -76,7 +76,7 @@
         [(string=? mode "meta") (build-path "_tmp" (string-append addr "." "metadata" ".json"))]
         [(root? addr) (build-path "_build" (string-append mode ".html"))]
         [else (build-path "_build" addr (string-append mode ".html"))]))
-    (final-card addr tmp-path output-path)))
+    (final-card (card-path c) addr tmp-path output-path)))
 
 (define (build-shell c)
   (define addr (final-card-addr c))
@@ -101,14 +101,23 @@
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
 
+  (define excludes (mutable-set))
+
   (define meta-cards (produce-scrbl card-list "meta"))
+  ; exclude files those no change
+  (for ([c meta-cards])
+    (when (< (file-or-directory-modify-seconds (final-card-src-path c))
+             (file-or-directory-modify-seconds (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c)))))
+      (set-add! excludes (final-card-addr c))))
   ; produces basic <addr>.metadata.json
-  (for/async ([c meta-cards])
+  (for/async ([c meta-cards]
+              #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.metadata.json ~n" (final-card-addr c))
     (parameterize ([current-output-port (open-output-string "")])
       (system* (find-executable-path "racket") (final-card-path c))))
   ; compute relations
-  (for/async ([c meta-cards])
+  (for/async ([c meta-cards]
+              #:unless (set-member? excludes (final-card-addr c)))
     (define meta-obj (file->json (final-card-target-path c)))
     (define related-queue (make-queue))
     (define references-queue (make-queue))
@@ -137,10 +146,12 @@
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))
 
-  (for/async ([c embed-cards])
+  (for/async ([c embed-cards]
+              #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.embed.html ~n" (final-card-addr c))
     (build-shell c))
-  (for/async ([c index-cards])
+  (for/async ([c index-cards]
+              #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.index.html ~n" (final-card-addr c))
     (build-shell c))
 
