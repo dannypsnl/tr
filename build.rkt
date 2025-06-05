@@ -22,7 +22,7 @@
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
-    @tree{@article{~a}}
+    @main{@tree{@article{~a}}}
     @generate-toc[]
   }
   @footer{
