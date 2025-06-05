@@ -79,6 +79,15 @@
         [else (build-path "_build" addr (string-append mode ".html"))]))
     (final-card (card-path c) addr tmp-path output-path)))
 
+(define (copy-directory-recursively source-dir target-dir)
+  (make-directory* target-dir)
+  (for ([item (directory-list source-dir)])
+    (let ([source-path (build-path source-dir item)]
+          [target-path (build-path target-dir item)])
+      (if (directory-exists? source-path)
+          (copy-directory-recursively source-path target-path)
+          (copy-file source-path target-path #t)))))
+
 (define (produce-html c)
   (define addr (final-card-addr c))
   (define src (final-card-path c))
@@ -100,8 +109,7 @@
   (close-output-port out))
 
 (define (search-and-build dir)
-  (make-directory* "_build")
-  (system* "cp" "-r" "assets/*" "_build")
+  (copy-directory-recursively "assets" "_build")
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define card-list
