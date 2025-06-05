@@ -101,6 +101,7 @@
 
 (define (search-and-build dir)
   (make-directory* "_build")
+  (system* "cp" "-r" "assets/*" "_build")
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define card-list

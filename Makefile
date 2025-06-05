@@ -1,6 +1,5 @@
 build:
 	@raco tr build
-	cp -r assets/* _build
 
 serve:
 	python3 -m http.server -d _build

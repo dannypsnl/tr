@@ -1,5 +1,6 @@
 #lang racket
 (require dirname)
+(require file-watchers)
 (require "private/next.rkt"
          "build.rkt")
 
@@ -17,6 +18,14 @@
        args)))
 
   (match args
+    [(list "watch")
+      (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) "content"))
+      (thread-wait
+        (watch scrbl-list
+          (λ (_paths)
+            (search-and-build "content"))
+          (λ (_)
+            (void))))]
     [(list "build") (search-and-build "content")]
     [(list "next" addr-prefix)
       (define scrbl-list
