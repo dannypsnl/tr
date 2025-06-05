@@ -1,4 +1,5 @@
 #lang racket
+(provide search-and-build)
 (require dirname json data/queue)
 (require "private/common.rkt")
 
@@ -166,5 +167,3 @@
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
   )
-
-(search-and-build "content")

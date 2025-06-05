@@ -9,3 +9,6 @@
 (define version "0.1.0")
 (define license '(Apache-2.0 OR MIT))
 (define pkg-authors '(dannypsnl))
+
+(define raco-commands
+  '(("tr" (submod tr/command main) "run tr" #f)))
