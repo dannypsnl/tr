@@ -10,7 +10,8 @@
 
   generate-index?
   generate-root?
-  (rename-out [set-title title]
+  (rename-out [pre* pre]
+              [set-title title]
               [ignore taxon]
               [ignore date]
               [ignore author]
@@ -19,7 +20,7 @@
   transclude m mm tikzcd
   mention
   doctype
-  (except-out (all-from-out scribble/html/html) title)
+  (except-out (all-from-out scribble/html/html) title pre)
   (all-from-out scribble/html/extra)
   summary
   article
@@ -28,6 +29,7 @@
          scribble/html/extra
          scribble/html/xml)
 (require data/queue)
+(require (only-in scribble/text disable-prefix))
 (require "private/common.rkt")
 
 (define/provide-elements/not-empty summary path)
@@ -138,6 +140,9 @@
     (iframe 'class: "embedded" 'id: addr 'title: "tr-embed"
       'scrolling: "no"
       'src: (string-append "/" addr "/embed.html"))))
+
+(define (pre* . content)
+  (disable-prefix (pre content)))
 
 (define (mention #:title [title #f] addr)
   (define url (string-append "/" addr))
