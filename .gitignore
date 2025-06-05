@@ -4,6 +4,8 @@
 _build/
 _tmp/
 
+.deploy.sh
+.hutconfig
 .envrc
 *.tar.gz
 # racket package

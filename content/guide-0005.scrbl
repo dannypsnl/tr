@@ -11,4 +11,4 @@
     to work on a new file (replace @code{vi} with any command line editor command)
   }
 }
-@p{You are very likely wanted to change @code{make deploy}, the output directory is @code{_build}, upload the directory to any host you want to use.}
+@p{The output directory is @code{_build}, upload the directory to host.}
