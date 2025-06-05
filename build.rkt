@@ -115,7 +115,7 @@
 
   (define meta-cards (produce-scrbl card-list "meta"))
   ; exclude files those no change
-  (for ([c meta-cards])
+  (for/async ([c meta-cards])
     (define meta-path (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c))))
     (when (file-exists? meta-path)
       (when (< (file-or-directory-modify-seconds (final-card-src-path c))
