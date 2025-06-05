@@ -22,14 +22,15 @@
   (except-out (all-from-out scribble/html/html) title)
   (all-from-out scribble/html/extra)
   summary
-  article)
+  article
+  footer svg path)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
 (require data/queue)
 (require "private/common.rkt")
 
-(define/provide-elements/not-empty summary)
+(define/provide-elements/not-empty summary path)
 
 (define generate-index? (make-parameter #f))
 (define generate-root? (make-parameter #f))

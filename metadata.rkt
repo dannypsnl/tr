@@ -15,11 +15,16 @@
   transclude
   mention
   (except-out (all-from-out scribble/html/html)
-    p li code pre title))
+    p li code pre title)
+  summary
+  footer svg path)
 (require scribble/html/html
+         scribble/html/extra
          scribble/html/xml)
 (require json data/queue)
 (require "private/common.rkt")
+
+(define/provide-elements/not-empty summary path)
 
 (define self-title (make-parameter #f))
 (define (set-self-title . forms)
