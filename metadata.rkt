@@ -53,7 +53,7 @@
 (define (mention #:title [_title #f] addr)
   (enqueue! related-queue addr))
 
-(define (transclude addr)
+(define (transclude #:open [_ #t] addr)
   (enqueue! transclude-queue addr))
 
 (define (generate-metadata)

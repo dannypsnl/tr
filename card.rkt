@@ -121,13 +121,13 @@
             (add-between (queue->list meta-queue) " &#183; ")))))
     content))
 
-(define (transclude addr)
+(define (transclude #:open [open? #t] addr)
   ; side effect
   (enqueue! toc-queue
     (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
 
   ; output
-  (details 'open: #t
+  (details 'open: open?
     (summary
       (header
         (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
