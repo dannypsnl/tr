@@ -134,7 +134,7 @@
           (ul
             (li (fetch-metadata addr 'date))
             (li (fetch-metadata addr 'author))))))
-    (iframe 'class: "embedded" 'id: addr
+    (iframe 'class: "embedded" 'id: addr 'title: "tr-embed"
       'scrolling: "no"
       'src: (string-append "/" addr "/embed.html"))))
 

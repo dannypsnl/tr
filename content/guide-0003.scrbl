@@ -6,6 +6,7 @@
 @h2{Embed external web page}
 @p{Since you can use any HTML, @code{iframe} for sure is counted, you can embed external web page, e.g.}
 @iframe[
+  'title: "example. embed wiki"
   'src: "https://en.wikipedia.org/wiki/Riemann_surface"
   'height: "500"
 ]
