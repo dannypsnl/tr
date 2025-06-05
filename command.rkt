@@ -24,7 +24,10 @@
        #:args args
        args)))
 
-  (parameterize ([current-directory (find-root-dir (current-directory))])
+  (define root-path (find-root-dir (current-directory)))
+  (unless root-path
+    (raise "You're not in a tr project"))
+  (parameterize ([current-directory root-path])
     (match args
       [(list "watch")
         (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) "content"))
