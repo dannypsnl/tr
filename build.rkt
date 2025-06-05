@@ -158,6 +158,12 @@
       (match (hash-ref obj 'taxon)
         ["Reference" (enqueue! references-queue addr)]
         [_ (enqueue! related-queue addr)]))
+    (for/async ([addr (hash-ref meta-obj 'authors)])
+      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define links-set (list->set (hash-ref obj 'backlinks '())))
+      (write-json (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))) out)
+      (close-output-port out))
 
     (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append (final-card-addr c) "." "metadata" ".json"))))
     (write-json	(hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue)) out)
