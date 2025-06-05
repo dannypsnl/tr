@@ -79,7 +79,7 @@
         [else (build-path "_build" addr (string-append mode ".html"))]))
     (final-card (card-path c) addr tmp-path output-path)))
 
-(define (build-shell c)
+(define (produce-html c)
   (define addr (final-card-addr c))
   (define src (final-card-path c))
   (define target (final-card-target-path c))
@@ -92,7 +92,16 @@
     (system* (find-executable-path "racket") src))
   (close-output-port out))
 
+(define (produce file from-file)
+  (printf "racket ~a > ~a~n" from-file file)
+  (define out (open-output-file #:exists 'replace file))
+  (parameterize ([current-output-port out])
+    (system* (find-executable-path "racket") from-file))
+  (close-output-port out))
+
 (define (search-and-build dir)
+  (make-directory* "_build")
+
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define card-list
     (for/list ([path scrbl-list])
@@ -151,11 +160,11 @@
   (for/async ([c embed-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.embed.html ~n" (final-card-addr c))
-    (build-shell c))
+    (produce-html c))
   (for/async ([c index-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.index.html ~n" (final-card-addr c))
-    (build-shell c))
+    (produce-html c))
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
   (for/async ([tex-path tex-list])
@@ -166,4 +175,7 @@
     (system* (find-executable-path "dvisvgm")
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
+  
+  (produce "_build/search.json" "search.scrbl")
+  (produce "_build/rss.xml" "rss.scrbl")
   )
