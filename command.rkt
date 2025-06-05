@@ -41,7 +41,7 @@
           (define n (base36->int number-text))
           ; if not a number, we use 0 as value
           (if n n 0)))
-      (define max-num (apply max numbers))
+      (define max-num (apply max (cons -1 numbers)))
       (displayln (string-append addr-prefix "-" (int->base36 (add1 max-num))))]
     [_ (println "Unknown command")])
   )
