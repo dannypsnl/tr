@@ -134,7 +134,7 @@
       'scrolling: "no"
       'src: (string-append "/" addr "/embed.html"))))
 
-(define (mention addr [title #f])
+(define (mention #:title [title #f] addr)
   (define url (string-append "/" addr))
   (a 'class: "mention"
      'target: "_parent"

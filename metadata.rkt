@@ -45,7 +45,7 @@
         #:when (string? t))
     (enqueue! content-queue t)))
 
-(define (mention addr . _)
+(define (mention #:title [_title #f] addr)
   (enqueue! related-queue addr))
 
 (define (transclude addr)
