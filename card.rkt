@@ -42,7 +42,11 @@
 (define toc-queue (make-queue))
 
 (define (tr-h1 addr text taxon)
-  (define link-to-self (a 'class: "link-self" 'href: (string-append "/" addr) 'target: "_parent" "[" addr "]"))
+  (define url
+    (if (string=? "index" addr)
+      "/"
+      (string-append "/" addr)))
+  (define link-to-self (a 'class: "link-self" 'href: url 'target: "_parent" "[" addr "]"))
   (h1
     (when taxon
       (list (span 'class: "taxon" (string-append taxon ".")) " "))
