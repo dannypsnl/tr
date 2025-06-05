@@ -139,3 +139,27 @@ kbd {
   font-size: 0.825rem;
   padding: 0.25rem;
 }
+
+.katex-display,
+pre,
+img,
+section,
+center {
+  overflow-y: hidden;
+}
+code {
+  background-color: rgba(0, 100, 100, 0.04);
+}
+pre {
+  border-radius: 2px;
+  background-color: rgba(0, 100, 100, 0.04);
+  padding: 0.5em;
+  font-size: 11pt;
+  margin-top: 0em;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  white-space: -moz-pre-wrap;
+  white-space: -pre-wrap;
+  white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
