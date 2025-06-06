@@ -21,7 +21,7 @@ h1 {
 }
 
 details {
-  padding-bottom: 2em;
+  padding-bottom: 1em;
 }
 details:hover {
   box-shadow: 0 0 20px #9094fbff;
