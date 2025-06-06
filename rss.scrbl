@@ -23,7 +23,7 @@
                   (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
                   (item
                     (title (hash-ref meta-object 'title))
-                    (link (format "https://~a~a" site-url addr))
+                    (link (string-append "https://" (path->string (build-path site-url addr))))
                     (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
                "\n"))
 
