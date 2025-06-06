@@ -24,7 +24,8 @@
     (system* (find-executable-path "deno") "eval" js-code))
   (get-output-string out))
 
-(define (mm formula)
+(define (mm . forms)
+  (define formula (apply string-append forms))
   (define js-code
     (format "import katex from \"npm:katex\"; let html = katex.renderToString(~s, { throwOnError: false, displayMode: true }); console.log(html)" formula))
   (define out (open-output-string))
