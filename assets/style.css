@@ -20,6 +20,9 @@ h1 {
   font-size: 2em;
 }
 
+details {
+  padding-bottom: 2em;
+}
 details:hover {
   box-shadow: 0 0 20px #9094fbff;
   border-radius: 8px;
