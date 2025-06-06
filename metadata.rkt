@@ -10,7 +10,8 @@
               [collect-text li]
               [collect-text code]
               [collect-text pre]
-              [collect-text tikzcd])
+              [collect-text tikzcd]
+              [collect-text external])
   m mm
   transclude
   mention

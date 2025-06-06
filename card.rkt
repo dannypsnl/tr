@@ -18,7 +18,7 @@
               [ignore author/literal]
               [ignore tm])
   transclude m mm tikzcd
-  mention
+  mention external
   doctype
   (except-out (all-from-out scribble/html/html) title pre)
   (all-from-out scribble/html/extra)
@@ -143,6 +143,9 @@
 
 (define (pre* . content)
   (disable-prefix (pre content)))
+
+(define (external url)
+  (a 'href: url 'target: "_blank" url))
 
 (define (mention #:title [title #f] addr)
   (define url (string-append "/" addr))
