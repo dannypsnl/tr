@@ -134,12 +134,14 @@
         (set-add! excludes (final-card-addr c)))))
   ; record all metadata
   (define addr-maps-to-metajson (make-hash))
-  (for/async ([c meta-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
-    (printf "generate ~a.metadata.json ~n" (final-card-addr c))
-    (parameterize ([current-output-port (open-output-string)])
-      (system* (find-executable-path "racket") (final-card-path c)))
-    (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c))))
+  (for/async ([c meta-cards])
+    (if (set-member? excludes (final-card-addr c))
+      (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c)))
+      (begin
+        (printf "generate ~a.metadata.json ~n" (final-card-addr c))
+        (parameterize ([current-output-port (open-output-string)])
+          (system* (find-executable-path "racket") (final-card-path c)))
+        (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c))))))
   ; compute relations
   (for/async ([c meta-cards])
     (define meta-obj (hash-ref addr-maps-to-metajson (final-card-addr c)))
@@ -163,6 +165,17 @@
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c))))))
 
     (hash-set! addr-maps-to-metajson (final-card-addr c) (hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue))))
+  (for/async ([c meta-cards])
+    (define meta-obj (hash-ref addr-maps-to-metajson (final-card-addr c)))
+    (define references-queue (make-queue))
+
+    (for/async ([addr (hash-ref meta-obj 'transclude)])
+      (define obj (hash-ref addr-maps-to-metajson addr))
+      (define references (hash-ref obj 'references '()))
+      (for ([ref references])
+        (enqueue! references-queue ref)))
+
+    (hash-set! addr-maps-to-metajson (final-card-addr c) (hash-set* meta-obj 'references (queue->list references-queue))))
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
