@@ -171,11 +171,14 @@
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
       (define obj (hash-ref addr-maps-to-metajson addr))
-      (define references (hash-ref obj 'references '()))
+      (define references (hash-ref obj 'references))
       (for ([ref references])
         (enqueue! references-queue ref)))
 
-    (hash-set! addr-maps-to-metajson (final-card-addr c) (hash-set* meta-obj 'references (queue->list references-queue))))
+    (hash-set! addr-maps-to-metajson (final-card-addr c)
+      (hash-set* meta-obj
+        'references
+        (append (hash-ref meta-obj 'references) (queue->list references-queue)))))
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
