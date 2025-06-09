@@ -82,11 +82,13 @@
 (define (copy-directory-recursively source-dir target-dir)
   (make-directory* target-dir)
   (for ([item (directory-list source-dir)])
-    (let ([source-path (build-path source-dir item)]
-          [target-path (build-path target-dir item)])
-      (if (directory-exists? source-path)
-          (copy-directory-recursively source-path target-path)
-          (copy-file source-path target-path #t)))))
+    (if (string=? ".git" (path->string item))
+      (void)
+      (let ([source-path (build-path source-dir item)]
+            [target-path (build-path target-dir item)])
+        (if (directory-exists? source-path)
+            (copy-directory-recursively source-path target-path)
+            (copy-file source-path target-path #t))))))
 
 (define (produce-html c)
   (define addr (final-card-addr c))
