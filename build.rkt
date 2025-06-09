@@ -142,7 +142,7 @@
     (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c))))
   ; compute relations
   (for/async ([c meta-cards])
-    (define meta-obj (file->json (final-card-target-path c)))
+    (define meta-obj (hash-ref addr-maps-to-metajson (final-card-addr c)))
     (define related-queue (make-queue))
     (define references-queue (make-queue))
 
