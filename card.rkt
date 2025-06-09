@@ -72,7 +72,10 @@
 (define (generate-toc)
   (define entries (fetch-metadata (self-addr) 'transclude))
   (define (wrap addr)
-    (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
+    (define entries (fetch-metadata addr 'transclude))
+    (li (a 'class: "toc" 'href: (string-append "#" addr)
+      (fetch-metadata addr 'title)
+      (if (empty? entries) (void) (ol (for/list ([addr entries]) (wrap addr)))))))
   (define lst
     (for/list ([addr entries])
       (wrap addr)))
