@@ -4,4 +4,4 @@ A site generator inspired by [forester](https://www.forester-notes.org/index/ind
 
 Read https://tr-notes.srht.site for more information.
 
-Other related repository can be found at https://sr.ht/~dannypsnl/tr-notes/.
+Other related repositories can be found at https://sr.ht/~dannypsnl/tr-notes/.
