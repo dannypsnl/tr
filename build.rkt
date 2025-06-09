@@ -132,12 +132,14 @@
       (when (< (file-or-directory-modify-seconds (final-card-src-path c))
                (file-or-directory-modify-seconds meta-path))
         (set-add! excludes (final-card-addr c)))))
-  ; produces basic <addr>.metadata.json
+  ; record all metadata
+  (define addr-maps-to-metajson (make-hash))
   (for/async ([c meta-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.metadata.json ~n" (final-card-addr c))
-    (parameterize ([current-output-port (open-output-string "")])
-      (system* (find-executable-path "racket") (final-card-path c))))
+    (parameterize ([current-output-port (open-output-string)])
+      (system* (find-executable-path "racket") (final-card-path c)))
+    (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c))))
   ; compute relations
   (for/async ([c meta-cards])
     (define meta-obj (file->json (final-card-target-path c)))
@@ -145,31 +147,27 @@
     (define references-queue (make-queue))
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
-      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define obj (hash-ref addr-maps-to-metajson addr))
       (define ctx-set (list->set (hash-ref obj 'context '())))
-      (write-json (hash-set obj 'context (set->list (set-add ctx-set (final-card-addr c)))) out)
-      (close-output-port out))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->list (set-add ctx-set (final-card-addr c))))))
     (for/async ([addr (hash-ref meta-obj 'related)])
-      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (write-json (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))) out)
-      (close-output-port out)
-
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))))
       (match (hash-ref obj 'taxon)
         ["Reference" (enqueue! references-queue addr)]
         [_ (enqueue! related-queue addr)]))
     (for/async ([addr (hash-ref meta-obj 'authors)])
-      (define obj (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+      (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (write-json (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))) out)
-      (close-output-port out))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c))))))
 
-    (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append (final-card-addr c) "." "metadata" ".json"))))
-    (write-json	(hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue)) out)
-    (close-output-port out))
+    (hash-set! addr-maps-to-metajson (final-card-addr c) (hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue))))
+  ; produces <addr>.metadata.json
+  (hash-for-each addr-maps-to-metajson
+    (λ (addr json)
+      (printf "update ~a.metadata.json ~n" addr)
+      (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
   (define embed-cards (produce-scrbl card-list "embed"))
   (define index-cards (produce-scrbl card-list "index"))

@@ -1,7 +1,7 @@
 #lang racket
 (provide
   self-addr
-  file->json
+  file->json json->file
   m mm)
 (require dirname json)
 
@@ -15,6 +15,10 @@
   (define obj (read-json in))
   (close-input-port in)
   obj)
+(define (json->file json path)
+  (define out (open-output-file #:exists 'replace path))
+  (write-json json out)
+  (close-output-port out))
 
 (define (m formula)
   (define js-code
