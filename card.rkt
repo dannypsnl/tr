@@ -42,8 +42,6 @@
   (self-title forms))
 (define (ignore . _) (void))
 
-(define toc-queue (make-queue))
-
 (define (tr-h1 addr text taxon)
   (define url
     (if (string=? "index" addr)
@@ -72,13 +70,18 @@
 (define (generate-related) (footer-common "Related" 'related))
 
 (define (generate-toc)
-  (define entries (queue->list toc-queue))
+  (define entries (fetch-metadata (self-addr) 'transclude))
+  (define (wrap addr)
+    (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
+  (define lst
+    (for/list ([addr entries])
+      (wrap addr)))
   (cond
     [(empty? entries) (void)]
     [else
       (element 'nav 'id: "toc"
         (h1 "Table of Contents")
-          (ul (for/list ([e entries]) e)))]))
+          (ol lst))]))
 
 (define (common-share . content)
   (html
@@ -124,11 +127,6 @@
     content))
 
 (define (transclude #:open [open? #t] addr)
-  ; side effect
-  (enqueue! toc-queue
-    (li (a 'class: "toc" 'href: (string-append "#" addr) (fetch-metadata addr 'title))))
-
-  ; output
   (details 'open: open?
     (summary
       (header
