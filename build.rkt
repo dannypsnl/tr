@@ -182,7 +182,6 @@
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
-      (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
   (define embed-cards (produce-scrbl card-list "embed"))
