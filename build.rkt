@@ -1,6 +1,12 @@
 #lang racket
 (provide search-and-build)
-(require dirname json data/queue)
+(require dirname
+         json
+         data/queue
+         gregor)
+(require scribble/html/html
+         scribble/html/extra
+         scribble/html/xml)
 (require "private/common.rkt")
 
 (define (meta-header content)
@@ -205,17 +211,57 @@
     (system* (find-executable-path "dvisvgm")
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
-  
+
   (produce-search)
-  (produce "_build/rss.xml" "rss.scrbl")
+  (produce-rss)
   )
 
 (define (produce-search)
   (define (itemize items)
-    (string-join (map file->string items) ","))
+    (string-join (for/list ([p items]) (file->string p)) ","))
   (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
   (define out (open-output-file #:exists 'replace "_build/search.json"))
   (displayln "[" out)
   (displayln (itemize json-list) out)
   (displayln "]" out)
+  (close-output-port out))
+
+(define/provide-elements/not-empty item pubDate)
+(define (produce-rss)
+  (define (get-metadata addr)
+    (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+  (define site-obj (file->json "site.json"))
+  (define site-url (hash-ref site-obj 'domain))
+  (define site-title (hash-ref site-obj 'title))
+  (define site-description (hash-ref site-obj 'description))
+
+  (define (itemize items)
+    (add-between (for/list ([addr items])
+                    (define meta-object (get-metadata addr))
+                    (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
+                    (item
+                      (title (hash-ref meta-object 'title))
+                      (link (string-append "https://" (path->string (build-path site-url addr))))
+                      (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
+                 "\n"))
+  (define addrs
+    (for/list ([path (find-files
+                       (lambda (x) (path-has-extension? x #".scrbl"))
+                       "content/post")])
+      (basename (path-replace-extension path ""))))
+
+  (define out (open-output-file #:exists 'replace "_build/rss.xml"))
+  (fprintf out "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
+<rss version=\"2.0\">
+<channel>
+  <title>~a</title>
+  <link>~a</link>
+  <description>~a</description>
+  ~a
+</channel>
+</rss>
+" site-title 
+  site-url
+  site-description
+  (xml->string (itemize addrs)))
   (close-output-port out))
