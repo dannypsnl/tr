@@ -236,19 +236,21 @@
   (define site-description (hash-ref site-obj 'description))
 
   (define (itemize items)
-    (add-between (for/list ([addr items])
-                    (define meta-object (get-metadata addr))
+    (add-between (for/list ([meta-object items])
                     (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
                     (item
                       (title (hash-ref meta-object 'title))
-                      (link (string-append "https://" (path->string (build-path site-url addr))))
+                      (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
                       (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
                  "\n"))
   (define addrs
-    (for/list ([path (find-files
-                       (lambda (x) (path-has-extension? x #".scrbl"))
-                       "content/post")])
-      (basename (path-replace-extension path ""))))
+    (sort
+      (for/list ([path (find-files
+                         (lambda (x) (path-has-extension? x #".scrbl"))
+                         "content/post")])
+        (get-metadata (basename (path-replace-extension path ""))))
+      (λ (a b)
+        (datetime>=? (iso8601->datetime (hash-ref a 'date)) (iso8601->datetime (hash-ref b 'date))))))
 
   (define out (open-output-file #:exists 'replace "_build/rss.xml"))
   (fprintf out "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
