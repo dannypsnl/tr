@@ -17,7 +17,8 @@
               [ignore author]
               [ignore author/literal]
               [ignore tm])
-  transclude m mm tikzcd
+  transclude
+  m mm tikzcd texfig
   mention external
   hentry
   doctype
@@ -155,6 +156,20 @@
      'target: "_parent"
      'href: url
      (if title title (fetch-metadata addr 'title))))
+
+(define (texfig . formula)
+  (define job-id (symbol->string (gensym 'tex)))
+  (make-directory* (build-path "_tmp" job-id))
+  (define tex-path (build-path "_tmp" job-id "job.tex"))
+  (define tex (open-output-file #:exists 'replace tex-path))
+  (displayln "\\documentclass[crop,dvisvgm]{standalone}\n\\usepackage{quiver}\n\\begin{document}\n" tex)
+  (for-each (λ (s) (display s tex)) formula)
+  (displayln "\n\\end{document}" tex)
+  (close-output-port tex)
+  
+  (img 'class: "center"
+    'src: (string-append "/" job-id ".svg")
+    'alt: (string-append "figure " job-id)))
 
 (define (tikzcd . formula)
   (define job-id (symbol->string (gensym 'tex)))

@@ -11,6 +11,7 @@
               [collect-text code]
               [collect-text pre]
               [collect-text tikzcd]
+              [collect-text texfig]
               [collect-text external]
               [collect-text hentry])
   m mm
