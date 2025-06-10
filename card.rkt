@@ -158,7 +158,7 @@
      (if title title (fetch-metadata addr 'title))))
 
 (define (texfig . formula)
-  (define job-id (symbol->string (gensym 'tex)))
+  (define job-id (symbol->string (gensym (self-addr))))
   (make-directory* (build-path "_tmp" job-id))
   (define tex-path (build-path "_tmp" job-id "job.tex"))
   (define tex (open-output-file #:exists 'replace tex-path))
@@ -176,7 +176,7 @@
     'alt: (string-append "figure " job-id)))
 
 (define (tikzcd . formula)
-  (define job-id (symbol->string (gensym 'tikzcd)))
+  (define job-id (symbol->string (gensym (self-addr))))
   (make-directory* (build-path "_tmp" job-id))
   (define tex-path (build-path "_tmp" job-id "job.tex"))
   (define tex (open-output-file #:exists 'replace tex-path))
