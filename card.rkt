@@ -166,13 +166,13 @@
   (for-each (λ (s) (display s tex)) formula)
   (displayln "\n\\end{document}" tex)
   (close-output-port tex)
-  
+
   (img 'class: "center"
     'src: (string-append "/" job-id ".svg")
     'alt: (string-append "figure " job-id)))
 
 (define (tikzcd . formula)
-  (define job-id (symbol->string (gensym 'tex)))
+  (define job-id (symbol->string (gensym 'tikzcd)))
   (make-directory* (build-path "_tmp" job-id))
   (define tex-path (build-path "_tmp" job-id "job.tex"))
   (define tex (open-output-file #:exists 'replace tex-path))
