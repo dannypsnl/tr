@@ -3,7 +3,8 @@
 (define deps
   '("base"
     "dirname"
-    "gregor-lib"))
+    "gregor-lib"
+    "file-watchers"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc"))
 (define scribblings '(("scribblings/tr.scrbl" (multi-page) ("site generator"))))
 (define pkg-desc "A site generator")
