@@ -206,6 +206,16 @@
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
   
-  (produce "_build/search.json" "search.scrbl")
+  (produce-search)
   (produce "_build/rss.xml" "rss.scrbl")
   )
+
+(define (produce-search)
+  (define (itemize items)
+    (string-join (map file->string items) ","))
+  (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
+  (define out (open-output-file #:exists 'replace "_build/search.json"))
+  (displayln "[" out)
+  (displayln (itemize json-list) out)
+  (displayln "]" out)
+  (close-output-port out))
