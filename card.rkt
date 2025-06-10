@@ -19,6 +19,7 @@
               [ignore tm])
   transclude m mm tikzcd
   mention external
+  hentry
   doctype
   (except-out (all-from-out scribble/html/html) title pre)
   (all-from-out scribble/html/extra)
@@ -168,3 +169,6 @@
   (img 'class: "center"
     'src: (string-append "/" job-id ".svg")
     'alt: (string-append "figure " job-id)))
+
+(define (hentry description)
+  (div 'class: "h-entry" 'hidden: #t (p 'class: "e-content" description)))

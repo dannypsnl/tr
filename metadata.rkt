@@ -11,7 +11,8 @@
               [collect-text code]
               [collect-text pre]
               [collect-text tikzcd]
-              [collect-text external])
+              [collect-text external]
+              [collect-text hentry])
   m mm
   transclude
   mention
@@ -49,7 +50,8 @@
 (define (collect-text . content)
   (for ([t content]
         #:when (string? t))
-    (enqueue! content-queue t)))
+    (enqueue! content-queue t))
+  content)
 
 (define (mention #:title [_title #f] addr)
   (enqueue! related-queue addr))
