@@ -120,7 +120,7 @@
       (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title))))
   (define name-authors (fetch-metadata (self-addr) 'name-authors))
   (unless (empty? (append authors name-authors))
-    (enqueue! meta-queue (li (add-between (append authors name-authors) ","))))
+    (enqueue! meta-queue (li (add-between (append authors name-authors) ", "))))
 
   (details 'open: #t
     (summary
