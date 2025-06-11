@@ -105,7 +105,7 @@
 
   (define out (open-output-file #:exists 'truncate/replace target))
   (parameterize ([current-output-port out])
-    (system* (find-executable-path "racket") src))
+    (process* (find-executable-path "racket") src))
   (close-output-port out))
 
 (define (search-and-build dir)
@@ -198,7 +198,7 @@
     (parameterize ([current-directory (dirname tex-path)]
                    [current-output-port (open-output-string "")])
       (system* (find-executable-path "latex") "-halt-on-error" "-interaction=nonstopmode" "job.tex"))
-    (system* (find-executable-path "dvisvgm")
+    (process* (find-executable-path "dvisvgm")
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
 
