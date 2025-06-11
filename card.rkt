@@ -140,9 +140,8 @@
           (ul
             (li (fetch-metadata addr 'date))
             (li (fetch-metadata addr 'author))))))
-    (iframe 'class: "embedded" 'id: addr 'title: "tr-embed"
-      'scrolling: "no"
-      'src: (string-append "/" addr "/embed.html"))))
+    (file->string (string-append "_tmp/" addr ".embed.html"))
+    ))
 
 (define (pre* . content)
   (disable-prefix (pre content)))

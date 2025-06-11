@@ -18,10 +18,8 @@
 (define (embed-header content)
   (format "#lang scribble/text
 @(require tr/card)
-@(doctype 'html)
-@common-share{
-  @article{~a}
-}" content))
+@article{~a}
+" content))
 (define (index-header content)
   (format "#lang scribble/text
 @(require tr/card)
@@ -81,6 +79,7 @@
     (define output-path
       (cond
         [(string=? mode "meta") (build-path "_tmp" (string-append addr "." "metadata" ".json"))]
+        [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]
         [(root? addr) (build-path "_build" (string-append mode ".html"))]
         [else (build-path "_build" addr (string-append mode ".html"))]))
     (final-card (card-path c) addr tmp-path output-path)))
