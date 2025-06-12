@@ -16,7 +16,7 @@
   (close-input-port in)
   obj)
 (define (json->file json path)
-  (define out (open-output-file #:exists 'replace path))
+  (define out (open-output-file #:exists 'truncate/replace path))
   (write-json json out)
   (close-output-port out))
 

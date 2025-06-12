@@ -81,6 +81,6 @@
       ; a list of addresses, later we should split some of them to references, by checking taxon
       (cons 'related (queue->list related-queue)))))
 
-  (define out (open-output-file #:exists 'replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
+  (define out (open-output-file #:exists 'truncate/replace (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
   (write-json	metadata out)
   (close-output-port out))

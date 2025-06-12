@@ -65,7 +65,7 @@
       (if (root? addr)
         (build-path "_tmp" (string-append addr ".scrbl"))
         (build-path "_tmp" (string-append addr "." mode ".scrbl"))))
-    (define f (open-output-file #:exists 'replace tmp-path))
+    (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
     (define header (cond
       [(string=? mode "meta") meta-header]
@@ -103,7 +103,7 @@
   (define output-dir (build-path "_build/" addr))
   (make-directory* output-dir)
 
-  (define out (open-output-file #:exists 'replace target))
+  (define out (open-output-file #:exists 'truncate/replace target))
   (parameterize ([current-output-port out])
     (system* (find-executable-path "racket") src))
   (close-output-port out))
@@ -221,7 +221,7 @@
   (define (itemize items)
     (string-join (for/list ([p items]) (file->string p)) ","))
   (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
-  (define out (open-output-file #:exists 'replace "_build/search.json"))
+  (define out (open-output-file #:exists 'truncate/replace "_build/search.json"))
   (displayln "[" out)
   (displayln (itemize json-list) out)
   (displayln "]" out)
@@ -253,7 +253,7 @@
       (λ (a b)
         (datetime>=? (iso8601->datetime (hash-ref a 'date)) (iso8601->datetime (hash-ref b 'date))))))
 
-  (define out (open-output-file #:exists 'replace "_build/rss.xml"))
+  (define out (open-output-file #:exists 'truncate/replace "_build/rss.xml"))
   (fprintf out "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 <rss version=\"2.0\">
 <channel>
