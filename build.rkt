@@ -1,7 +1,6 @@
 #lang racket
 (provide search-and-build)
 (require dirname
-         json
          data/queue
          gregor
          mischief/dict
@@ -109,13 +108,6 @@
     (system* (find-executable-path "racket") src))
   (close-output-port out))
 
-(define (produce file from-file)
-  (printf "racket ~a > ~a~n" from-file file)
-  (define out (open-output-file #:exists 'replace file))
-  (parameterize ([current-output-port out])
-    (system* (find-executable-path "racket") from-file))
-  (close-output-port out))
-
 (define (search-and-build dir)
   (copy-directory-recursively "assets" "_build")
 
@@ -211,8 +203,7 @@
       (path->string (path-replace-extension tex-path ".dvi"))))
 
   (produce-search)
-  (produce-rss)
-  )
+  (produce-rss))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors
@@ -224,8 +215,7 @@
   (for/async ([c embed-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.embed.html ~n" (final-card-addr c))
-    (produce-html c))
-  )
+    (produce-html c)))
 
 (define (produce-search)
   (define (itemize items)
