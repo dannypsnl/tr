@@ -163,12 +163,12 @@
       (for ([ref references])
         (enqueue! references-queue ref)))
 
-    (define a (list->set (hash-ref meta-obj 'references)))
-    (define b (list->set (queue->list references-queue)))
+    (define a (hash-ref meta-obj 'references))
+    (define b (queue->list references-queue))
     (hash-set! addr-maps-to-metajson addr
       (hash-set* meta-obj
         'references
-        (set->list (set-union a b)))))
+        (set->list (list->set (append a b))))))
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
