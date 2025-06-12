@@ -5,7 +5,9 @@
     "dirname"
     "gregor-lib"
     "mischief"
-    "file-watchers"))
+    "file-watchers"
+    "scribble-html-lib"
+    "scribble-text-lib"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc"))
 (define scribblings '(("scribblings/tr.scrbl" (multi-page) ("site generator"))))
 (define pkg-desc "A site generator")
