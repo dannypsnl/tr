@@ -51,7 +51,7 @@
       (lambda (in) (read-inside in))))
   (for ([form forms])
     (handle-form form))
-  
+
   (define taxon (self-taxon))
   (define title (self-title))
 
