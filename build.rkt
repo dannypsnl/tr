@@ -3,7 +3,9 @@
 (require dirname
          json
          data/queue
-         gregor)
+         gregor
+         mischief/dict
+         mischief/sort)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -49,7 +51,6 @@
   }
 }" content))
 
-(struct card (addr path) #:transparent)
 (struct final-card (src-path addr path target-path) #:transparent)
 
 (define (compute-addr path)
@@ -58,15 +59,15 @@
 (define (root? addr)
   (string=? addr "index"))
 
-(define (produce-scrbl card-list mode)
-  (for/list ([c card-list])
-    (define addr (card-addr c))
+(define (produce-scrbl addr-list addr->path mode)
+  (for/list ([addr addr-list])
+    (define source-path (hash-ref addr->path addr))
     (define tmp-path
       (if (root? addr)
         (build-path "_tmp" (string-append addr ".scrbl"))
         (build-path "_tmp" (string-append addr "." mode ".scrbl"))))
     (define f (open-output-file #:exists 'replace tmp-path))
-    (define in (open-input-file (card-path c)))
+    (define in (open-input-file source-path))
     (define header (cond
       [(string=? mode "meta") meta-header]
       [(root? addr) root-header]
@@ -82,7 +83,7 @@
         [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]
         [(root? addr) (build-path "_build" (string-append mode ".html"))]
         [else (build-path "_build" addr (string-append mode ".html"))]))
-    (final-card (card-path c) addr tmp-path output-path)))
+    (final-card source-path addr tmp-path output-path)))
 
 (define (copy-directory-recursively source-dir target-dir)
   (make-directory* target-dir)
@@ -119,17 +120,19 @@
   (copy-directory-recursively "assets" "_build")
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
-  (define card-list
+  (define addr->path (make-hash))
+  (define addr-list
     (for/list ([path scrbl-list])
       (define addr (compute-addr path))
-      (card addr path)))
+      (hash-set! addr->path addr path)
+      addr))
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
 
   (define excludes (mutable-set))
 
-  (define meta-cards (produce-scrbl card-list "meta"))
+  (define meta-cards (produce-scrbl addr-list addr->path "meta"))
   ; exclude files those no change
   (for/async ([c meta-cards])
     (define meta-path (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c))))
@@ -189,13 +192,9 @@
     (λ (addr json)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
-  (define embed-cards (produce-scrbl card-list "embed"))
-  (define index-cards (produce-scrbl card-list "index"))
+  (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
 
-  (for/async ([c embed-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
-    (printf "generate ~a.embed.html ~n" (final-card-addr c))
-    (produce-html c))
+  (define index-cards (produce-scrbl addr-list addr->path "index"))
   (for/async ([c index-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.index.html ~n" (final-card-addr c))
@@ -213,6 +212,19 @@
 
   (produce-search)
   (produce-rss)
+  )
+
+(define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
+  (define neighbors
+    (dict->procedure (hash-map/copy addr-maps-to-metajson (λ (addr json) (values addr (hash-ref json 'transclude '()))))))
+
+  (define addr-list* (topological-sort addr-list neighbors))
+  (define embed-cards (produce-scrbl addr-list* addr->path "embed"))
+
+  (for/async ([c embed-cards]
+              #:unless (set-member? excludes (final-card-addr c)))
+    (printf "generate ~a.embed.html ~n" (final-card-addr c))
+    (produce-html c))
   )
 
 (define (produce-search)
