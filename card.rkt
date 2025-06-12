@@ -132,7 +132,7 @@
     content))
 
 (define (transclude #:open [open? #t] addr)
-  (details 'open: open?
+  (details 'open: open? 'id: addr
     (summary
       (header
         (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
@@ -140,9 +140,7 @@
           (ul
             (li (fetch-metadata addr 'date))
             (li (fetch-metadata addr 'author))))))
-    (iframe 'class: "embedded" 'id: addr 'title: "tr-embed"
-      'scrolling: "no"
-      'src: (string-append "/" addr "/embed.html"))))
+    (file->string (string-append "_tmp/" addr ".embed.html"))))
 
 (define (pre* . content)
   (disable-prefix (pre content)))
