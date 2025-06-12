@@ -1,12 +1,10 @@
 #lang racket
 (provide search-and-build)
 (require dirname
-         data/queue
          gregor
          mischief/dict
          mischief/sort)
 (require scribble/html/html
-         scribble/html/extra
          scribble/html/xml)
 (require "metadata.rkt"
          "private/common.rkt")
@@ -130,8 +128,8 @@
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
-    (define related-queue (make-queue))
-    (define references-queue (make-queue))
+    (define related-set (mutable-set))
+    (define references-set (mutable-set))
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
       (define obj (hash-ref addr-maps-to-metajson addr))
@@ -142,8 +140,8 @@
       (define links-set (list->set (hash-ref obj 'backlinks '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr))))
       (match (hash-ref obj 'taxon)
-        ["Reference" (enqueue! references-queue addr)]
-        [_ (enqueue! related-queue addr)]))
+        ["Reference" (set-add! references-set addr)]
+        [_ (set-add! related-set addr)]))
     (for/async ([addr (hash-ref meta-obj 'authors)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
@@ -151,24 +149,20 @@
 
     (hash-set! addr-maps-to-metajson top-addr
       (hash-set* meta-obj
-        'related (queue->list related-queue)
-        'references (queue->list references-queue))))
+        'related (set->list related-set)
+        'references (set->list references-set))))
   (for/async ([addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson addr))
-    (define references-queue (make-queue))
+    (define refs (list->mutable-set (hash-ref meta-obj 'references)))
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define references (hash-ref obj 'references))
       (for ([ref references])
-        (enqueue! references-queue ref)))
+        (set-add! refs ref)))
 
-    (define a (hash-ref meta-obj 'references))
-    (define b (queue->list references-queue))
     (hash-set! addr-maps-to-metajson addr
-      (hash-set* meta-obj
-        'references
-        (set->list (list->set (append a b))))))
+      (hash-set* meta-obj 'references (set->list refs))))
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
