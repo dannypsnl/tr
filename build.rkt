@@ -96,12 +96,8 @@
             (copy-file source-path target-path #t))))))
 
 (define (produce-html c)
-  (define addr (final-card-addr c))
   (define src (final-card-path c))
   (define target (final-card-target-path c))
-
-  (define output-dir (build-path "_build/" addr))
-  (make-directory* output-dir)
 
   (define out (open-output-file #:exists 'truncate/replace target))
   (parameterize ([current-output-port out])
@@ -190,6 +186,8 @@
   (for/async ([c index-cards]
               #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.index.html ~n" (final-card-addr c))
+    (define output-dir (build-path "_build/" (final-card-addr c)))
+    (make-directory* output-dir)
     (produce-html c))
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
