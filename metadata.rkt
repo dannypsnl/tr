@@ -1,8 +1,16 @@
 #lang racket
 (provide compute-metadata)
 (require scribble/reader
+         scribble/html/html
          data/queue)
 (require "private/common.rkt")
+
+(define (execute f)
+  (match f
+    [`(m ,text) (m text)]
+    [`(mm ,text) (mm text)]
+    [`(code ,text) (code text)]
+    [t t]))
 
 (define (compute-metadata addr addr-path)
   (define self-title (make-parameter #f))
@@ -22,12 +30,13 @@
 
   (define (handle-form form)
     (match form
-      [`(title ,@forms) (self-title forms)]
+      [`(title ,@forms) (self-title (for/list ([f forms]) (execute f)))]
       [`(taxon ,text) (self-taxon text)]
       [`(date ,text) (self-date text)]
       [`(author ,addr) (enqueue! author-queue addr)]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
+      [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
       [t #:when (string? t)
         (enqueue! content-queue t)]
