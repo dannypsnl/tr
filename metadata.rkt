@@ -38,6 +38,7 @@
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
       [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
+      [`(mention ,@_ ,addr) (enqueue! related-queue addr)]
       [t #:when (string? t)
         (enqueue! content-queue t)]
       [`(,_ ,@forms)
