@@ -95,19 +95,6 @@
             (copy-directory-recursively source-path target-path)
             (copy-file source-path target-path #t))))))
 
-(define (produce-html c)
-  (define addr (final-card-addr c))
-  (define src (final-card-path c))
-  (define target (final-card-target-path c))
-
-  (define output-dir (build-path "_build/" addr))
-  (make-directory* output-dir)
-
-  (define out (open-output-file #:exists 'truncate/replace target))
-  (parameterize ([current-output-port out])
-    (process* (find-executable-path "racket") src))
-  (close-output-port out))
-
 (define (search-and-build dir)
   (copy-directory-recursively "assets" "_build")
 
@@ -205,6 +192,22 @@
   (produce-search)
   (produce-rss))
 
+(define signal (make-fsemaphore 50))
+(define (produce-html c)
+  (define addr (final-card-addr c))
+  (define src (final-card-path c))
+  (define target (final-card-target-path c))
+
+  (fsemaphore-wait signal)
+  (define output-dir (build-path "_build/" addr))
+  (make-directory* output-dir)
+
+  (define out (open-output-file #:exists 'truncate/replace target))
+  (match-define (list _ _ _ _ ctl)
+    (process*/ports out #f #f (find-executable-path "racket") src))
+  (ctl 'wait)
+  (close-output-port out)
+  (fsemaphore-post signal))
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors
     (dict->procedure (hash-map/copy addr-maps-to-metajson (λ (addr json) (values addr (hash-ref json 'transclude '()))))))
