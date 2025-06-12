@@ -6,11 +6,7 @@
 
 (define (compute-metadata addr addr-path)
   (define self-title (make-parameter #f))
-  (define (set-self-title . forms)
-    (self-title forms))
   (define self-taxon (make-parameter #f))
-  (define (set-self-taxon t)
-    (self-taxon t))
   (define self-date (make-parameter #f))
 
   (define literal-author-queue (make-queue))
@@ -26,8 +22,9 @@
 
   (define (handle-form form)
     (match form
-      [`(title ,@forms) (set-self-title forms)]
-      [`(taxon ,text) (set-self-taxon text)]
+      [`(title ,@forms) (self-title forms)]
+      [`(taxon ,text) (self-taxon text)]
+      [`(date ,text) (self-date text)]
       [`(author ,addr) (enqueue! author-queue addr)]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
