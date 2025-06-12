@@ -8,13 +8,8 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
-(require "private/common.rkt")
-
-(define (meta-header content)
-  (format "#lang scribble/text
-@(require tr/metadata)
-~a
-@generate-metadata[]" content))
+(require "metadata.rkt"
+         "private/common.rkt")
 
 (define (embed-header content)
   (format "#lang scribble/text
@@ -62,13 +57,12 @@
   (for/list ([addr addr-list])
     (define source-path (hash-ref addr->path addr))
     (define tmp-path
-      (if (root? addr)
-        (build-path "_tmp" (string-append addr ".scrbl"))
-        (build-path "_tmp" (string-append addr "." mode ".scrbl"))))
+      (cond
+        [(root? addr) (build-path "_tmp" (string-append addr ".scrbl"))]
+        [else (build-path "_tmp" (string-append addr "." mode ".scrbl"))]))
     (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
     (define header (cond
-      [(string=? mode "meta") meta-header]
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
@@ -78,7 +72,6 @@
 
     (define output-path
       (cond
-        [(string=? mode "meta") (build-path "_tmp" (string-append addr "." "metadata" ".json"))]
         [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]
         [(root? addr) (build-path "_build" (string-append mode ".html"))]
         [else (build-path "_build" addr (string-append mode ".html"))]))
@@ -120,49 +113,48 @@
 
   (define excludes (mutable-set))
 
-  (define meta-cards (produce-scrbl addr-list addr->path "meta"))
   ; exclude files those no change
-  (for/async ([c meta-cards])
-    (define meta-path (build-path "_tmp" (format "~a.metadata.json" (final-card-addr c))))
+  (for/async ([addr addr-list])
+    (define meta-path (build-path "_tmp" (format "~a.metadata.json" addr)))
     (when (file-exists? meta-path)
-      (when (< (file-or-directory-modify-seconds (final-card-src-path c))
+      (when (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
                (file-or-directory-modify-seconds meta-path))
-        (set-add! excludes (final-card-addr c)))))
+        (set-add! excludes addr))))
   ; record all metadata
   (define addr-maps-to-metajson (make-hash))
-  (for/async ([c meta-cards])
-    (if (set-member? excludes (final-card-addr c))
-      (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c)))
-      (begin
-        (printf "generate ~a.metadata.json ~n" (final-card-addr c))
-        (parameterize ([current-output-port (open-output-string)])
-          (system* (find-executable-path "racket") (final-card-path c)))
-        (hash-set! addr-maps-to-metajson (final-card-addr c) (file->json (final-card-target-path c))))))
+  (for ([addr addr-list])
+    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
+    (if (set-member? excludes addr)
+      (hash-set! addr-maps-to-metajson addr (file->json meta-path))
+      (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))))
   ; compute relations
-  (for/async ([c meta-cards])
-    (define meta-obj (hash-ref addr-maps-to-metajson (final-card-addr c)))
+  (for/async ([top-addr addr-list])
+    (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
     (define related-queue (make-queue))
     (define references-queue (make-queue))
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define ctx-set (list->set (hash-ref obj 'context '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->list (set-add ctx-set (final-card-addr c))))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->list (set-add ctx-set top-addr)))))
     (for/async ([addr (hash-ref meta-obj 'related)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c)))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr))))
       (match (hash-ref obj 'taxon)
         ["Reference" (enqueue! references-queue addr)]
         [_ (enqueue! related-queue addr)]))
     (for/async ([addr (hash-ref meta-obj 'authors)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set (final-card-addr c))))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr)))))
 
-    (hash-set! addr-maps-to-metajson (final-card-addr c) (hash-set* meta-obj 'related (queue->list related-queue) 'references (queue->list references-queue))))
-  (for/async ([c meta-cards])
-    (define meta-obj (hash-ref addr-maps-to-metajson (final-card-addr c)))
+    (hash-set! addr-maps-to-metajson top-addr
+      (hash-set* meta-obj
+        'related (queue->list related-queue)
+        'references (queue->list references-queue))))
+  (for/async ([addr addr-list])
+    (define meta-obj (hash-ref addr-maps-to-metajson addr))
     (define references-queue (make-queue))
 
     (for/async ([addr (hash-ref meta-obj 'transclude)])
@@ -171,13 +163,16 @@
       (for ([ref references])
         (enqueue! references-queue ref)))
 
-    (hash-set! addr-maps-to-metajson (final-card-addr c)
+    (define a (list->set (hash-ref meta-obj 'references)))
+    (define b (list->set (queue->list references-queue)))
+    (hash-set! addr-maps-to-metajson addr
       (hash-set* meta-obj
         'references
-        (append (hash-ref meta-obj 'references) (queue->list references-queue)))))
+        (set->list (set-union a b)))))
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
+      (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
@@ -195,8 +190,8 @@
     (printf "compile ~a ~n" (path->string tex-path))
     (parameterize ([current-directory (dirname tex-path)]
                    [current-output-port (open-output-string "")])
-      (process* (find-executable-path "latex") "-halt-on-error" "-interaction=nonstopmode" "job.tex"))
-    (process* (find-executable-path "dvisvgm")
+      (system* (find-executable-path "latex") "-halt-on-error" "-interaction=nonstopmode" "job.tex"))
+    (system* (find-executable-path "dvisvgm")
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
 
