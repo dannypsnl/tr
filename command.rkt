@@ -1,5 +1,6 @@
 #lang racket
 (require dirname
+         json
          file-watchers)
 (require "private/next.rkt"
          "build.rkt")
@@ -25,11 +26,27 @@
        args)))
 
   (define root-path (find-root-dir (current-directory)))
-  (unless root-path
-    (raise "You're not in a tr project"))
-  (parameterize ([current-directory root-path])
+  (parameterize ([current-directory (if root-path root-path (current-directory))])
     (match args
+      [(list "init")
+        (call-with-output-file ".gitignore"
+          (λ (out)
+            (displayln "_tmp/" out)
+            (displayln "_build/" out)
+            (displayln "assets/" out)))
+        (call-with-output-file "site.json"
+          (λ (out)
+            (define x (make-hasheq
+              '((domain . "your domain")
+                (title . "your site title")
+                (description . "your site description"))))
+            (write-json x out)))
+        (system* (find-executable-path "git") "clone" "https://git.sr.ht/~dannypsnl/tr-assets" "assets")
+        (system* (find-executable-path "git") "init")
+        (make-directory* "content/post")
+        (displayln "init done")]
       [(list "watch")
+        (unless root-path (raise "You're not in a tr project"))
         (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) "content"))
         (thread-wait
           (watch scrbl-list
@@ -37,8 +54,11 @@
               (search-and-build "content"))
             (λ (_)
               (void))))]
-      [(list "build") (search-and-build "content")]
+      [(list "build")
+        (unless root-path (raise "You're not in a tr project"))
+        (search-and-build "content")]
       [(list "next" addr-prefix)
+        (unless root-path (raise "You're not in a tr project"))
         (define scrbl-list
           (find-files
             (λ (path)
@@ -54,4 +74,6 @@
             (if n n 0)))
         (define max-num (apply max (cons -1 numbers)))
         (displayln (string-append addr-prefix "-" (int->base36 (add1 max-num))))]
-      [_ (println "Unknown command")])))
+      [(list cmd _ ...) (printf "Unknown command `~a`~n" cmd)]
+      [_ (displayln "No command provided")]
+      )))
