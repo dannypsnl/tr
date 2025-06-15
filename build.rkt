@@ -186,6 +186,7 @@
                    [current-output-port (open-output-string "")])
       (system* (find-executable-path "latex") "-halt-on-error" "-interaction=nonstopmode" "job.tex"))
     (system* (find-executable-path "dvisvgm")
+      "--font-format=woff"
       "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
       (path->string (path-replace-extension tex-path ".dvi"))))
 
