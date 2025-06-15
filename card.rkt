@@ -169,23 +169,17 @@
   (displayln "\n\\end{document}" tex)
   (close-output-port tex)
 
-  (img 'class: "center"
-    'src: (string-append "/" job-id ".svg")
-    'alt: (string-append "figure " job-id)))
+  (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
+    (img 'class: "center"
+         'src: (string-append "/" job-id ".svg")
+         'alt: (string-append "figure " job-id))))
 
 (define (tikzcd . formula)
-  (define job-id (symbol->string (gensym (self-addr))))
-  (make-directory* (build-path "_tmp" job-id))
-  (define tex-path (build-path "_tmp" job-id "job.tex"))
-  (define tex (open-output-file #:exists 'truncate/replace tex-path))
-  (displayln "\\documentclass[crop,dvisvgm]{standalone}\n\\usepackage{quiver}\n\\begin{document}\n\\begin{tikzcd}" tex)
-  (for-each (λ (s) (display s tex)) formula)
-  (displayln "\n\\end{tikzcd}\n\\end{document}" tex)
-  (close-output-port tex)
-
-  (img 'class: "center"
-    'src: (string-append "/" job-id ".svg")
-    'alt: (string-append "figure " job-id)))
+  (define out (open-output-string))
+  (displayln "\\begin{tikzcd}" out)
+  (for-each (λ (s) (display s out)) formula)
+  (displayln "\\end{tikzcd}" out)
+  (apply texfig (list (get-output-string out))))
 
 (define (hentry description)
   (div 'class: "h-entry" 'hidden: #t (p 'class: "e-content" description)))
