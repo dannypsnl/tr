@@ -180,7 +180,8 @@
     (produce-html c))
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
-  (for/async ([tex-path tex-list])
+  (for/async ([tex-path tex-list]
+              #:unless (set-member? excludes (basename (dirname tex-path))))
     (printf "compile ~a ~n" (path->string tex-path))
     (parameterize ([current-directory (dirname tex-path)]
                    [current-output-port (open-output-string "")])
