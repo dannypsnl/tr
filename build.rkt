@@ -184,15 +184,23 @@
     (printf "compile ~a ~n" (path->string tex-path))
     (parameterize ([current-directory (dirname tex-path)]
                    [current-output-port (open-output-string "")])
-      (system* (find-executable-path "latex") "-halt-on-error" "-interaction=nonstopmode" "job.tex"))
+      (system* (find-executable-path "latex")
+        "-halt-on-error"
+        "-interaction=nonstopmode"
+        (basename tex-path)))
+
+    (define svg-path
+      (string-replace (path->string (path-replace-extension tex-path #".svg"))
+        "_tmp"
+        "_build"))
     (system* (find-executable-path "dvisvgm")
       "--exact"
       "--clipjoin"
       "--font-format=woff"
       "--bbox=papersize"
       "--zoom=1.5"
-      "-o" (format "_build/~a.svg" (basename (dirname tex-path)))
-      (path->string (path-replace-extension tex-path ".dvi"))))
+      "-o" svg-path
+      (path->string (path-replace-extension tex-path #".dvi"))))
 
   (produce-search)
   (produce-rss))

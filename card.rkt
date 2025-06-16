@@ -156,9 +156,10 @@
      (if title title (fetch-metadata addr 'title))))
 
 (define (texfig . formula)
-  (define job-id (symbol->string (gensym (self-addr))))
-  (make-directory* (build-path "_tmp" job-id))
-  (define tex-path (build-path "_tmp" job-id "job.tex"))
+  (define job-id (symbol->string (gensym 'tex)))
+  (define dir (build-path "_tmp" (self-addr)))
+  (make-directory* dir)
+  (define tex-path (build-path dir (string-append job-id ".tex")))
   (define tex (open-output-file #:exists 'truncate/replace tex-path))
   (displayln "\\documentclass[crop,dvisvgm]{standalone}\n" tex)
   (displayln "\\usepackage{quiver}\n" tex)
@@ -171,7 +172,7 @@
 
   (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
     (img 'class: "center"
-         'src: (string-append "/" job-id ".svg")
+         'src: (string-append "/" (self-addr) "/" job-id ".svg")
          'alt: (string-append "figure " job-id))))
 
 (define (tikzcd . formula)
