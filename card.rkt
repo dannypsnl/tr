@@ -98,7 +98,7 @@
 
     (script 'src: "/minisearch/index.min.js")
     (script 'src: "/tiny.js"))
-   (body 'id: (if (generate-index?) "whole" "embed-whole")
+   (body 'id: (when (generate-index?) "whole")
       (dialog 'id: "search-dialog"
         (input 'type: "text" 'id: "search-bar"
           'spellcheck: "false" 'autocomplete: "off"
