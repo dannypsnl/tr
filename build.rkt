@@ -228,7 +228,7 @@
   (displayln "]" out)
   (close-output-port out))
 
-(define/provide-elements/not-empty item pubDate)
+(define/provide-elements/not-empty item pubDate description)
 (define (produce-rss)
   (define (get-metadata addr)
     (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
@@ -243,6 +243,7 @@
                     (item
                       (title (hash-ref meta-object 'title))
                       (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
+                      (description (hash-ref meta-object 'text))
                       (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
                  "\n"))
   (define addrs
