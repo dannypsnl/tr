@@ -3,6 +3,7 @@
          json
          file-watchers)
 (require "private/next.rkt"
+         "private/common.rkt"
          "build.rkt")
 
 (define (find-root-dir dir)
@@ -11,6 +12,17 @@
     (if (directory-exists? (build-path dir "content"))
       dir
       (find-root-dir (string->path (dirname dir))))))
+
+(define (copy-directory-recursively source-dir target-dir)
+  (make-directory* target-dir)
+  (for ([item (directory-list source-dir)])
+    (if (string=? ".git" (path->string item))
+      (void)
+      (let ([source-path (build-path source-dir item)]
+            [target-path (build-path target-dir item)])
+        (if (directory-exists? source-path)
+            (copy-directory-recursively source-path target-path)
+            (copy-file source-path target-path #t))))))
 
 (module+ main
   (define args
@@ -56,6 +68,11 @@
               (void))))]
       [(list "build")
         (unless root-path (raise "You're not in a tr project"))
+        (define site-obj (file->json "site.json"))
+        ; If user didn't assign one, use our setup
+        (define assets-directories (hash-ref site-obj 'assets '("assets")))
+        (for ([path assets-directories])
+          (copy-directory-recursively path "_build"))
         (search-and-build "content")]
       [(list "next" addr-prefix)
         (unless root-path (raise "You're not in a tr project"))

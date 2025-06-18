@@ -75,17 +75,6 @@
         [else (build-path "_build" addr (string-append mode ".html"))]))
     (final-card source-path addr tmp-path output-path)))
 
-(define (copy-directory-recursively source-dir target-dir)
-  (make-directory* target-dir)
-  (for ([item (directory-list source-dir)])
-    (if (string=? ".git" (path->string item))
-      (void)
-      (let ([source-path (build-path source-dir item)]
-            [target-path (build-path target-dir item)])
-        (if (directory-exists? source-path)
-            (copy-directory-recursively source-path target-path)
-            (copy-file source-path target-path #t))))))
-
 (define (produce-html c)
   (define src (final-card-path c))
   (define target (final-card-target-path c))
@@ -96,8 +85,6 @@
   (close-output-port out))
 
 (define (search-and-build dir)
-  (copy-directory-recursively "assets" "_build")
-
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define addr->path (make-hash))
   (define addr-list
