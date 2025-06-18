@@ -12,12 +12,13 @@
 (define (embed-header content)
   (format "#lang scribble/text
 @(require tr/card)
+@(generate-mode 'embed)
 @article{~a}
 " content))
 (define (index-header content)
   (format "#lang scribble/text
 @(require tr/card)
-@(generate-index? #t)
+@(generate-mode 'index)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
@@ -34,8 +35,7 @@
 (define (root-header content)
   (format "#lang scribble/text
 @(require tr/card)
-@(generate-index? #t)
-@(generate-root? #t)
+@(generate-mode 'root)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{

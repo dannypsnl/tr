@@ -1,5 +1,7 @@
 #lang racket
 (provide
+  generate-mode
+
   generate-toc
   generate-context
   generate-references
@@ -8,8 +10,6 @@
 
   common-share tree
 
-  generate-index?
-  generate-root?
   toc/depth
   (rename-out [pre* pre]
               [set-title title]
@@ -37,8 +37,18 @@
 
 (define/provide-elements/not-empty summary path)
 
-(define generate-index? (make-parameter #f))
-(define generate-root? (make-parameter #f))
+(define generate-mode (make-parameter #f))
+#| we use strict match so other values will crash the program, are invalid input |#
+(define (generate-index?)
+  (case (generate-mode)
+    [(embed) #f]
+    [(index) #t]
+    [(root) #t]))
+(define (generate-root?)
+  (case (generate-mode)
+    [(embed) #f]
+    [(index) #f]
+    [(root) #t]))
 
 (define toc/depth (make-parameter 2))
 (define self-title (make-parameter #f))
