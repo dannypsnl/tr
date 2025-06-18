@@ -10,6 +10,7 @@
 
   generate-index?
   generate-root?
+  toc/depth
   (rename-out [pre* pre]
               [set-title title]
               [ignore taxon]
@@ -39,6 +40,7 @@
 (define generate-index? (make-parameter #f))
 (define generate-root? (make-parameter #f))
 
+(define toc/depth (make-parameter 2))
 (define self-title (make-parameter #f))
 (define (set-title . forms)
   (self-title forms))
@@ -71,22 +73,20 @@
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
 (define (generate-related) (footer-common "Related" 'related))
 
+(define (recur-toc addr depth)
+  (li (a 'class: "toc" 'href: (string-append "#" addr)
+    (fetch-metadata addr 'title)
+    (unless (= 0 depth)
+      (define entries (fetch-metadata addr 'transclude))
+      (ol
+        (for/list ([addr entries])
+          (recur-toc addr (sub1 depth))))))))
 (define (generate-toc)
   (define entries (fetch-metadata (self-addr) 'transclude))
-  (define (wrap addr)
-    (define entries (fetch-metadata addr 'transclude))
-    (li (a 'class: "toc" 'href: (string-append "#" addr)
-      (fetch-metadata addr 'title)
-      (if (empty? entries) (void) (ol (for/list ([addr entries]) (wrap addr)))))))
-  (define lst
-    (for/list ([addr entries])
-      (wrap addr)))
-  (cond
-    [(empty? entries) (void)]
-    [else
-      (element 'nav 'id: "toc"
-        (h1 "Table of Contents")
-          (ol lst))]))
+  (unless (empty? entries)
+    (element 'nav 'id: "toc"
+      (h1 "Table of Contents")
+        (ol (for/list ([addr entries]) (recur-toc addr (sub1 (toc/depth))))))))
 
 (define (common-share . content)
   (html
