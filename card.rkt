@@ -78,9 +78,10 @@
     (fetch-metadata addr 'title)
     (unless (= 0 depth)
       (define entries (fetch-metadata addr 'transclude))
-      (ol
-        (for/list ([addr entries])
-          (recur-toc addr (sub1 depth))))))))
+      (unless (empty? entries)
+        (ol
+          (for/list ([addr entries])
+            (recur-toc addr (sub1 depth)))))))))
 (define (generate-toc)
   (define entries (fetch-metadata (self-addr) 'transclude))
   (unless (empty? entries)
