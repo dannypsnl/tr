@@ -85,7 +85,9 @@
 
 (define (recur-toc addr depth)
   (li (a 'class: "toc" 'href: (string-append "#" addr)
-    (fetch-metadata addr 'title)
+    (or
+      (fetch-metadata addr 'title)
+      addr)
     (unless (= 0 depth)
       (define entries (fetch-metadata addr 'transclude))
       (unless (empty? entries)
