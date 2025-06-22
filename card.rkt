@@ -156,12 +156,8 @@
             (li (fetch-metadata addr 'author))))))
     (file->string (string-append "_tmp/" addr ".embed.html"))))
 
-(define escape-html
-  (compose
-    (lambda (s) (string-replace s "<" "&lt;"))
-    (lambda (s) (string-replace s ">" "&gt;"))))
 (define (pre* . content)
-  (disable-prefix (pre (for/list ([s content]) (escape-html s)))))
+  (disable-prefix (pre (literal content) )))
 
 (define (external url)
   (a 'href: url 'target: "_blank" url))
