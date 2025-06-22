@@ -24,7 +24,7 @@
                     (item
                       (title (hash-ref meta-object 'title))
                       (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
-                      (description (literal (file->string (string-append "_tmp/" (hash-ref meta-object 'id) ".embed.html"))))
+                      (description (file->string (string-append "_tmp/" (hash-ref meta-object 'id) ".embed.html")))
                       (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
                  "\n"))
   (define addrs
