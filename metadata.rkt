@@ -39,6 +39,7 @@
       [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
       [`(mention ,@_ ,addr) (enqueue! related-queue addr)]
+      [`(bibtex ,_text) (void)]
       [`(toc/depth ,_num) (void)]
       [t #:when (string? t)
         (enqueue! content-queue t)]

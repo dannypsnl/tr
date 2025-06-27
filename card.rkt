@@ -12,6 +12,7 @@
 
   toc/depth
   (rename-out [pre* pre]
+              [pre* bibtex]
               [set-title title]
               [ignore taxon]
               [ignore date]
