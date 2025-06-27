@@ -155,10 +155,10 @@
           (ul
             (li (fetch-metadata addr 'date))
             (li (fetch-metadata addr 'author))))))
-    (file->string (string-append "_tmp/" addr ".embed.html"))))
+    (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
 
 (define (pre* . content)
-  (disable-prefix (pre (literal content) )))
+  (disable-prefix (pre (literal content))))
 
 (define (external url)
   (a 'href: url 'target: "_blank" url))
