@@ -18,6 +18,7 @@
               [ignore date]
               [ignore author]
               [ignore author/literal]
+              [ignore doi]
               [ignore tm])
   transclude
   m mm tikzcd texfig
@@ -130,6 +131,11 @@
   (define meta-queue (make-queue))
   (when (fetch-metadata (self-addr) 'date)
     (enqueue! meta-queue (li (fetch-metadata (self-addr) 'date))))
+  (when (fetch-metadata (self-addr) 'doi)
+    (enqueue! meta-queue (li (a 'class: "link-self"
+                                'href: (string-append "https://doi.org/" (fetch-metadata (self-addr) 'doi))
+                                'target: "_blank"
+                                (fetch-metadata (self-addr) 'doi)))))
   (define authors
     (for/list ([addr (fetch-metadata (self-addr) 'authors)])
       (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title))))

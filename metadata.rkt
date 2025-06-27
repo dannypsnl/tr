@@ -16,6 +16,7 @@
   (define self-title (make-parameter #f))
   (define self-taxon (make-parameter #f))
   (define self-date (make-parameter #f))
+  (define self-doi (make-parameter #f))
 
   (define literal-author-queue (make-queue))
   (define author-queue (make-queue))
@@ -33,6 +34,7 @@
       [`(title ,@forms) (self-title (for/list ([f forms]) (execute f)))]
       [`(taxon ,text) (self-taxon text)]
       [`(date ,text) (self-date text)]
+      [`(doi ,text) (self-doi text)]
       [`(author ,addr) (enqueue! author-queue addr)]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
@@ -62,6 +64,7 @@
   (make-immutable-hash (list
     (cons 'id addr)
     (cons 'date (self-date))
+    (cons 'doi (self-doi))
     (cons 'authors (queue->list author-queue))
     (cons 'name-authors (queue->list literal-author-queue))
     (cons 'title title)
