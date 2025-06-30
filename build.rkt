@@ -98,18 +98,37 @@
 
   ; exclude files those no change
   (for/async ([addr addr-list])
-    (define meta-path (build-path "_tmp" (format "~a.metadata.json" addr)))
+    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
     (when (file-exists? meta-path)
       (when (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
                (file-or-directory-modify-seconds meta-path))
         (set-add! excludes addr))))
   ; record all metadata
   (define addr-maps-to-metajson (make-hash))
+  ; record their differential updates
+  (define metadata-changes (make-hash)) ; track what's changed
+
   (for ([addr addr-list])
     (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
     (if (set-member? excludes addr)
+      ; Load existing metadata
       (hash-set! addr-maps-to-metajson addr (file->json meta-path))
-      (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))))
+      ; Compute new metadata and compare with old (if exists)
+      (let ([new-meta (compute-metadata addr (hash-ref addr->path addr))])
+        (hash-set! addr-maps-to-metajson addr new-meta)
+        ; Only track changes if old metadata exists
+        (when (file-exists? meta-path)
+          (define old-meta (file->json meta-path))
+          (define changes (make-hash))
+          (for ([key '(transclude related authors context references backlinks)])
+            (define old-set (list->set (hash-ref old-meta key '())))
+            (define new-set (list->set (hash-ref new-meta key '())))
+            (define added (set-subtract new-set old-set))
+            (define removed (set-subtract old-set new-set))
+            (when (or (not (set-empty? added)) (not (set-empty? removed)))
+              (hash-set! changes key (cons (set->list added) (set->list removed)))))
+          (unless (hash-empty? changes)
+            (hash-set! metadata-changes addr changes))))))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
@@ -154,23 +173,19 @@
       (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
-  ; Track which cards changed (weren't excluded)
-  (define cards-that-changed (set-subtract (list->set addr-list) excludes))
-
-  ; For each changed card, mark all its neighbors for update
-  (for ([changed-addr cards-that-changed])
-    (define meta-obj (hash-ref addr-maps-to-metajson changed-addr))
-    ; Mark all cards this one references
-    (for ([neighbor (hash-ref meta-obj 'transclude '())])
-      (set-remove! excludes neighbor))
-    (for ([neighbor (hash-ref meta-obj 'related '())])
-      (set-remove! excludes neighbor))
-    (for ([neighbor (hash-ref meta-obj 'authors '())])
-      (set-remove! excludes neighbor))
-    (for ([neighbor (hash-ref meta-obj 'context '())])
-      (set-remove! excludes neighbor))
-    (for ([neighbor (hash-ref meta-obj 'backlinks '())])
-      (set-remove! excludes neighbor)))
+  ; Use differential changes to mark precise neighbors for update
+  (hash-for-each metadata-changes
+    (λ (_ changes)
+      (hash-for-each changes
+        (λ (_ added-removed-pair)
+          (define added (car added-removed-pair))
+          (define removed (cdr added-removed-pair))
+          ; Mark newly added neighbors for update
+          (for ([neighbor-addr added])
+            (set-remove! excludes neighbor-addr))
+          ; Mark removed neighbors for update (they need to clean up backlink style links)
+          (for ([neighbor-addr removed])
+            (set-remove! excludes neighbor-addr))))))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
 
