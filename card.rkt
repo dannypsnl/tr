@@ -71,13 +71,13 @@
     " "
     link-to-self))
 
-(define cached-metadata #f)
+(define cached-metadata (make-hash))
 (define (fetch-metadata addr key [default #f])
-  (if cached-metadata
-    (hash-ref cached-metadata key default)
-    (begin
-      (set! cached-metadata (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-      (hash-ref cached-metadata key default))))
+  (if (hash-ref cached-metadata addr #f)
+    (hash-ref (hash-ref cached-metadata addr) key default)
+    (let ([json (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json")))])
+      (hash-set! cached-metadata addr json)
+      (hash-ref json key default))))
 (define (footer-common title key)
   (define addr-list (fetch-metadata (self-addr) key '()))
   (unless (empty? addr-list)
