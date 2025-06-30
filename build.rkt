@@ -219,6 +219,21 @@
       "-o" svg-path
       (path->string (path-replace-extension tex-path #".dvi"))))
 
+  (define typ-list (find-files (lambda (x) (path-has-extension? x #".typ")) "_tmp"))
+  (for/async ([typ-path typ-list]
+              #:unless (set-member? excludes (basename (dirname typ-path))))
+    (printf "compile ~a ~n" (path->string typ-path))
+    (define svg-path
+      (string-replace (path->string (path-replace-extension typ-path #".svg"))
+        "_tmp"
+        "_build"))
+    (make-directory* (dirname svg-path))
+    (system* (find-executable-path "typst")
+      "compile"
+      "--format" "svg"
+      (path->string typ-path)
+      svg-path))
+
   (produce-search)
   (produce-rss))
 
