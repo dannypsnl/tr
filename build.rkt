@@ -116,7 +116,7 @@
       ; Compute new metadata and compare with old (if exists)
       (let ([new-meta (compute-metadata addr (hash-ref addr->path addr))])
         (hash-set! addr-maps-to-metajson addr new-meta)
-        ; Only track changes if old metadata exists
+        ; Track changes make sense only when old metadata is there
         (when (file-exists? meta-path)
           (define old-meta (file->json meta-path))
           (define changes (make-hash))
@@ -126,7 +126,7 @@
             (define added (set-subtract new-set old-set))
             (define removed (set-subtract old-set new-set))
             (when (or (not (set-empty? added)) (not (set-empty? removed)))
-              (hash-set! changes key (cons (set->list added) (set->list removed)))))
+              (hash-set! changes key (cons added removed))))
           (unless (hash-empty? changes)
             (hash-set! metadata-changes addr changes))))))
   ; compute relations
@@ -181,11 +181,9 @@
           (define added (car added-removed-pair))
           (define removed (cdr added-removed-pair))
           ; Mark newly added neighbors for update
-          (for ([neighbor-addr added])
-            (set-remove! excludes neighbor-addr))
+          (set-subtract! excludes added)
           ; Mark removed neighbors for update (they need to clean up backlink style links)
-          (for ([neighbor-addr removed])
-            (set-remove! excludes neighbor-addr))))))
+          (set-subtract! excludes removed)))))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
 
