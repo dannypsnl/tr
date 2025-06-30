@@ -125,7 +125,7 @@
             (define new-set (list->set (hash-ref new-meta key '())))
             (define added (set-subtract new-set old-set))
             (define removed (set-subtract old-set new-set))
-            (when (or (not (set-empty? added)) (not (set-empty? removed)))
+            (unless (and (set-empty? added) (set-empty? removed))
               (hash-set! changes key (cons added removed))))
           (unless (hash-empty? changes)
             (hash-set! metadata-changes addr changes))))))
