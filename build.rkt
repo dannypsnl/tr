@@ -154,6 +154,24 @@
       (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
+  ; Track which cards changed (weren't excluded)
+  (define cards-that-changed (set-subtract (list->set addr-list) excludes))
+
+  ; For each changed card, mark all its neighbors for update
+  (for ([changed-addr cards-that-changed])
+    (define meta-obj (hash-ref addr-maps-to-metajson changed-addr))
+    ; Mark all cards this one references
+    (for ([neighbor (hash-ref meta-obj 'transclude '())])
+      (set-remove! excludes neighbor))
+    (for ([neighbor (hash-ref meta-obj 'related '())])
+      (set-remove! excludes neighbor))
+    (for ([neighbor (hash-ref meta-obj 'authors '())])
+      (set-remove! excludes neighbor))
+    (for ([neighbor (hash-ref meta-obj 'context '())])
+      (set-remove! excludes neighbor))
+    (for ([neighbor (hash-ref meta-obj 'backlinks '())])
+      (set-remove! excludes neighbor)))
+
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
 
   (define index-cards (produce-scrbl addr-list addr->path "index"))
