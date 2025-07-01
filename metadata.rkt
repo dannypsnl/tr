@@ -20,10 +20,6 @@
 
   (define literal-author-queue (make-queue))
   (define author-queue (make-queue))
-  (define (add-literal-author name)
-    (enqueue! literal-author-queue name))
-  (define (add-author addr)
-    (enqueue! author-queue addr))
 
   (define related-queue (make-queue))
   (define transclude-queue (make-queue))
