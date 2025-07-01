@@ -4,7 +4,8 @@
          file-watchers)
 (require "private/next.rkt"
          "private/common.rkt"
-         "build.rkt")
+         "build.rkt"
+         "metadata.rkt")
 
 (define (find-root-dir dir)
   (if (string=? "/" (path->string dir))
@@ -91,6 +92,9 @@
             (if n n 0)))
         (define max-num (apply max (cons -1 numbers)))
         (displayln (string-append addr-prefix "-" (int->base36 (add1 max-num))))]
+      [(list "meta" addr)
+        (define scrbl-list (find-files (lambda (x) (string=? addr (path->string (path-replace-extension (basename x) "")))) "content"))
+        (write-json (compute-metadata addr (first scrbl-list)))]
       [(list cmd _ ...) (printf "Unknown command `~a`~n" cmd)]
       [_ (displayln "No command provided")]
       )))
