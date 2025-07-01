@@ -108,27 +108,11 @@
   ; record their differential updates
   (define metadata-changes (make-hash)) ; track what's changed
 
-  (for ([addr addr-list])
+  (for/async ([addr addr-list])
     (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
     (if (set-member? excludes addr)
-      ; Load existing metadata
       (hash-set! addr-maps-to-metajson addr (file->json meta-path))
-      ; Compute new metadata and compare with old (if exists)
-      (let ([new-meta (compute-metadata addr (hash-ref addr->path addr))])
-        (hash-set! addr-maps-to-metajson addr new-meta)
-        ; Track changes make sense only when old metadata is there
-        (when (file-exists? meta-path)
-          (define old-meta (file->json meta-path))
-          (define changes (make-hash))
-          (for ([key '(transclude related authors context references backlinks)])
-            (define old-set (list->set (hash-ref old-meta key '())))
-            (define new-set (list->set (hash-ref new-meta key '())))
-            (define added (set-subtract new-set old-set))
-            (define removed (set-subtract old-set new-set))
-            (unless (and (set-empty? added) (set-empty? removed))
-              (hash-set! changes key (cons added removed))))
-          (unless (hash-empty? changes)
-            (hash-set! metadata-changes addr changes))))))
+      (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
@@ -167,6 +151,23 @@
 
     (hash-set! addr-maps-to-metajson addr
       (hash-set* meta-obj 'references (set->list refs))))
+
+  (for/async ([addr addr-list])
+    (define new-meta (hash-ref addr-maps-to-metajson addr))
+    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
+    (when (file-exists? meta-path)
+      (define old-meta (file->json meta-path))
+      (define changes (make-hash))
+      (for ([key '(transclude related authors context references backlinks)])
+        (define old-set (list->set (hash-ref old-meta key '())))
+        (define new-set (list->set (hash-ref new-meta key '())))
+        (define added (set-subtract new-set old-set))
+        (define removed (set-subtract old-set new-set))
+        (unless (and (set-empty? added) (set-empty? removed))
+          (hash-set! changes key (cons added removed))))
+      (unless (hash-empty? changes)
+        (hash-set! metadata-changes addr changes))))
+
   ; produces <addr>.metadata.json
   (hash-for-each addr-maps-to-metajson
     (λ (addr json)
