@@ -222,13 +222,12 @@
   (displayln "\\end{tikzcd}" out)
   (apply texfig (list (get-output-string out)) #:header "\\usepackage{quiver}\n"))
 
-(define (typst #:header [header-code ""] . formula)
+(define (typst . formula)
   (define job-id (symbol->string (gensym 'typ)))
   (define dir (build-path "_tmp" (self-addr)))
   (make-directory* dir)
   (define typ-path (build-path dir (string-append job-id ".typ")))
   (define typ (open-output-file #:exists 'truncate/replace typ-path))
-  (displayln header-code typ)
   (for-each (λ (s) (display s typ)) formula)
   (close-output-port typ)
 
