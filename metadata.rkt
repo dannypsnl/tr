@@ -17,6 +17,7 @@
   (define self-taxon (make-parameter #f))
   (define self-date (make-parameter #f))
   (define self-doi (make-parameter #f))
+  (define self-orcid (make-parameter #f))
 
   (define literal-author-queue (make-queue))
   (define author-queue (make-queue))
@@ -24,6 +25,8 @@
   (define related-queue (make-queue))
   (define transclude-queue (make-queue))
   (define content-queue (make-queue))
+  (define meta-queue (make-queue))
+  (define metalink-queue (make-queue))
 
   (define (handle-form form)
     (match form
@@ -31,12 +34,15 @@
       [`(taxon ,text) (self-taxon text)]
       [`(date ,text) (self-date text)]
       [`(doi ,text) (self-doi text)]
+      [`(orcid ,text) (self-orcid text)]
       [`(author ,addr) (enqueue! author-queue addr)]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
       [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
       [`(mention ,@_ ,addr) (enqueue! related-queue addr)]
+      [`(meta/text ,@forms) (enqueue! meta-queue (for/list ([f forms]) (execute f)))]
+      [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
       [`(toc/depth ,_num) (void)]
       [t #:when (string? t)
@@ -61,6 +67,7 @@
     (cons 'id addr)
     (cons 'date (self-date))
     (cons 'doi (self-doi))
+    (cons 'orcid (self-orcid))
     (cons 'authors (queue->list author-queue))
     (cons 'name-authors (queue->list literal-author-queue))
     (cons 'title title)
@@ -69,4 +76,8 @@
     ; a list of addresses, later we should update context of these addresses
     (cons 'transclude (queue->list transclude-queue))
     ; a list of addresses, later we should split some of them to references, by checking taxon
-    (cons 'related (queue->list related-queue)))))
+    (cons 'related (queue->list related-queue))
+    ; general metadata entries (text)
+    (cons 'meta (queue->list meta-queue))
+    ; external link metadata entries
+    (cons 'metalink (queue->list metalink-queue)))))

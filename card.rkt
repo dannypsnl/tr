@@ -19,6 +19,9 @@
               [ignore author]
               [ignore author/literal]
               [ignore doi]
+              [ignore orcid]
+              [ignore meta/text]
+              [ignore meta/link]
               [ignore tm])
   transclude
   m mm tikzcd texfig
@@ -141,6 +144,19 @@
                                 'href: (string-append "https://doi.org/" (fetch-metadata (self-addr) 'doi))
                                 'target: "_blank"
                                 (fetch-metadata (self-addr) 'doi)))))
+  (define meta-entries (fetch-metadata (self-addr) 'meta '()))
+  (unless (empty? meta-entries)
+    (for ([meta meta-entries])
+      (enqueue! meta-queue (li meta))))
+  (when (fetch-metadata (self-addr) 'orcid)
+    (enqueue! meta-queue (li (a 'class: "link-self"
+                                'href: (string-append "https://orcid.org/" (fetch-metadata (self-addr) 'orcid))
+                                'target: "_blank"
+                                (string-append "ORCID: " (fetch-metadata (self-addr) 'orcid))))))
+  (define metalink-entries (fetch-metadata (self-addr) 'metalink '()))
+  (unless (empty? metalink-entries)
+    (for ([metalink metalink-entries])
+      (enqueue! meta-queue (li (a 'href: metalink 'target: "_blank" metalink)))))
   (define authors
     (for/list ([addr (fetch-metadata (self-addr) 'authors)])
       (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title))))
