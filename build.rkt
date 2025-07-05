@@ -185,6 +185,12 @@
           (set-subtract! excludes added)
           ; Mark removed neighbors for update (they need to clean up backlink style links)
           (set-subtract! excludes removed)))))
+  (for/async ([addr addr-list]
+              #:unless (set-member? excludes addr))
+    (define obj (hash-ref addr-maps-to-metajson addr))
+    (define ctx (hash-ref obj 'context '()))
+    (for ([addr ctx])
+      (set-remove! excludes addr)))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
 
