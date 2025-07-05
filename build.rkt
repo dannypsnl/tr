@@ -9,13 +9,17 @@
 
 (define (embed-header addr content)
   (format "#lang scribble/text
-@(require tr/card \"~a.rkt\")
+@(require tr/card)
+~a
 @(generate-mode 'embed)
 @article{~a}
-" addr content))
+"
+  (if addr (string-append "@(require \"" addr ".rkt\")") "")
+  content))
 (define (index-header addr content)
   (format "#lang scribble/text
-@(require tr/card \"~a.rkt\")
+@(require tr/card)
+~a
 @(generate-mode 'index)
 @(doctype 'html)
 @common-share{
@@ -29,17 +33,22 @@
     @generate-backlinks[]
     @generate-related[]
   }
-}" addr content))
+}"
+  (if addr (string-append "@(require \"" addr ".rkt\")") "")
+  content))
 (define (root-header addr content)
   (format "#lang scribble/text
-@(require tr/card \"~a.rkt\")
+@(require tr/card)
+~a
 @(generate-mode 'root)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
     @tree{~a}
   }
-}" addr content))
+}"
+  (if addr (string-append "@(require \"" addr ".rkt\")") "")
+  content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
 
@@ -62,7 +71,8 @@
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
-    (displayln (header addr (port->string in)) f)
+    (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
+    (displayln (header (if (file-exists? rkt-path) addr #f) (port->string in)) f)
     (close-input-port in)
     (close-output-port f)
 
@@ -111,10 +121,11 @@
   (for/async ([addr addr-list])
     (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
     (define lst (compute-racket addr (hash-ref addr->path addr)))
-    (define out (open-output-file #:exists 'truncate/replace rkt-path))
-    (for ([text lst])
-      (displayln text out))
-    (close-output-port out))
+    (unless (empty? lst)
+      (define out (open-output-file #:exists 'truncate/replace rkt-path))
+      (for ([text lst])
+        (displayln text out))
+      (close-output-port out)))
   (for/async ([addr addr-list])
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (if (set-member? excludes addr)
