@@ -188,7 +188,7 @@
     (λ (addr _)
       (define json (hash-ref addr-maps-to-metajson addr))
       (printf "update ~a.metadata.json ~n" addr)
-      (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
+      (json->file json (build-path "_tmp" (string-append addr ".metadata.json")))))
 
   ; Use differential changes to mark precise neighbors for update
   (hash-for-each metadata-changes
