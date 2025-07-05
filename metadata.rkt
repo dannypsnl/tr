@@ -1,5 +1,6 @@
 #lang racket
-(provide compute-metadata)
+(provide compute-metadata
+         compute-racket)
 (require scribble/reader
          scribble/html/html
          data/queue)
@@ -45,6 +46,8 @@
       [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
       [`(toc/depth ,_num) (void)]
+      [`(tr/code ,form) (void)]
+      [`(tr/code ,@forms) (void)]
       [t #:when (string? t)
         (enqueue! content-queue t)]
       [`(,_ ,@forms)
@@ -81,3 +84,17 @@
     (cons 'meta (queue->list meta-queue))
     ; external link metadata entries
     (cons 'metalink (queue->list metalink-queue)))))
+
+(define (compute-racket addr addr-path)
+  (define forms
+    (call-with-input-file addr-path
+      (lambda (in) (read-inside in))))
+  (define content-queue (make-queue))
+  (for ([form forms])
+    (match form
+      [`(tr/code ,text) (enqueue! content-queue text)]
+      [`(tr/code ,@lst)
+        (for ([text lst])
+          (enqueue! content-queue text))]
+      [_ (void)]))
+  (queue->list content-queue))

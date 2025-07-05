@@ -7,15 +7,15 @@
          "private/common.rkt"
          "private/rss.rkt")
 
-(define (embed-header content)
+(define (embed-header addr content)
   (format "#lang scribble/text
-@(require tr/card)
+@(require tr/card \"~a.rkt\")
 @(generate-mode 'embed)
 @article{~a}
-" content))
-(define (index-header content)
+" addr content))
+(define (index-header addr content)
   (format "#lang scribble/text
-@(require tr/card)
+@(require tr/card \"~a.rkt\")
 @(generate-mode 'index)
 @(doctype 'html)
 @common-share{
@@ -29,17 +29,17 @@
     @generate-backlinks[]
     @generate-related[]
   }
-}" content))
-(define (root-header content)
+}" addr content))
+(define (root-header addr content)
   (format "#lang scribble/text
-@(require tr/card)
+@(require tr/card \"~a.rkt\")
 @(generate-mode 'root)
 @(doctype 'html)
 @common-share{
   @div['class: \"top-wrapper\"]{
     @tree{~a}
   }
-}" content))
+}" addr content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
 
@@ -62,7 +62,7 @@
       [(root? addr) root-header]
       [(string=? mode "embed") embed-header]
       [else index-header]))
-    (displayln (header (port->string in)) f)
+    (displayln (header addr (port->string in)) f)
     (close-input-port in)
     (close-output-port f)
 
@@ -98,7 +98,7 @@
 
   ; exclude files those no change
   (for/async ([addr addr-list])
-    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
+    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (when (file-exists? meta-path)
       (when (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
                (file-or-directory-modify-seconds meta-path))
@@ -109,7 +109,14 @@
   (define metadata-changes (make-hash)) ; track what's changed
 
   (for/async ([addr addr-list])
-    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
+    (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
+    (define lst (compute-racket addr (hash-ref addr->path addr)))
+    (define out (open-output-file #:exists 'truncate/replace rkt-path))
+    (for ([text lst])
+      (displayln text out))
+    (close-output-port out))
+  (for/async ([addr addr-list])
+    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (if (set-member? excludes addr)
       (hash-set! addr-maps-to-metajson addr (file->json meta-path))
       (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))))

@@ -22,7 +22,8 @@
               [ignore orcid]
               [ignore meta/text]
               [ignore meta/link]
-              [ignore tm])
+              [ignore tm]
+              [ignore tr/code])
   transclude
   m mm tikzcd texfig typst
   mention external
