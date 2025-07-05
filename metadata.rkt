@@ -1,9 +1,11 @@
 #lang racket
-(provide compute-metadata
+(provide compute-addr
+         compute-metadata
          compute-racket)
 (require scribble/reader
          scribble/html/html
-         data/queue)
+         data/queue
+         dirname)
 (require "private/common.rkt")
 
 (define (execute f)
@@ -98,3 +100,6 @@
           (enqueue! content-queue text))]
       [_ (void)]))
   (queue->list content-queue))
+
+(define (compute-addr path)
+  (basename (path-replace-extension path "")))

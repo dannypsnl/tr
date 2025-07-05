@@ -52,9 +52,6 @@
 
 (struct final-card (src-path addr path target-path) #:transparent)
 
-(define (compute-addr path)
-  (basename (path-replace-extension path "")))
-
 (define (root? addr)
   (string=? addr "index"))
 
