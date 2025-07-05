@@ -183,9 +183,10 @@
       (unless (hash-empty? changes)
         (hash-set! metadata-changes addr changes))))
 
-  ; produces <addr>.metadata.json
-  (hash-for-each addr-maps-to-metajson
-    (λ (addr json)
+  ; produce/update <addr>.metadata.json
+  (hash-for-each metadata-changes
+    (λ (addr _)
+      (define json (hash-ref addr-maps-to-metajson addr))
       (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr "." "metadata" ".json")))))
 
