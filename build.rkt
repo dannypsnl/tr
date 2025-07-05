@@ -125,9 +125,15 @@
       (close-output-port out)))
   (for/async ([addr addr-list])
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (if (set-member? excludes addr)
-      (hash-set! addr-maps-to-metajson addr (file->json meta-path))
-      (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))))
+    (cond
+      [(not (file-exists? meta-path))
+        (define obj (compute-metadata addr (hash-ref addr->path addr)))
+        (json->file obj meta-path)
+        (hash-set! addr-maps-to-metajson addr obj)]
+      [(set-member? excludes addr)
+       (hash-set! addr-maps-to-metajson addr (file->json meta-path))]
+      [else
+        (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))]))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
@@ -169,7 +175,7 @@
 
   (for/async ([addr addr-list])
     (define new-meta (hash-ref addr-maps-to-metajson addr))
-    (define meta-path (build-path "_tmp" (string-append addr "." "metadata" ".json")))
+    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (when (file-exists? meta-path)
       (define old-meta (file->json meta-path))
       (define changes (make-hash))
