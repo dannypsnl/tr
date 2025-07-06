@@ -38,7 +38,7 @@ jobs:
         uses: Bogdanp/setup-racket@v1.14
         with:
           architecture: ${{ matrix.arch }}
-          distribution: "minimal"
+          distribution: "full"
           variant: ${{ matrix.variant }}
           version: ${{ matrix.version }}
       - run: raco pkg install --auto --skip-installed
