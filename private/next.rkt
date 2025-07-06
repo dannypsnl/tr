@@ -21,15 +21,15 @@
   (define (convert n acc)
     (match n
       [0 acc]
-      [_ (let ([q (quotient n base)]
-               [r (remainder n base)])
-           (convert q (string-append (string (string-ref alphabet r)) acc)))]))
+      [_ (define q (quotient n base))
+         (define r (remainder n base))
+         (convert q (string-append (string (string-ref alphabet r)) acc))]))
 
   (define (pad-zeros str len)
-    (let ([str-len (string-length str)])
-      (if (< str-len len)
-          (string-append (make-string (- len str-len) #\0) str)
-          str)))
+    (define str-len (string-length str))
+    (if (< str-len len)
+      (string-append (make-string (- len str-len) #\0) str)
+      str))
 
   (pad-zeros (convert number "") 4))
 
