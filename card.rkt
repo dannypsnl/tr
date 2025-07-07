@@ -136,7 +136,7 @@
         (tr-h1 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
-            (add-between (queue->list meta-queue) " &#183; ")))))
+            (add-between (queue->list meta-queue) " · ")))))
     (literal (file->string path))))
 
 (define (transclude #:open [open? #t] addr)
