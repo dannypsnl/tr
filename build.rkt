@@ -5,49 +5,33 @@
          mischief/sort)
 (require "metadata.rkt"
          "private/common.rkt"
-         "private/rss.rkt")
+         "private/rss.rkt"
+         "generate-index.rkt")
+(require scribble/html/html
+         scribble/html/extra
+         scribble/html/xml
+         (only-in "card.rkt"
+            self-addr
+            tree
+            generate-toc
+            generate-context
+            generate-references
+            generate-backlinks
+            generate-related))
+(require (only-in scribble/text disable-prefix))
 
 (define (embed-header addr content)
+  (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
   (format "#lang scribble/text
 @(require tr/card)
 ~a
-@(generate-mode 'embed)
+@self-addr{~a}
 @article{~a}
 "
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
-  content))
-(define (index-header addr content)
-  (format "#lang scribble/text
-@(require tr/card)
-~a
-@(generate-mode 'index)
-@(doctype 'html)
-@common-share{
-  @div['class: \"top-wrapper\"]{
-    @main{@tree{@article{~a}}}
-    @generate-toc[]
-  }
-  @footer{
-    @generate-context[]
-    @generate-references[]
-    @generate-backlinks[]
-    @generate-related[]
-  }
-}"
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
-  content))
-(define (root-header addr content)
-  (format "#lang scribble/text
-@(require tr/card)
-~a
-@(generate-mode 'root)
-@(doctype 'html)
-@common-share{
-  @div['class: \"top-wrapper\"]{
-    @tree{~a}
-  }
-}"
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
+  (if (file-exists? rkt-path)
+    (string-append "@(require \"" addr ".rkt\")")
+    "")
+  addr
   content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
@@ -64,12 +48,11 @@
         [else (build-path "_tmp" (string-append addr "." mode ".scrbl"))]))
     (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
-    (define header (cond
-      [(root? addr) root-header]
-      [(string=? mode "embed") embed-header]
-      [else index-header]))
-    (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
-    (displayln (header (if (file-exists? rkt-path) addr #f) (port->string in)) f)
+    (displayln
+      (embed-header
+        addr
+        (port->string in))
+      f)
     (close-input-port in)
     (close-output-port f)
 
@@ -215,14 +198,7 @@
       (set-remove! excludes addr)))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
-
-  (define index-cards (produce-scrbl addr-list addr->path "index"))
-  (for/async ([c index-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
-    (printf "generate ~a.index.html ~n" (final-card-addr c))
-    (define output-dir (build-path "_build/" (final-card-addr c)))
-    (make-directory* output-dir)
-    (produce-html c))
+  (produce-indexes addr-list excludes addr-maps-to-metajson)
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
   (for/async ([tex-path tex-list]
@@ -265,6 +241,45 @@
 
   (produce-search)
   (produce-rss))
+
+(define (produce-indexes addr-list excludes addr-maps-to-metajson)
+  (for ([addr addr-list]
+        #:unless (set-member? excludes addr))
+    (printf "generate ~a.index.html ~n" addr)
+    (define output-dir (build-path "_build/" addr))
+    (make-directory* output-dir)
+    (define out
+      (open-output-file
+        (if (root? addr)
+          (build-path "_build" "index.html")
+          (build-path "_build" addr "index.html"))))
+    (parameterize ([self-addr addr]
+                   [generate-mode (if (root? addr) "root" "index")])
+    (if (root? addr)
+      (output-xml
+        (list
+          (doctype 'html)
+          (common-share #:title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title)
+            (div 'class: "top-wrapper"
+              (tree (build-path "_tmp" (string-append addr ".embed.html"))))))
+        out)
+      (output-xml
+      (list
+      (doctype 'html)
+      (common-share #:title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title)
+        (div 'class: "top-wrapper"
+          (main
+            (tree (build-path "_tmp" (string-append addr ".embed.html"))))
+          (generate-toc))
+        (footer
+          (generate-context)
+          (generate-references)
+          (generate-backlinks)
+          (generate-related))))
+      out)
+      )
+      )
+    (close-output-port out)))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors
