@@ -77,7 +77,7 @@
     (details 'open: #t 'id: (symbol->string key)
       (summary (h1 title))
       (for/list ([addr addr-list])
-        (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))))))
+        (tr-h1 addr (literal (fetch-metadata addr 'title)) (fetch-metadata addr 'taxon))))))
 (define (generate-context) (footer-common "Context" 'context))
 (define (generate-references) (footer-common "References" 'references))
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
