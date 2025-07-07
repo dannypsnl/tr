@@ -30,17 +30,13 @@
     (define title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title))
     (parameterize ([self-addr addr]
                    [generate-root? (root? addr)])
-    (if (root? addr)
-      (output-xml
-        (list
-          (doctype 'html)
+    (output-xml
+      (list
+        (doctype 'html)
+        (if (root? addr)
           (common-share #:title title
             (div 'class: "top-wrapper"
-              (tree (build-path "_tmp" (string-append addr ".embed.html"))))))
-        out)
-      (output-xml
-        (list
-          (doctype 'html)
+              (tree (build-path "_tmp" (string-append addr ".embed.html")))))
           (common-share #:title title
             (div 'class: "top-wrapper"
               (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
@@ -50,7 +46,8 @@
               (generate-references)
               (generate-backlinks)
               (generate-related))))
-        out)))
+        )
+      out))
     (close-output-port out)))
 
 (define generate-root? (make-parameter #f))
