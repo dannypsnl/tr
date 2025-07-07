@@ -1,6 +1,6 @@
 #lang racket
 (provide
-  generate-mode
+  self-addr
 
   generate-toc
   generate-context
@@ -8,7 +8,7 @@
   generate-backlinks
   generate-related
 
-  common-share tree
+  tree
 
   toc/depth
   (rename-out [pre* pre]
@@ -43,18 +43,7 @@
 
 (define/provide-elements/not-empty summary path)
 
-(define generate-mode (make-parameter #f))
-#| we use strict match so other values will crash the program, are invalid input |#
-(define (generate-index?)
-  (case (generate-mode)
-    [(embed) #f]
-    [(index) #t]
-    [(root) #t]))
-(define (generate-root?)
-  (case (generate-mode)
-    [(embed) #f]
-    [(index) #f]
-    [(root) #t]))
+(define self-addr (make-parameter #f))
 
 (define toc/depth (make-parameter 2))
 (define self-title (make-parameter #f))
@@ -112,31 +101,7 @@
       (h1 "Table of Contents")
         (ol (for/list ([addr entries]) (recur-toc addr (sub1 (toc/depth))))))))
 
-(define (common-share . content)
-  (html
-   (head
-    (meta 'http-equiv: "Content-Type" 'content: "text/html; charset=utf-8")
-    (meta 'name: "viewport" 'content: "width=device-width, initial-scale=1")
-    (title (self-title))
-    (link 'rel: "stylesheet" 'href: "/katex.min.css")
-    (link 'rel: "stylesheet" 'href: "/style.css")
-
-    (script 'src: "/minisearch/index.min.js")
-    (script 'src: "/tiny.js"))
-   (body 'id: (when (generate-index?) "whole")
-      (dialog 'id: "search-dialog"
-        (input 'type: "text" 'id: "search-bar"
-          'spellcheck: "false" 'autocomplete: "off"
-          'placeholder: "Start typing a note title or ID")
-        (div 'id: "search-result"))
-      (cond
-        [(generate-root?) (void)]
-        [(generate-index?) (a 'class: "link-home" 'href: "/" "&#171; Home")]
-        [else (void)])
-      content
-      (when (or (generate-index?) (generate-root?)) (script 'src: "/fullTextSearch.js")))))
-
-(define (tree . content)
+(define (tree path)
   (define meta-queue (make-queue))
   (when (fetch-metadata (self-addr) 'date)
     (enqueue! meta-queue (li (fetch-metadata (self-addr) 'date))))
@@ -172,7 +137,7 @@
         (div 'class: "metadata"
           (ul
             (add-between (queue->list meta-queue) " &#183; ")))))
-    content))
+    (literal (file->string path))))
 
 (define (transclude #:open [open? #t] addr)
   (details 'open: open? 'id: addr

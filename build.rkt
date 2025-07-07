@@ -5,55 +5,24 @@
          mischief/sort)
 (require "metadata.rkt"
          "private/common.rkt"
-         "private/rss.rkt")
+         "private/rss.rkt"
+         "generate-index.rkt")
 
 (define (embed-header addr content)
+  (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
   (format "#lang scribble/text
 @(require tr/card)
 ~a
-@(generate-mode 'embed)
+@self-addr{~a}
 @article{~a}
 "
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
-  content))
-(define (index-header addr content)
-  (format "#lang scribble/text
-@(require tr/card)
-~a
-@(generate-mode 'index)
-@(doctype 'html)
-@common-share{
-  @div['class: \"top-wrapper\"]{
-    @main{@tree{@article{~a}}}
-    @generate-toc[]
-  }
-  @footer{
-    @generate-context[]
-    @generate-references[]
-    @generate-backlinks[]
-    @generate-related[]
-  }
-}"
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
-  content))
-(define (root-header addr content)
-  (format "#lang scribble/text
-@(require tr/card)
-~a
-@(generate-mode 'root)
-@(doctype 'html)
-@common-share{
-  @div['class: \"top-wrapper\"]{
-    @tree{~a}
-  }
-}"
-  (if addr (string-append "@(require \"" addr ".rkt\")") "")
+  (if (file-exists? rkt-path)
+    (string-append "@(require \"" addr ".rkt\")")
+    "")
+  addr
   content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
-
-(define (root? addr)
-  (string=? addr "index"))
 
 (define (produce-scrbl addr-list addr->path mode)
   (for/list ([addr addr-list])
@@ -64,12 +33,11 @@
         [else (build-path "_tmp" (string-append addr "." mode ".scrbl"))]))
     (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
-    (define header (cond
-      [(root? addr) root-header]
-      [(string=? mode "embed") embed-header]
-      [else index-header]))
-    (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
-    (displayln (header (if (file-exists? rkt-path) addr #f) (port->string in)) f)
+    (displayln
+      (embed-header
+        addr
+        (port->string in))
+      f)
     (close-input-port in)
     (close-output-port f)
 
@@ -215,14 +183,7 @@
       (set-remove! excludes addr)))
 
   (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
-
-  (define index-cards (produce-scrbl addr-list addr->path "index"))
-  (for/async ([c index-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
-    (printf "generate ~a.index.html ~n" (final-card-addr c))
-    (define output-dir (build-path "_build/" (final-card-addr c)))
-    (make-directory* output-dir)
-    (produce-html c))
+  (produce-indexes addr-list excludes addr-maps-to-metajson)
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
   (for/async ([tex-path tex-list]
