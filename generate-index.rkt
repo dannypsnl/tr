@@ -31,7 +31,7 @@
     (define metaobj (hash-ref addr-maps-to-metajson addr))
     (define title (hash-ref metaobj 'title))
     (parameterize ([self-addr addr]
-                   [toc/depth (hash-ref metaobj 'toc/depth)]
+                   [toc/depth (if (hash-ref metaobj 'toc/depth) (hash-ref metaobj 'toc/depth) 2)]
                    [generate-root? (root? addr)])
     (output-xml
       (list
