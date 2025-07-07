@@ -73,6 +73,6 @@
           'placeholder: "Start typing a note title or ID")
         (div 'id: "search-result"))
       (unless (generate-root?)
-        (a 'class: "link-home" 'href: "/" "&#171; Home"))
+        (a 'class: "link-home" 'href: "/" "« Home"))
       content
       (script 'src: "/fullTextSearch.js"))))
