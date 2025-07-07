@@ -85,7 +85,7 @@
 
   (for/async ([addr addr-list])
     (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
-    (define lst (compute-racket addr (hash-ref addr->path addr)))
+    (define lst (compute-racket (hash-ref addr->path addr)))
     (unless (empty? lst)
       (define out (open-output-file #:exists 'truncate/replace rkt-path))
       (for ([text lst])

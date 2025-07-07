@@ -5,7 +5,7 @@
          scribble/html/extra
          scribble/html/xml
          (only-in "card.rkt"
-            self-addr
+            self-addr toc/depth
             tree
             generate-toc
             generate-context
@@ -27,8 +27,11 @@
         (if (root? addr)
           (build-path "_build" "index.html")
           (build-path "_build" addr "index.html"))))
-    (define title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title))
+
+    (define metaobj (hash-ref addr-maps-to-metajson addr))
+    (define title (hash-ref metaobj 'title))
     (parameterize ([self-addr addr]
+                   [toc/depth (hash-ref metaobj 'toc/depth)]
                    [generate-root? (root? addr)])
     (output-xml
       (list

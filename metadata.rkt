@@ -21,6 +21,7 @@
   (define self-date (make-parameter #f))
   (define self-doi (make-parameter #f))
   (define self-orcid (make-parameter #f))
+  (define self-toc/depth (make-parameter #f))
 
   (define literal-author-queue (make-queue))
   (define author-queue (make-queue))
@@ -47,7 +48,7 @@
       [`(meta/text ,@forms) (enqueue! meta-queue (for/list ([f forms]) (execute f)))]
       [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
-      [`(toc/depth ,_num) (void)]
+      [`(toc/depth ,num) (self-toc/depth num)]
       [`(tr/code ,form) (void)]
       [`(tr/code ,@forms) (void)]
       [t #:when (string? t)
@@ -78,6 +79,7 @@
     (cons 'title title)
     (cons 'taxon taxon)
     (cons 'text collected-text)
+    (cons 'toc/depth (self-toc/depth))
     ; a list of addresses, later we should update context of these addresses
     (cons 'transclude (queue->list transclude-queue))
     ; a list of addresses, later we should split some of them to references, by checking taxon
@@ -87,7 +89,7 @@
     ; external link metadata entries
     (cons 'metalink (queue->list metalink-queue)))))
 
-(define (compute-racket addr addr-path)
+(define (compute-racket addr-path)
   (define forms
     (call-with-input-file addr-path
       (lambda (in) (read-inside in))))
