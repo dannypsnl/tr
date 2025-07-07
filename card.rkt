@@ -13,7 +13,7 @@
   toc/depth
   (rename-out [pre* pre]
               [pre* bibtex]
-              [set-title title]
+              [ignore title]
               [ignore taxon]
               [ignore date]
               [ignore author]
@@ -46,9 +46,6 @@
 (define self-addr (make-parameter #f))
 
 (define toc/depth (make-parameter 2))
-(define self-title (make-parameter #f))
-(define (set-title . forms)
-  (self-title forms))
 (define (ignore . _) (void))
 
 (define (tr-h1 addr text taxon)
@@ -131,7 +128,7 @@
   (details 'open: #t
     (summary
       (header
-        (tr-h1 (self-addr) (self-title) (fetch-metadata (self-addr) 'taxon))
+        (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
         (div 'class: "metadata"
           (ul
             (add-between (queue->list meta-queue) " · ")))))
