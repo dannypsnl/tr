@@ -1,16 +1,59 @@
 #lang racket
-(provide generate-mode
-         common-share)
+(provide root?
+         produce-indexes)
 (require scribble/html/html
          scribble/html/extra
-         scribble/html/xml)
+         scribble/html/xml
+         (only-in "card.rkt"
+            self-addr
+            tree
+            generate-toc
+            generate-context
+            generate-references
+            generate-backlinks
+            generate-related))
 
-(define generate-mode (make-parameter #f))
-#| we use strict match so other values will crash the program, are invalid input |#
-(define (generate-root?)
-  (case (generate-mode)
-    [(index) #f]
-    [(root) #t]))
+(define (root? addr)
+  (string=? addr "index"))
+
+(define (produce-indexes addr-list excludes addr-maps-to-metajson)
+  (for ([addr addr-list]
+        #:unless (set-member? excludes addr))
+    (printf "generate ~a/index.html ~n" addr)
+    (define output-dir (build-path "_build/" addr))
+    (make-directory* output-dir)
+    (define out
+      (open-output-file #:exists 'truncate/replace
+        (if (root? addr)
+          (build-path "_build" "index.html")
+          (build-path "_build" addr "index.html"))))
+    (define title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title))
+    (parameterize ([self-addr addr]
+                   [generate-root? (root? addr)])
+    (if (root? addr)
+      (output-xml
+        (list
+          (doctype 'html)
+          (common-share #:title title
+            (div 'class: "top-wrapper"
+              (tree (build-path "_tmp" (string-append addr ".embed.html"))))))
+        out)
+      (output-xml
+        (list
+          (doctype 'html)
+          (common-share #:title title
+            (div 'class: "top-wrapper"
+              (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
+            (generate-toc))
+            (footer
+              (generate-context)
+              (generate-references)
+              (generate-backlinks)
+              (generate-related))))
+        out)))
+    (close-output-port out)))
+
+(define generate-root? (make-parameter #f))
 
 (define (common-share #:title this-title . content)
   (html
@@ -29,8 +72,7 @@
           'spellcheck: "false" 'autocomplete: "off"
           'placeholder: "Start typing a note title or ID")
         (div 'id: "search-result"))
-      (cond
-        [(generate-root?) (void)]
-        [else (a 'class: "link-home variant-strip-embed" 'href: "/" "&#171; Home")])
+      (unless (generate-root?)
+        (a 'class: "link-home" 'href: "/" "&#171; Home"))
       content
-      (script 'class: "variant-strip-embed" 'src: "/fullTextSearch.js"))))
+      (script 'src: "/fullTextSearch.js"))))

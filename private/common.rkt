@@ -2,12 +2,7 @@
 (provide
   file->json json->file
   m mm)
-(require dirname json)
-
-; (define (self-addr)
-;   (define current-scrbl-path (find-system-path 'run-file))
-;   (define self-path (path->string (path-replace-extension current-scrbl-path "")))
-;   (string-trim (basename self-path) #px"\\.index|\\.embed|\\.meta"))
+(require json)
 
 (define (file->json path)
   (define in (open-input-file path))

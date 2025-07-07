@@ -7,18 +7,6 @@
          "private/common.rkt"
          "private/rss.rkt"
          "generate-index.rkt")
-(require scribble/html/html
-         scribble/html/extra
-         scribble/html/xml
-         (only-in "card.rkt"
-            self-addr
-            tree
-            generate-toc
-            generate-context
-            generate-references
-            generate-backlinks
-            generate-related))
-(require (only-in scribble/text disable-prefix))
 
 (define (embed-header addr content)
   (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
@@ -35,9 +23,6 @@
   content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
-
-(define (root? addr)
-  (string=? addr "index"))
 
 (define (produce-scrbl addr-list addr->path mode)
   (for/list ([addr addr-list])
@@ -241,45 +226,6 @@
 
   (produce-search)
   (produce-rss))
-
-(define (produce-indexes addr-list excludes addr-maps-to-metajson)
-  (for ([addr addr-list]
-        #:unless (set-member? excludes addr))
-    (printf "generate ~a.index.html ~n" addr)
-    (define output-dir (build-path "_build/" addr))
-    (make-directory* output-dir)
-    (define out
-      (open-output-file
-        (if (root? addr)
-          (build-path "_build" "index.html")
-          (build-path "_build" addr "index.html"))))
-    (parameterize ([self-addr addr]
-                   [generate-mode (if (root? addr) "root" "index")])
-    (if (root? addr)
-      (output-xml
-        (list
-          (doctype 'html)
-          (common-share #:title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title)
-            (div 'class: "top-wrapper"
-              (tree (build-path "_tmp" (string-append addr ".embed.html"))))))
-        out)
-      (output-xml
-      (list
-      (doctype 'html)
-      (common-share #:title (hash-ref (hash-ref addr-maps-to-metajson addr) 'title)
-        (div 'class: "top-wrapper"
-          (main
-            (tree (build-path "_tmp" (string-append addr ".embed.html"))))
-          (generate-toc))
-        (footer
-          (generate-context)
-          (generate-references)
-          (generate-backlinks)
-          (generate-related))))
-      out)
-      )
-      )
-    (close-output-port out)))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors
