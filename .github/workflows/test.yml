@@ -27,13 +27,6 @@ jobs:
         version: ["stable", "current"]
     steps:
       - uses: actions/checkout@master
-      - name: Cache installed packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/racket
-            ~/.local/share/racket
-          key: ${{ runner.os }}-primes
       - name: Setup Racket
         uses: Bogdanp/setup-racket@v1.14
         with:
