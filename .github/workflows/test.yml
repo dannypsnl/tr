@@ -41,5 +41,5 @@ jobs:
           distribution: "full"
           variant: ${{ matrix.variant }}
           version: ${{ matrix.version }}
-      - run: raco pkg install --auto --skip-installed
+      - run: raco pkg install --auto
       - run: raco test .
