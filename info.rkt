@@ -5,6 +5,7 @@
     "dirname"
     "gregor-lib"
     "mischief"
+    "argo"
     "file-watchers"
     "scribble-html-lib"
     "scribble-text-lib"))

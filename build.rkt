@@ -2,7 +2,8 @@
 (provide search-and-build)
 (require dirname
          mischief/dict
-         mischief/sort)
+         mischief/sort
+         argo/equal)
 (require "metadata.rkt"
          "private/common.rkt"
          "private/rss.rkt"
@@ -81,6 +82,7 @@
   ; record all metadata
   (define addr-maps-to-metajson (make-hash))
   ; record their differential updates
+  (define metadata-changed (mutable-set)) ; track what's changed
   (define metadata-changes (make-hash)) ; track what's changed
 
   (for/async ([addr addr-list])
@@ -146,20 +148,23 @@
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (when (file-exists? meta-path)
       (define old-meta (file->json meta-path))
-      (define changes (make-hash))
-      (for ([key '(transclude related authors context references backlinks)])
-        (define old-set (list->set (hash-ref old-meta key '())))
-        (define new-set (list->set (hash-ref new-meta key '())))
-        (define added (set-subtract new-set old-set))
-        (define removed (set-subtract old-set new-set))
-        (unless (and (set-empty? added) (set-empty? removed))
-          (hash-set! changes key (cons added removed))))
-      (unless (hash-empty? changes)
-        (hash-set! metadata-changes addr changes))))
+      (unless (equal-jsexprs? old-meta new-meta)
+        (set-add! metadata-changed addr)
+
+        (define changes (make-hash))
+        (for ([key '(transclude related authors context references backlinks)])
+          (define old-set (list->set (hash-ref old-meta key '())))
+          (define new-set (list->set (hash-ref new-meta key '())))
+          (define added (set-subtract new-set old-set))
+          (define removed (set-subtract old-set new-set))
+          (unless (and (set-empty? added) (set-empty? removed))
+            (hash-set! changes key (cons added removed))))
+        (unless (hash-empty? changes)
+          (hash-set! metadata-changes addr changes)))))
 
   ; produce/update <addr>.metadata.json
-  (hash-for-each metadata-changes
-    (λ (addr _)
+  (set-for-each metadata-changed
+    (λ (addr)
       (define json (hash-ref addr-maps-to-metajson addr))
       (printf "update ~a.metadata.json ~n" addr)
       (json->file json (build-path "_tmp" (string-append addr ".metadata.json")))))
