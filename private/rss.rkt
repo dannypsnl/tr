@@ -7,7 +7,8 @@
          scribble/html/xml)
 (require gregor
          dirname)
-(require "common.rkt")
+(require "common.rkt"
+         "config.rkt")
 
 (define/provide-elements/not-empty item pubDate description)
 (define (produce-rss)
@@ -36,7 +37,7 @@
       (λ (a b)
         (datetime>=? (iso8601->datetime (hash-ref a 'date)) (iso8601->datetime (hash-ref b 'date))))))
 
-  (define out (open-output-file #:exists 'truncate/replace "_build/rss.xml"))
+  (define out (open-output-file #:exists 'truncate/replace (build-path (get-output-path) "rss.xml")))
   (fprintf out "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
 <rss version=\"2.0\">
 <channel>

@@ -6,6 +6,7 @@
          argo/equal)
 (require "metadata.rkt"
          "private/common.rkt"
+         "private/config.rkt"
          "private/rss.rkt"
          "generate-index.rkt")
 
@@ -45,8 +46,8 @@
     (define output-path
       (cond
         [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]
-        [(root? addr) (build-path "_build" (string-append mode ".html"))]
-        [else (build-path "_build" addr (string-append mode ".html"))]))
+        [(root? addr) (build-path (get-output-path) (string-append mode ".html"))]
+        [else (build-path (get-output-path) addr (string-append mode ".html"))]))
     (final-card source-path addr tmp-path output-path)))
 
 (define (produce-html c)
@@ -204,7 +205,7 @@
     (define svg-path
       (string-replace (path->string (path-replace-extension tex-path #".svg"))
         "_tmp"
-        "_build"))
+        (get-output-path)))
     (system* (find-executable-path "dvisvgm")
       "--exact"
       "--clipjoin"
@@ -221,7 +222,7 @@
     (define svg-path
       (string-replace (path->string (path-replace-extension typ-path #".svg"))
         "_tmp"
-        "_build"))
+        (get-output-path)))
     (make-directory* (dirname svg-path))
     (system* (find-executable-path "typst")
       "compile"
@@ -248,7 +249,7 @@
   (define (itemize items)
     (string-join (for/list ([p items]) (file->string p)) ","))
   (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
-  (define out (open-output-file #:exists 'truncate/replace "_build/search.json"))
+  (define out (open-output-file #:exists 'truncate/replace (build-path (get-output-path) "search.json")))
   (displayln "[" out)
   (displayln (itemize json-list) out)
   (displayln "]" out)

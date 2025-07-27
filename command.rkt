@@ -3,7 +3,7 @@
          json
          file-watchers)
 (require "private/next.rkt"
-         "private/common.rkt"
+         "private/config.rkt"
          "build.rkt"
          "metadata.rkt")
 (require racket/logging)
@@ -55,11 +55,11 @@
     #:usage-help "build tr-notes project"
     #:args _
     (unless root-path (raise "You're not in a tr project"))
-      (define site-obj (file->json "site.json"))
+    (setup-config! "site.json")
     ; If user didn't assign one, use our setup
-    (define assets-directories (hash-ref site-obj 'assets '("assets")))
+    (define assets-directories (get-config 'assets '("assets")))
     (for ([path assets-directories])
-      (copy-directory-recursively path "_build"))
+      (copy-directory-recursively path (get-output-path)))
     (search-and-build "content")))
 (define (run-tr-watch)
   (command-line

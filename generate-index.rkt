@@ -4,6 +4,7 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml
+         "private/config.rkt"
          (only-in "card.rkt"
             self-addr toc/depth
             tree
@@ -20,13 +21,13 @@
   (for ([addr addr-list]
         #:unless (set-member? excludes addr))
     (printf "generate ~a/index.html ~n" addr)
-    (define output-dir (build-path "_build/" addr))
+    (define output-dir (build-path (get-output-path) addr))
     (make-directory* output-dir)
     (define out
       (open-output-file #:exists 'truncate/replace
         (if (root? addr)
-          (build-path "_build" "index.html")
-          (build-path "_build" addr "index.html"))))
+          (build-path (get-output-path) "index.html")
+          (build-path (get-output-path) addr "index.html"))))
 
     (define metaobj (hash-ref addr-maps-to-metajson addr))
     (define title (hash-ref metaobj 'title))
