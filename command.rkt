@@ -50,12 +50,15 @@
 
 (define root-path (find-root-dir (current-directory)))
 (define (run-tr-build)
+  (define config-path "site.json")
   (command-line
     #:program "tr build"
     #:usage-help "build tr-notes project"
+    #:once-each
+    [("-c" "--config") config "Use not default configuration" (set! config-path config)]
     #:args _
     (unless root-path (raise "You're not in a tr project"))
-    (setup-config! "site.json")
+    (setup-config! config-path)
     ; If user didn't assign one, use our setup
     (define assets-directories (get-config 'assets '("assets")))
     (for ([path assets-directories])
