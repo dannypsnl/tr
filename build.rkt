@@ -69,7 +69,18 @@
       addr))
 
   (when (dev-mode?)
-    (write-to-file addr->path (build-path (get-output-path) "sourcemap.rktd")))
+    (with-output-to-file
+      #:exists 'truncate/replace
+      (build-path (get-output-path) "sourcemap.json")
+      (lambda ()
+        (printf "{")
+        (printf
+          (string-join
+            (hash-map addr->path
+              (lambda (key value)
+                (format "~s: ~s" key (path->string (path->complete-path value)))))
+            ","))
+        (printf "}"))))
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
