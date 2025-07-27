@@ -68,6 +68,9 @@
       (hash-set! addr->path addr path)
       addr))
 
+  (when (dev-mode?)
+    (write-to-file addr->path (build-path (get-output-path) "sourcemap.rktd")))
+
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
 
