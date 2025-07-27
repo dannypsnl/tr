@@ -49,8 +49,9 @@
     (displayln "init done")))
 
 (define root-path (find-root-dir (current-directory)))
+(define config-path "site.json")
+
 (define (run-tr-build)
-  (define config-path "site.json")
   (command-line
     #:program "tr build"
     #:usage-help "build tr-notes project"
@@ -68,8 +69,11 @@
   (command-line
     #:program "tr watch"
     #:usage-help "watch and rebuild tr-notes project"
+    #:once-each
+    [("-c" "--config") config "Use not default configuration" (set! config-path config)]
     #:args _
     (unless root-path (raise "You're not in a tr project"))
+    (setup-config! config-path)
     (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) "content"))
     (thread-wait
       (watch scrbl-list
@@ -84,7 +88,7 @@
     #:usage-help "compute next address for <prefix>"
     #:args (prefix)
     (unless root-path (raise "You're not in a tr project"))
-    
+
     (define scrbl-list
       (find-files
         (λ (path)
