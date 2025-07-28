@@ -148,8 +148,10 @@
 (define (pre* . content)
   (disable-prefix (pre (literal content))))
 
-(define (external url)
-  (a 'href: url 'target: "_blank" url))
+(define external
+  (case-lambda
+    [(url) (a 'href: url 'target: "_blank" url)]
+    [(url . body) (a 'href: url 'target: "_blank" body)]))
 
 (define mention
   (case-lambda
