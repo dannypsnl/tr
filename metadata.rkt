@@ -84,9 +84,9 @@
     (cons 'transclude (queue->list transclude-queue))
     ; a list of addresses, later we should split some of them to references, by checking taxon
     (cons 'related (queue->list related-queue))
-    ; general metadata entries (text)
+    ; metadata entry: text
     (cons 'meta (queue->list meta-queue))
-    ; external link metadata entries
+    ; metadata entry: external link
     (cons 'metalink (queue->list metalink-queue)))))
 
 (define (compute-racket addr-path)
