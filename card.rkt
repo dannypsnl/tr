@@ -151,12 +151,20 @@
 (define (external url)
   (a 'href: url 'target: "_blank" url))
 
-(define (mention #:title [title #f] addr)
-  (define url (string-append "/" addr))
-  (a 'class: "mention"
-     'target: "_parent"
-     'href: url
-     (if title title (fetch-metadata addr 'title))))
+(define mention
+  (case-lambda
+    [(addr)
+     (define url (string-append "/" addr))
+     (a 'class: "mention"
+        'target: "_parent"
+        'href: url
+        (fetch-metadata addr 'title))]
+    [(addr . body)
+     (define url (string-append "/" addr))
+     (a 'class: "mention"
+        'target: "_parent"
+        'href: url
+        body)]))
 
 (define (texfig #:header [header-code ""] . formula)
   (define job-id (symbol->string (gensym 'tex)))

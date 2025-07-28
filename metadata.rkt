@@ -44,7 +44,7 @@
       [`(transclude ,addr) (enqueue! transclude-queue addr)]
       [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
-      [`(mention ,@_ ,addr) (enqueue! related-queue addr)]
+      [`(mention ,addr ,@_) (enqueue! related-queue addr)]
       [`(meta/text ,@forms) (enqueue! meta-queue (for/list ([f forms]) (execute f)))]
       [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
