@@ -181,8 +181,8 @@
                 (list (span 'class: "taxon" (string-append taxon ".")) " "))
               title
               " "
-              link-to-self))
-            content)))
+              link-to-self)))
+           (article content)))
 
 (define (pre* . content)
   (disable-prefix (pre (literal content))))
