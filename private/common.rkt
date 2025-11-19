@@ -1,7 +1,8 @@
 #lang racket
 (provide
-  file->json json->file
-  m mm)
+ file->json json->file
+ non-local?
+ m mm)
 (require json)
 
 (define (file->json path)
@@ -30,3 +31,6 @@
   (parameterize ([current-output-port out])
     (system* (find-executable-path "deno") "eval" js-code))
   (get-output-string out))
+
+(define (non-local? addr)
+  (not (string-contains? addr ":")))

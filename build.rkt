@@ -18,11 +18,11 @@
 @self-addr{~a}
 @article{~a}
 "
-  (if (file-exists? rkt-path)
-    (string-append "@(require \"" addr ".rkt\")")
-    "")
-  addr
-  content))
+          (if (file-exists? rkt-path)
+              (string-append "@(require \"" addr ".rkt\")")
+              "")
+          addr
+          content))
 
 (struct final-card (src-path addr path target-path) #:transparent)
 
@@ -36,10 +36,10 @@
     (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
     (displayln
-      (embed-header
-        addr
-        (port->string in))
-      f)
+     (embed-header
+      addr
+      (port->string in))
+     f)
     (close-input-port in)
     (close-output-port f)
 
@@ -70,16 +70,16 @@
 
   (when (dev-mode?)
     (with-output-to-file
-      #:exists 'truncate/replace
+        #:exists 'truncate/replace
       (build-path (get-output-path) "sourcemap.json")
       (lambda ()
         (printf "{")
         (printf
-          (string-join
-            (hash-map addr->path
-              (lambda (key value)
-                (format "~s: ~s" key (path->string (path->complete-path value)))))
-            ","))
+         (string-join
+          (hash-map addr->path
+                    (lambda (key value)
+                      (format "~s: ~s" key (path->string (path->complete-path value)))))
+          ","))
         (printf "}"))))
 
   (define tmp (build-path "_tmp"))
@@ -112,20 +112,21 @@
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
     (cond
       [(not (file-exists? meta-path))
-        (define obj (compute-metadata addr (hash-ref addr->path addr)))
-        (json->file obj meta-path)
-        (hash-set! addr-maps-to-metajson addr obj)]
+       (define obj (compute-metadata addr (hash-ref addr->path addr)))
+       (json->file obj meta-path)
+       (hash-set! addr-maps-to-metajson addr obj)]
       [(set-member? excludes addr)
        (hash-set! addr-maps-to-metajson addr (file->json meta-path))]
       [else
-        (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))]))
+       (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))]))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
     (define related-set (mutable-set))
     (define references-set (mutable-set))
 
-    (for/async ([addr (hash-ref meta-obj 'transclude)])
+    (for/async ([addr (hash-ref meta-obj 'transclude)]
+                #:when (non-local? addr))
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define ctx-set (list->set (hash-ref obj 'context '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->list (set-add ctx-set top-addr)))))
@@ -142,21 +143,22 @@
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr)))))
 
     (hash-set! addr-maps-to-metajson top-addr
-      (hash-set* meta-obj
-        'related (set->list related-set)
-        'references (set->list references-set))))
+               (hash-set* meta-obj
+                          'related (set->list related-set)
+                          'references (set->list references-set))))
   (for/async ([addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson addr))
     (define refs (list->mutable-set (hash-ref meta-obj 'references)))
 
-    (for/async ([addr (hash-ref meta-obj 'transclude)])
+    (for/async ([addr (hash-ref meta-obj 'transclude)]
+                #:when (non-local? addr))
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define references (hash-ref obj 'references))
       (for ([ref references])
         (set-add! refs ref)))
 
     (hash-set! addr-maps-to-metajson addr
-      (hash-set* meta-obj 'references (set->list refs))))
+               (hash-set* meta-obj 'references (set->list refs))))
 
   (for/async ([addr addr-list])
     (define new-meta (hash-ref addr-maps-to-metajson addr))
@@ -179,22 +181,20 @@
 
   ; produce/update <addr>.metadata.json
   (set-for-each metadata-changed
-    (λ (addr)
-      (define json (hash-ref addr-maps-to-metajson addr))
-      (printf "update ~a.metadata.json ~n" addr)
-      (json->file json (build-path "_tmp" (string-append addr ".metadata.json")))))
+                (λ (addr)
+                  (define json (hash-ref addr-maps-to-metajson addr))
+                  (printf "update ~a.metadata.json ~n" addr)
+                  (json->file json (build-path "_tmp" (string-append addr ".metadata.json")))))
 
   ; Use differential changes to mark precise neighbors for update
-  (hash-for-each metadata-changes
-    (λ (_ changes)
-      (hash-for-each changes
-        (λ (_ added-removed-pair)
-          (define added (car added-removed-pair))
-          (define removed (cdr added-removed-pair))
-          ; Mark newly added neighbors for update
-          (set-subtract! excludes added)
-          ; Mark removed neighbors for update (they need to clean up backlink style links)
-          (set-subtract! excludes removed)))))
+  (for* ([changes (in-hash-values metadata-changes)]
+         [(_ added-removed-pair) (in-hash changes)])
+    (define added (car added-removed-pair))
+    (define removed (cdr added-removed-pair))
+    ; Mark newly added neighbors for update
+    (set-subtract! excludes added)
+    ; Mark removed neighbors for update (they need to clean up backlink style links)
+    (set-subtract! excludes removed))
   (for/async ([addr addr-list]
               #:unless (set-member? excludes addr))
     (define obj (hash-ref addr-maps-to-metajson addr))
@@ -212,22 +212,22 @@
     (parameterize ([current-directory (dirname tex-path)]
                    [current-output-port (open-output-string "")])
       (system* (find-executable-path "latex")
-        "-halt-on-error"
-        "-interaction=nonstopmode"
-        (basename tex-path)))
+               "-halt-on-error"
+               "-interaction=nonstopmode"
+               (basename tex-path)))
 
     (define svg-path
       (string-replace (path->string (path-replace-extension tex-path #".svg"))
-        "_tmp"
-        (get-output-path)))
+                      "_tmp"
+                      (get-output-path)))
     (system* (find-executable-path "dvisvgm")
-      "--exact"
-      "--clipjoin"
-      "--font-format=woff"
-      "--bbox=papersize"
-      "--zoom=1.5"
-      "-o" svg-path
-      (path->string (path-replace-extension tex-path #".dvi"))))
+             "--exact"
+             "--clipjoin"
+             "--font-format=woff"
+             "--bbox=papersize"
+             "--zoom=1.5"
+             "-o" svg-path
+             (path->string (path-replace-extension tex-path #".dvi"))))
 
   (define typ-list (find-files (lambda (x) (path-has-extension? x #".typ")) "_tmp"))
   (for/async ([typ-path typ-list]
@@ -235,21 +235,24 @@
     (printf "compile ~a ~n" (path->string typ-path))
     (define svg-path
       (string-replace (path->string (path-replace-extension typ-path #".svg"))
-        "_tmp"
-        (get-output-path)))
+                      "_tmp"
+                      (get-output-path)))
     (make-directory* (dirname svg-path))
     (system* (find-executable-path "typst")
-      "compile"
-      "--format" "svg"
-      (path->string typ-path)
-      svg-path))
+             "compile"
+             "--format" "svg"
+             (path->string typ-path)
+             svg-path))
 
   (produce-search)
   (produce-rss))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors
-    (dict->procedure (hash-map/copy addr-maps-to-metajson (λ (addr json) (values addr (hash-ref json 'transclude '()))))))
+    (dict->procedure (hash-map/copy addr-maps-to-metajson
+                                    (λ (addr json)
+                                      (values addr
+                                              (filter non-local? (hash-ref json 'transclude '())))))))
 
   (define addr-list* (topological-sort addr-list neighbors))
   (define embed-cards (produce-scrbl addr-list* addr->path "embed"))

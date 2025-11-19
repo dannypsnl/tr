@@ -1,39 +1,40 @@
 #lang racket
 (provide
-  self-addr
+ self-addr
 
-  generate-toc
-  generate-context
-  generate-references
-  generate-backlinks
-  generate-related
+ generate-toc
+ generate-context
+ generate-references
+ generate-backlinks
+ generate-related
 
-  tree
+ tree
 
-  toc/depth
-  (rename-out [pre* pre]
-              [pre* bibtex]
-              [ignore title]
-              [ignore taxon]
-              [ignore date]
-              [ignore author]
-              [ignore author/literal]
-              [ignore doi]
-              [ignore orcid]
-              [ignore meta/text]
-              [ignore meta/link]
-              [ignore tm]
-              [ignore tr/code])
-  transclude
-  m mm tikzcd texfig typst
-  mention external
-  hentry
-  doctype
-  (except-out (all-from-out scribble/html/html) title pre)
-  (all-from-out scribble/html/extra)
-  summary
-  article
-  footer svg path)
+ toc/depth
+ (rename-out [pre* pre]
+             [pre* bibtex]
+             [ignore title]
+             [ignore taxon]
+             [ignore date]
+             [ignore author]
+             [ignore author/literal]
+             [ignore doi]
+             [ignore orcid]
+             [ignore meta/text]
+             [ignore meta/link]
+             [ignore tm]
+             [ignore tr/code])
+ transclude
+ tr/card
+ m mm tikzcd texfig typst
+ mention external
+ hentry
+ doctype
+ (except-out (all-from-out scribble/html/html) title pre)
+ (all-from-out scribble/html/extra)
+ summary
+ article
+ footer svg path)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -51,50 +52,65 @@
 (define (tr-h1 addr text taxon)
   (define url
     (if (string=? "index" addr)
-      "/"
-      (string-append "/" addr)))
+        "/"
+        (string-append "/" addr)))
   (define link-to-self (a 'class: "link-self" 'href: url 'target: "_parent" "[" addr "]"))
   (h1
-    (when taxon
-      (list (span 'class: "taxon" (string-append taxon ".")) " "))
-    text
-    " "
-    link-to-self))
+   (when taxon
+     (list (span 'class: "taxon" (string-append taxon ".")) " "))
+   text
+   " "
+   link-to-self))
 
 (define cached-metadata (make-hash))
 (define (fetch-metadata addr key [default #f])
   (if (hash-ref cached-metadata addr #f)
-    (hash-ref (hash-ref cached-metadata addr) key default)
-    (let ([json (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json")))])
-      (hash-set! cached-metadata addr json)
-      (hash-ref json key default))))
+      (hash-ref (hash-ref cached-metadata addr) key default)
+      (let ([json (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json")))])
+        (hash-set! cached-metadata addr json)
+        (hash-ref json key default))))
 (define (footer-common title key)
   (define addr-list (fetch-metadata (self-addr) key '()))
   (unless (empty? addr-list)
     (details 'open: #t 'id: (symbol->string key)
-      (summary (h1 title))
-      (for/list ([addr addr-list])
-        (tr-h1 addr (literal (fetch-metadata addr 'title)) (fetch-metadata addr 'taxon))))))
+             (summary (h1 title))
+             (for/list ([addr addr-list])
+               (tr-h1 addr (literal (fetch-metadata addr 'title)) (fetch-metadata addr 'taxon))))))
 (define (generate-context) (footer-common "Context" 'context))
 (define (generate-references) (footer-common "References" 'references))
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
 (define (generate-related) (footer-common "Related" 'related))
 
 (define (recur-toc addr depth)
-  (li (a 'class: "toc" 'href: (string-append "#" addr)
-    (literal (or (fetch-metadata addr 'title) addr))
-    (unless (= 0 depth)
-      (define entries (fetch-metadata addr 'transclude))
-      (unless (empty? entries)
-        (ol
-          (for/list ([addr entries])
-            (recur-toc addr (sub1 depth)))))))))
+  (cond
+    [(non-local? addr)
+     (li (a 'class: "toc" 'href: (string-append "#" addr)
+            (literal (or (fetch-metadata addr 'title) addr))
+            (unless (= 0 depth)
+              (define entries (fetch-metadata addr 'transclude))
+              (unless (empty? entries)
+                (ol
+                 (for/list ([addr entries])
+                   (recur-toc addr (sub1 depth))))))))]
+    [else
+     ; a local addr has form `addr:count`
+     (define locals (fetch-metadata (self-addr) 'locals))
+     (define idx (string->number (second (string-split addr ":"))))
+     (define metadata (list-ref locals idx))
+     (li (a 'class: "toc" 'href: (format "#~a" addr)
+            (literal (or (hash-ref metadata 'title) addr))
+            (unless (= 0 depth)
+              (define entries (hash-ref metadata 'transclude '()))
+              (unless (empty? entries)
+                (ol
+                 (for/list ([addr entries])
+                   (recur-toc addr (sub1 depth))))))))]))
 (define (generate-toc)
   (define entries (fetch-metadata (self-addr) 'transclude))
   (unless (empty? entries)
     (element 'nav 'id: "toc"
-      (h1 "Table of Contents")
-        (ol (for/list ([addr entries]) (recur-toc addr (sub1 (toc/depth))))))))
+             (h1 "Table of Contents")
+             (ol (for/list ([addr entries]) (recur-toc addr (sub1 (toc/depth))))))))
 
 (define (tree path)
   (define meta-queue (make-queue))
@@ -126,24 +142,45 @@
       (enqueue! meta-queue (li (a 'href: metalink 'target: "_blank" metalink)))))
 
   (details 'open: #t
-    (summary
-      (header
-        (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
-        (div 'class: "metadata"
-          (ul
-            (add-between (queue->list meta-queue) " · ")))))
-    (literal (file->string path))))
+           (summary
+            (header
+             (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
+             (div 'class: "metadata"
+                  (ul
+                   (add-between (queue->list meta-queue) " · ")))))
+           (literal (file->string path))))
 
 (define (transclude #:open [open? #t] addr)
   (details 'open: open? 'id: addr
-    (summary
-      (header
-        (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
-        (div 'class: "metadata"
-          (ul
-            (li (fetch-metadata addr 'date))
-            (li (fetch-metadata addr 'author))))))
-    (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
+           (summary
+            (header
+             (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
+             (div 'class: "metadata"
+                  (ul
+                   (li (fetch-metadata addr 'date))
+                   (li (fetch-metadata addr 'author))))))
+           (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
+
+(define card-counting 0)
+(define (tr/card . content)
+  (define locals (fetch-metadata (self-addr) 'locals '()))
+  (define local-metadata (list-ref locals card-counting))
+  (define title (hash-ref local-metadata 'title))
+  (define taxon (hash-ref local-metadata 'taxon))
+  (define addr (format "local-~a" card-counting))
+  (define location (format "~a:~a" (self-addr) card-counting))
+  (define link-to-self (a 'class: "link-self" 'href: (string-append "#" location) 'target: "_parent" "[" addr "]"))
+  (set! card-counting (add1 card-counting))
+  (details 'open: #t 'id: location
+           (summary
+            (header
+             (h1
+              (when taxon
+                (list (span 'class: "taxon" (string-append taxon ".")) " "))
+              title
+              " "
+              link-to-self))
+            content)))
 
 (define (pre* . content)
   (disable-prefix (pre (literal content))))
@@ -182,9 +219,9 @@
   (close-output-port tex)
 
   (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
-    (img 'class: "center"
-         'src: (string-append "/" (self-addr) "/" job-id ".svg")
-         'alt: (string-append "figure " job-id))))
+          (img 'class: "center"
+               'src: (string-append "/" (self-addr) "/" job-id ".svg")
+               'alt: (string-append "figure " job-id))))
 
 (define (tikzcd . formula)
   (define out (open-output-string))
@@ -203,9 +240,9 @@
   (close-output-port typ)
 
   (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
-    (img 'class: "center"
-      'src: (string-append "/" (self-addr) "/" job-id ".svg")
-      'alt: (string-append "figure " job-id))))
+          (img 'class: "center"
+               'src: (string-append "/" (self-addr) "/" job-id ".svg")
+               'alt: (string-append "figure " job-id))))
 
 (define (hentry description)
   (div 'class: "h-entry" 'hidden: #t (p 'class: "e-content" description)))

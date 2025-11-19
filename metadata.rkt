@@ -31,7 +31,32 @@
   (define content-queue (make-queue))
   (define meta-queue (make-queue))
   (define metalink-queue (make-queue))
+  (define local-cards-queue (make-queue))
 
+  (define (handle-card-form form transclude-queue)
+    (match form
+      [`(tr/card ,@forms)
+       (define local-card-title #f)
+       (define local-card-taxon #f)
+       (define local-transclude-queue (make-queue))
+       (for ([form forms])
+         (match form
+           ; These four must be take over to make sure metadata is correct
+           [`(title ,@forms) (set! local-card-title (for/list ([f forms]) (execute f)))]
+           [`(taxon ,text) (set! local-card-taxon text)]
+           [`(transclude ,addr) (enqueue! local-transclude-queue addr)]
+           [`(transclude ,@_ ,addr) (enqueue! local-transclude-queue addr)]
+           [`(tr/card ,@forms)
+            (handle-card-form `(tr/card ,@forms) local-transclude-queue)]
+           [form (handle-form form)]))
+       (enqueue! local-cards-queue
+                 (make-immutable-hash (list
+                                       (cons 'title local-card-title)
+                                       (cons 'taxon local-card-taxon)
+                                       (cons 'transclude (queue->list local-transclude-queue)))))
+
+       (enqueue! transclude-queue (format "~a:~a" addr (sub1 (queue-length local-cards-queue))))]
+      [t (handle-form t)]))
   (define (handle-form form)
     (match form
       [`(title ,@forms) (self-title (for/list ([f forms]) (execute f)))]
@@ -41,21 +66,22 @@
       [`(orcid ,text) (self-orcid text)]
       [`(author ,addr) (enqueue! author-queue addr)]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
-      [`(transclude ,addr) (enqueue! transclude-queue addr)]
-      [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
-      [`(mention ,addr) (enqueue! related-queue addr)]
-      [`(mention ,addr ,@_) (enqueue! related-queue addr)]
       [`(meta/text ,@forms) (enqueue! meta-queue (for/list ([f forms]) (execute f)))]
       [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
       [`(toc/depth ,num) (self-toc/depth num)]
+      [`(transclude ,addr) (enqueue! transclude-queue addr)]
+      [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
+      [`(mention ,addr) (enqueue! related-queue addr)]
+      [`(mention ,addr ,@_) (enqueue! related-queue addr)]
       [`(tr/code ,form) (void)]
       [`(tr/code ,@forms) (void)]
+      [`(tr/card ,@forms) (handle-card-form `(tr/card ,@forms) transclude-queue)]
       [t #:when (string? t)
-        (enqueue! content-queue t)]
+         (enqueue! content-queue t)]
       [`(,_ ,@forms)
-        (for ([form forms])
-          (handle-form form))]
+       (for ([form forms])
+         (handle-form form))]
       [_ (void)]))
 
   (define forms
@@ -70,24 +96,26 @@
   (define collected-text (string-join (queue->list content-queue) " "))
 
   (make-immutable-hash (list
-    (cons 'id addr)
-    (cons 'date (self-date))
-    (cons 'doi (self-doi))
-    (cons 'orcid (self-orcid))
-    (cons 'authors (queue->list author-queue))
-    (cons 'name-authors (queue->list literal-author-queue))
-    (cons 'title title)
-    (cons 'taxon taxon)
-    (cons 'text collected-text)
-    (cons 'toc/depth (self-toc/depth))
-    ; a list of addresses, later we should update context of these addresses
-    (cons 'transclude (queue->list transclude-queue))
-    ; a list of addresses, later we should split some of them to references, by checking taxon
-    (cons 'related (queue->list related-queue))
-    ; metadata entry: text
-    (cons 'meta (queue->list meta-queue))
-    ; metadata entry: external link
-    (cons 'metalink (queue->list metalink-queue)))))
+                        (cons 'id addr)
+                        (cons 'date (self-date))
+                        (cons 'doi (self-doi))
+                        (cons 'orcid (self-orcid))
+                        (cons 'authors (queue->list author-queue))
+                        (cons 'name-authors (queue->list literal-author-queue))
+                        (cons 'title title)
+                        (cons 'taxon taxon)
+                        (cons 'text collected-text)
+                        (cons 'toc/depth (self-toc/depth))
+                        ; a list of addresses, later we should update context of these addresses
+                        (cons 'transclude (queue->list transclude-queue))
+                        ; a list of addresses, later we should split some of them to references, by checking taxon
+                        (cons 'related (queue->list related-queue))
+                        ; metadata entry: text
+                        (cons 'meta (queue->list meta-queue))
+                        ; metadata entry: external link
+                        (cons 'metalink (queue->list metalink-queue))
+                        (cons 'locals (queue->list local-cards-queue))
+                        )))
 
 (define (compute-racket addr-path)
   (define forms
@@ -98,8 +126,8 @@
     (match form
       [`(tr/code ,text) (enqueue! content-queue text)]
       [`(tr/code ,@lst)
-        (for ([text lst])
-          (enqueue! content-queue text))]
+       (for ([text lst])
+         (enqueue! content-queue text))]
       [_ (void)]))
   (queue->list content-queue))
 
