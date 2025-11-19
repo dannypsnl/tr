@@ -83,24 +83,25 @@
 
 (define (recur-toc addr depth)
   (cond
-    [(non-local? addr)
-     (li (a 'class: "toc" 'href: (string-append "#" addr)
-            (literal (or (fetch-metadata addr 'title) addr))
-            (unless (= 0 depth)
-              (define entries (fetch-metadata addr 'transclude))
-              (unless (empty? entries)
-                (ol
-                 (for/list ([addr entries])
-                   (recur-toc addr (sub1 depth))))))))]
-    [else
+    [(string-contains? addr ":")
      ; a local addr has form `addr:count`
-     (define locals (fetch-metadata (self-addr) 'locals))
-     (define idx (string->number (second (string-split addr ":"))))
+     (define tmp (string-split addr ":"))
+     (define locals (fetch-metadata (first tmp) 'locals))
+     (define idx (string->number (second tmp)))
      (define metadata (list-ref locals idx))
      (li (a 'class: "toc" 'href: (format "#~a" addr)
             (literal (or (hash-ref metadata 'title) addr))
             (unless (= 0 depth)
               (define entries (hash-ref metadata 'transclude '()))
+              (unless (empty? entries)
+                (ol
+                 (for/list ([addr entries])
+                   (recur-toc addr (sub1 depth))))))))]
+    [else
+     (li (a 'class: "toc" 'href: (string-append "#" addr)
+            (literal (or (fetch-metadata addr 'title) addr))
+            (unless (= 0 depth)
+              (define entries (fetch-metadata addr 'transclude))
               (unless (empty? entries)
                 (ol
                  (for/list ([addr entries])
@@ -110,7 +111,8 @@
   (unless (empty? entries)
     (element 'nav 'id: "toc"
              (h1 "Table of Contents")
-             (ol (for/list ([addr entries]) (recur-toc addr (sub1 (toc/depth))))))))
+             (ol (for/list ([addr entries])
+                   (recur-toc addr (sub1 (toc/depth))))))))
 
 (define (tree path)
   (define meta-queue (make-queue))
