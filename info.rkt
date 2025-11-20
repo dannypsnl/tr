@@ -7,6 +7,7 @@
     "mischief"
     "argo"
     "file-watchers"
+    "at-exp-lib"
     "scribble-html-lib"
     "scribble-text-lib"))
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc"))
