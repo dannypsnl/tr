@@ -17,7 +17,7 @@
             (loop (+ sum (* place digit-value)) (* place base) (sub1 r))
             #f)))))
 
-(define (int->base36 number)  
+(define (int->base36 number)
   (define (convert n acc)
     (match n
       [0 acc]
