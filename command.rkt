@@ -120,7 +120,7 @@
    (with-output-to-file (format "content/ag/~a.scrbl" addr)
      (lambda () (printf "@disable-prefix{@include{../html/~a.html}}~n" addr)))
    (with-output-to-file (format "src/~a.lagda.md" addr)
-     (lambda () (void)))))
+     (lambda () (printf "```~nmodule ~a where~n```~n" addr)))))
 
 (define (run-tr-meta)
   (command-line
