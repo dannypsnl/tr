@@ -107,21 +107,6 @@
 
    (displayln (compute-next-addr prefix))))
 
-(define (run-tr-next-agda)
-  (command-line
-   #:program "tr next-agda"
-   #:usage-help "create next agda card"
-   #:args ()
-   (unless root-path (raise "You're not in a tr project"))
-
-   (define addr (compute-next-addr "ag"))
-   (make-directory* "content/ag/")
-   (make-directory* "src")
-   (with-output-to-file (format "content/ag/~a.scrbl" addr)
-     (lambda () (printf "@disable-prefix{@include{../html/~a.html}}~n" addr)))
-   (with-output-to-file (format "src/~a.lagda.md" addr)
-     (lambda () (printf "```~nmodule ~a where~n```~n" addr)))))
-
 (define (run-tr-meta)
   (command-line
    #:program "tr meta"
@@ -142,7 +127,6 @@
 \tbuild
 \twatch
 \tnext
-\tnext-agda
 \tmeta
 
 For help on these, use 'build --help', 'next --help', etc."
@@ -164,7 +148,6 @@ For help on these, use 'build --help', 'next --help', etc."
        ["build" (call-command run-tr-build)]
        ["watch" (call-command run-tr-watch)]
        ["next" (call-command run-tr-next)]
-       ["next-agda" (call-command run-tr-next-agda)]
        ["meta" (call-command run-tr-meta)]))))
 
 (module+ main
