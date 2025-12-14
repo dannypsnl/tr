@@ -82,6 +82,17 @@
 (define (generate-related) (footer-common "Related" 'related))
 
 (define (recur-toc addr depth)
+  (define (common-part taxon title entries)
+    (li (a 'class: "toc" 'href: (format "#~a" addr)
+           (when taxon
+             (span 'class: "taxon" (format "~a. " taxon)))
+           (literal (or title addr))
+           (unless (= 0 depth)
+             (unless (empty? entries)
+               (ol
+                (for/list ([addr entries])
+                  (recur-toc addr (sub1 depth)))))))))
+
   (cond
     [(string-contains? addr ":")
      ; a local addr has form `addr:count`
@@ -89,23 +100,13 @@
      (define locals (fetch-metadata (first tmp) 'locals))
      (define idx (string->number (second tmp)))
      (define metadata (list-ref locals idx))
-     (li (a 'class: "toc" 'href: (format "#~a" addr)
-            (literal (or (hash-ref metadata 'title) addr))
-            (unless (= 0 depth)
-              (define entries (hash-ref metadata 'transclude '()))
-              (unless (empty? entries)
-                (ol
-                 (for/list ([addr entries])
-                   (recur-toc addr (sub1 depth))))))))]
+     (common-part (hash-ref metadata 'taxon)
+                  (hash-ref metadata 'title)
+                  (hash-ref metadata 'transclude '()))]
     [else
-     (li (a 'class: "toc" 'href: (string-append "#" addr)
-            (literal (or (fetch-metadata addr 'title) addr))
-            (unless (= 0 depth)
-              (define entries (fetch-metadata addr 'transclude))
-              (unless (empty? entries)
-                (ol
-                 (for/list ([addr entries])
-                   (recur-toc addr (sub1 depth))))))))]))
+     (common-part (fetch-metadata addr 'taxon)
+                  (fetch-metadata addr 'title)
+                  (fetch-metadata addr 'transclude))]))
 (define (generate-toc)
   (define entries (fetch-metadata (self-addr) 'transclude))
   (unless (empty? entries)
