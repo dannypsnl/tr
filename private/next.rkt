@@ -9,13 +9,12 @@
   (let loop ([sum 0]
              [place 1]
              [r (sub1 len)])
-    (if (< r 0)
-        sum
-        (let* ([x (string-ref text r)]
-               [digit-value (string-find alphabet (build-string 1 (λ (_) x)))])
-          (if digit-value
-            (loop (+ sum (* place digit-value)) (* place base) (sub1 r))
-            #f)))))
+    (cond
+      [(< r 0) sum]
+      [else
+       (define x (string-ref text r))
+       (define digit-value (string-find alphabet (build-string 1 (λ (_) x))))
+       (and digit-value (loop (+ sum (* place digit-value)) (* place base) (sub1 r)))])))
 
 (define (int->base36 number)
   (define (convert n acc)
@@ -28,8 +27,8 @@
   (define (pad-zeros str len)
     (define str-len (string-length str))
     (if (< str-len len)
-      (string-append (make-string (- len str-len) #\0) str)
-      str))
+        (string-append (make-string (- len str-len) #\0) str)
+        str))
 
   (pad-zeros (convert number "") 4))
 
