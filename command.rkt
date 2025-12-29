@@ -6,7 +6,8 @@
          "private/config.rkt"
          "build.rkt"
          "metadata.rkt")
-(require racket/logging)
+(require racket/logging
+         racket/random)
 
 (define (find-root-dir dir)
   (if (string=? "/" (path->string dir))
@@ -82,7 +83,7 @@
            (λ (_)
              (void))))))
 
-(define (compute-next-addr prefix)
+(define (compute-next-addr prefix random?)
   (define scrbl-list
     (find-files
      (λ (path)
@@ -96,16 +97,30 @@
       (define n (base36->int number-text))
       ; if not a number, we use 0 as value
       (if n n 0)))
-  (define max-num (apply max (cons -1 numbers)))
-  (string-append prefix "-" (int->base36 (add1 max-num))))
+  (define max-num (apply max -1 numbers))
+  (define numbers-set (list->set numbers))
+  (define suffix
+    (cond
+      [random?
+       (int->base36
+        (random-ref (sequence-filter (lambda (x) (not (set-member? numbers-set x))) (in-inclusive-range 0 1679615))))]
+      ; usual mode: compute new max number
+      [else (int->base36 (add1 max-num))]))
+  (cond
+    [(non-empty-string? prefix) (string-append prefix "-" suffix)]
+    [else suffix]))
 (define (run-tr-next)
+  (define random? #f)
+
   (command-line
    #:program "tr next"
    #:usage-help "compute next address for <prefix>"
+   #:once-each
+   [("--random") "Use not default configuration" (set! random? #t)]
    #:args (prefix)
    (unless root-path (raise "You're not in a tr project"))
 
-   (displayln (compute-next-addr prefix))))
+   (displayln (compute-next-addr prefix random?))))
 
 (define (run-tr-meta)
   (command-line
