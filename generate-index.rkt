@@ -43,8 +43,7 @@
            (common-share #:title title
                          #:fedi-validation (if fedi
                                                (link 'rel: "me"
-                                                     'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle))
-                                                     "Mastodon")
+                                                     'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle)))
                                                #f)
                          (div 'class: "top-wrapper"
                               (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
