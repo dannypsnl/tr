@@ -10,22 +10,20 @@
          racket/random)
 
 (define (find-root-dir dir)
-  (if (string=? "/" (path->string dir))
-      #f
-      (if (directory-exists? (build-path dir "content"))
-          dir
-          (find-root-dir (string->path (dirname dir))))))
+  (cond
+    [(string=? "/" (path->string dir)) #f]
+    [(directory-exists? (build-path dir "content")) dir]
+    [else (find-root-dir (string->path (dirname dir)))]))
 
 (define (copy-directory-recursively source-dir target-dir)
   (make-directory* target-dir)
-  (for ([item (directory-list source-dir)])
-    (if (string=? ".git" (path->string item))
-        (void)
-        (let ([source-path (build-path source-dir item)]
-              [target-path (build-path target-dir item)])
-          (if (directory-exists? source-path)
-              (copy-directory-recursively source-path target-path)
-              (copy-file source-path target-path #t))))))
+  (for ([item (directory-list source-dir)]
+        #:unless (string=? ".git" (path->string item)))
+    (define source-path (build-path source-dir item))
+    (define target-path (build-path target-dir item))
+    (if (directory-exists? source-path)
+        (copy-directory-recursively source-path target-path)
+        (copy-file source-path target-path #t))))
 
 (define (run-tr-init)
   (command-line

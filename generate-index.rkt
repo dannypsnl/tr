@@ -41,19 +41,18 @@
           [(root? addr)
            (define fedi (get-config 'fedi #f))
            (common-share #:title title
-                         #:fedi-validation (if fedi
-                                               (link 'rel: "me"
-                                                     'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle)))
-                                               #f)
+                         #:fedi-validation (and fedi
+                                                (link 'rel: "me"
+                                                      'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle))))
                          (div 'class: "top-wrapper"
                               (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
           [else
            (define fedi (get-config 'fedi #f))
            (common-share #:title title
-                         #:fedi-signature (if fedi
-                                              (meta 'name: "fediverse:creator"
-                                                    'content: (format "@~a@~a" (hash-ref fedi 'handle) (hash-ref fedi 'site)))
-                                              #f)
+                         #:fedi-signature
+                         (and fedi
+                              (meta 'name: "fediverse:creator"
+                                    'content: (format "@~a@~a" (hash-ref fedi 'handle) (hash-ref fedi 'site))))
                          (div 'class: "top-wrapper"
                               (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
                               (generate-toc))
