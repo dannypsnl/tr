@@ -44,7 +44,7 @@
     (when (= (modulo i 10) 0)
       (displayln (format "  complete ~a/~a..." i times))))
 
-  (define avg (/ (apply + times-list) times))
+  (define avg (exact->inexact (/ (apply + times-list) times)))
   (define min-time (apply min times-list))
   (define max-time (apply max times-list))
 
