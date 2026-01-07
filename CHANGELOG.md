@@ -6,12 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.2] - 2026-01-07
+
 ### Added
+- KaTeX service (port `8765`) to improve LaTeX rendering performance (2026-01-07)
 - Fediverse site validation and signature support (2026-01-07)
 - Flag `--random` for `raco tr next` command (2025-12-29)
 - TOC entry construction with taxon hint (2025-12-14)
 
 ### Changed
+- Switch from `deno eval` to HTTP service for KaTeX rendering (significant performance improvement) (2026-01-07)
+- Copy file-watchers source code as temporary fix (2026-01-07)
 - Apply suggestions from linter (2026-01-07)
 - Remove body in link (2026-01-07)
 - Apply suggestions from language server (2025-12-29)
