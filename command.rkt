@@ -1,7 +1,7 @@
 #lang racket
 (require dirname
          json
-         file-watchers)
+         "file-watchers/main.rkt")
 (require "private/next.rkt"
          "private/config.rkt"
          "build.rkt"

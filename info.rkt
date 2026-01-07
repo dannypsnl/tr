@@ -6,7 +6,6 @@
     "gregor-lib"
     "mischief"
     "argo"
-    "file-watchers"
     "at-exp-lib"
     "scribble-html-lib"
     "scribble-text-lib"))
