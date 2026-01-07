@@ -1,5 +1,6 @@
 #lang racket
 (provide search-and-build)
+(require racket/runtime-path)
 (require dirname
          mischief/dict
          mischief/sort
@@ -9,6 +10,8 @@
          "private/config.rkt"
          "private/rss.rkt"
          "generate-index.rkt")
+
+(define-runtime-path katex-service "katex-service.ts")
 
 (define (embed-header addr content)
   (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
@@ -60,6 +63,9 @@
   (close-output-port out))
 
 (define (search-and-build dir)
+  (match-define (list _stdout _stdin _pid _stderr stop-katex-service)
+    (process* (find-executable-path "deno") "run" "--allow-net" katex-service))
+
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define addr->path (make-hash))
   (define addr-list
@@ -245,7 +251,9 @@
              svg-path))
 
   (produce-search)
-  (produce-rss))
+  (produce-rss)
+
+  (stop-katex-service 'kill))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors

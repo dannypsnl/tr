@@ -3,7 +3,8 @@
  file->json json->file
  non-local?
  m mm)
-(require json)
+(require json
+         net/http-easy)
 
 (define (file->json path)
   (define in (open-input-file path))
@@ -15,20 +16,18 @@
   (write-json json out)
   (close-output-port out))
 
-(define (m formula)
-  (define js-code
-    (format
-     "import katex from \"npm:katex\"; let html = katex.renderToString(~s, { throwOnError: false }); console.log(html)"
-     formula))
-  (with-output-to-string (λ () (system* (find-executable-path "deno") "eval" js-code))))
+(define (latex->html tex #:display? [display? #f])
+  (bytes->string/utf-8
+   (response-body
+    (post "http://localhost:8765"
+          #:data tex
+          #:headers (hash 'Display-Mode
+                          (if display? "true" "false"))))))
 
+(define (m formula) (latex->html formula))
 (define (mm . forms)
   (define formula (apply string-append forms))
-  (define js-code
-    (format
-     "import katex from \"npm:katex\"; let html = katex.renderToString(~s, { throwOnError: false, displayMode: true }); console.log(html)"
-     formula))
-  (with-output-to-string (λ () (system* (find-executable-path "deno") "eval" js-code))))
+  (latex->html formula #:display? #t))
 
 (define (non-local? addr)
   (not (string-contains? addr ":")))
