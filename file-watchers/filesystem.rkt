@@ -48,7 +48,7 @@
 (define (ls path)
   (directory-list path #:build? #t))
 
-(module+ test-lib
+(module+ test
   (require rackunit)
   (provide
     (contract-out
