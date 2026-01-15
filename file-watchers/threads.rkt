@@ -50,7 +50,7 @@
   (values (apply prefix-reporter (append (list report-change) head))
           (apply prefix-reporter (append (list report-status) head))))
 
-(module+ test-lib
+(module+ test
   (provide
     (contract-out
       [set-alarm       (->* () (positive-integer?) evt?)]
