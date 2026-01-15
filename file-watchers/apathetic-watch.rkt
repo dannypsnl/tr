@@ -33,8 +33,8 @@
 (module+ test
   (require
     rackunit
-    (submod "./filesystem.rkt" test-lib)
-    (submod "./threads.rkt" test-lib))
+    (submod "./filesystem.rkt" test)
+    (submod "./threads.rkt" test))
 
     (test-case
       "Apathetic watch on directory"
