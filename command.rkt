@@ -42,7 +42,7 @@
                     (title . "your site title")
                     (description . "your site description"))))
        (write-json x out)))
-   (system* (find-executable-path "git") "clone" "https://git.sr.ht/~dannypsnl/tr-assets" "assets")
+   (system* (find-executable-path "git") "clone" "https://codeberg.org/dannypsnl/tr-assets.git" "assets")
    (system* (find-executable-path "git") "init")
    (make-directory* "content/post")
    (displayln "init done")))
