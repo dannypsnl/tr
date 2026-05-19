@@ -13,8 +13,6 @@
          "private/rss.rkt"
          "generate-index.rkt")
 
-(define-runtime-path katex-service "katex-service.ts")
-
 (define (embed-header addr content)
   (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
   (format "#lang scribble/text
@@ -67,8 +65,6 @@
 
 (define (search-and-build dir)
   (reset-metadata-cache!)
-  (match-define (list _stdout _stdin _pid _stderr stop-katex-service)
-    (process* (find-executable-path "deno") "run" "--allow-net" katex-service))
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define addr->path (make-hash))
@@ -255,9 +251,7 @@
              svg-path))
 
   (produce-search)
-  (produce-rss)
-
-  (stop-katex-service 'kill))
+  (produce-rss))
 
 (define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
   (define neighbors

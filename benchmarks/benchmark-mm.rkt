@@ -68,10 +68,10 @@
       [(= b 0) (bytes->string/utf-8 (get-output-bytes out))]
       [else (write-byte b out) (loop)])))
 
-(define (make-stdio-fn stdin-port stdout-port)
+(define (make-stdio-fn stdin-port stdout-port [prefix ""])
   (lambda forms
     (define formula (apply string-append forms))
-    (fprintf stdin-port "~a\n" formula)
+    (fprintf stdin-port "~a~a\n" prefix formula)
     (flush-output stdin-port)
     (read-until-null stdout-port)))
 (define (run-benchmarks)
@@ -178,12 +178,12 @@
   (stop-katex-service-node 'kill)
   (sleep 0.5)
 
-  (define (run-stdio-benchmark label exe . args)
+  (define (run-stdio-benchmark label exe #:prefix [prefix ""] . args)
     (displayln "\n========================================")
     (displayln (format "Starting ~a stdio worker..." label))
     (match-define (list s-out s-in _pid _err stop-worker)
       (apply process* (find-executable-path exe) args))
-    (define mm-stdio (make-stdio-fn s-in s-out))
+    (define mm-stdio (make-stdio-fn s-in s-out prefix))
 
     (displayln (format "\nChecking ~a stdio worker..." label))
     (let loop ([retries 20])
@@ -209,8 +209,8 @@
     (stop-worker 'kill)
     (sleep 0.2))
 
-  (run-stdio-benchmark "deno" "deno" "run" katex-stdio-deno)
-  (run-stdio-benchmark "bun"  "bun"  "run" katex-stdio-bun)
+  (run-stdio-benchmark "deno" "deno" #:prefix "d" "run" katex-stdio-deno)
+  (run-stdio-benchmark "bun"  "bun"  #:prefix "d" "run" katex-stdio-bun)
   (run-stdio-benchmark "node" "node" katex-stdio-node)
 
   (displayln "\n========================================")
