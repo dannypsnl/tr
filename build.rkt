@@ -1,11 +1,13 @@
 #lang racket
 (provide search-and-build)
-(require racket/runtime-path)
+(require racket/runtime-path
+         racket/rerequire)
 (require dirname
          mischief/dict
          mischief/sort
          argo/equal)
-(require "metadata.rkt"
+(require "card.rkt"
+         "metadata.rkt"
          "private/common.rkt"
          "private/config.rkt"
          "private/rss.rkt"
@@ -58,11 +60,13 @@
   (define target (final-card-target-path c))
 
   (define out (open-output-file #:exists 'truncate/replace target))
-  (parameterize ([current-output-port out])
-    (system* (find-executable-path "racket") src))
+  (parameterize ([current-output-port out]
+                 [card-counting 0])
+    (dynamic-rerequire (path->complete-path src)))
   (close-output-port out))
 
 (define (search-and-build dir)
+  (reset-metadata-cache!)
   (match-define (list _stdout _stdin _pid _stderr stop-katex-service)
     (process* (find-executable-path "deno") "run" "--allow-net" katex-service))
 
@@ -262,11 +266,11 @@
                                       (values addr
                                               (filter non-local? (hash-ref json 'transclude '())))))))
 
-  (define addr-list* (topological-sort addr-list neighbors))
+  (define addr-list* (remove-duplicates (topological-sort addr-list neighbors)))
   (define embed-cards (produce-scrbl addr-list* addr->path "embed"))
 
-  (for/async ([c embed-cards]
-              #:unless (set-member? excludes (final-card-addr c)))
+  (for ([c embed-cards]
+        #:unless (set-member? excludes (final-card-addr c)))
     (printf "generate ~a.embed.html ~n" (final-card-addr c))
     (produce-html c)))
 

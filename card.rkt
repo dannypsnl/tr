@@ -26,6 +26,8 @@
              [ignore tr/code])
  transclude
  tr/card
+ card-counting
+ reset-metadata-cache!
  m mm tikzcd texfig typst
  mention external
  hentry
@@ -63,6 +65,7 @@
    link-to-self))
 
 (define cached-metadata (make-hash))
+(define (reset-metadata-cache!) (hash-clear! cached-metadata))
 (define (fetch-metadata addr key [default #f])
   (if (hash-ref cached-metadata addr #f)
       (hash-ref (hash-ref cached-metadata addr) key default)
@@ -164,16 +167,17 @@
                    (li (fetch-metadata addr 'author))))))
            (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
 
-(define card-counting 0)
+(define card-counting (make-parameter 0))
 (define (tr/card . content)
+  (define cc (card-counting))
   (define locals (fetch-metadata (self-addr) 'locals '()))
-  (define local-metadata (list-ref locals card-counting))
+  (define local-metadata (list-ref locals cc))
   (define title (hash-ref local-metadata 'title))
   (define taxon (hash-ref local-metadata 'taxon))
-  (define addr (format "local-~a" card-counting))
-  (define location (format "~a:~a" (self-addr) card-counting))
+  (define addr (format "local-~a" cc))
+  (define location (format "~a:~a" (self-addr) cc))
   (define link-to-self (a 'class: "link-self" 'href: (string-append "#" location) 'target: "_parent" "[" addr "]"))
-  (set! card-counting (add1 card-counting))
+  (card-counting (add1 cc))
   (details 'open: #t 'id: location
            (summary
             (header
