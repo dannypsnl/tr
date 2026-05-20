@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.3] 2026-05-19
+
+### Changed
+
+- Use stdio so katex service no longer takes port `8765`
+- Use `dynamic-rerequire` instead of spawn a `racket` process speed up about 13 times
+
 ## [1.2] - 2026-01-07
 
 ### Added
