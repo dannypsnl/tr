@@ -3,6 +3,12 @@ import katex from "katex";
 const decoder = new TextDecoder();
 let buffer = "";
 
+function writeAll(data: string | Uint8Array): Promise<void> {
+  return new Promise((resolve, reject) => {
+    process.stdout.write(data, (err) => err ? reject(err) : resolve());
+  });
+}
+
 for await (const chunk of process.stdin) {
   buffer += decoder.decode(chunk);
   let nl;
@@ -14,7 +20,7 @@ for await (const chunk of process.stdin) {
       throwOnError: false,
       displayMode: display
     });
-    process.stdout.write(html);
-    process.stdout.write("\0");
+    await writeAll(html);
+    await writeAll("\0");
   }
 }

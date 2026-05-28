@@ -2,6 +2,7 @@ import katex from "npm:katex";
 
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
+const writer = Deno.stdout.writable.getWriter();
 let buffer = "";
 
 for await (const chunk of Deno.stdin.readable) {
@@ -15,7 +16,7 @@ for await (const chunk of Deno.stdin.readable) {
       throwOnError: false,
       displayMode: display
     });
-    await Deno.stdout.write(encoder.encode(html));
-    await Deno.stdout.write(new Uint8Array([0]));
+    await writer.write(encoder.encode(html));
+    await writer.write(new Uint8Array([0]));
   }
 }
