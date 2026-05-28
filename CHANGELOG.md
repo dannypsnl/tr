@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## Changed
+
+- Use JSON marshal to get correct formula and provide flag
+
 ## [1.3] 2026-05-19
 
 ### Changed

@@ -9,11 +9,10 @@ for await (const chunk of process.stdin) {
   while ((nl = buffer.indexOf("\n")) !== -1) {
     const line = buffer.slice(0, nl);
     buffer = buffer.slice(nl + 1);
-    const displayMode = line[0] === "d";
-    const formula = line.slice(1);
-    const html = katex.renderToString(formula, {
+    const { display, tex } = JSON.parse(line);
+    const html = katex.renderToString(tex, {
       throwOnError: false,
-      displayMode
+      displayMode: display
     });
     process.stdout.write(html);
     process.stdout.write("\0");

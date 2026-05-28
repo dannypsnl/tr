@@ -46,7 +46,8 @@
    katex-worker-lock
    (lambda ()
      (unless katex-worker-ctrl (start-katex-worker!))
-     (fprintf katex-worker-stdin "~a~a\n" (if display? "d" "i") tex)
+     (write-json (hash 'display display? 'tex tex) katex-worker-stdin)
+     (newline katex-worker-stdin)
      (flush-output katex-worker-stdin)
      (read-until-null katex-worker-stdout))))
 
