@@ -6,8 +6,8 @@
   (define formula (apply string-append forms))
   (define js-code
     (format
-     "import katex from \"katex\"; let html = katex.renderToString(~s, { throwOnError: false, displayMode: true }); console.log(html)"
-     formula))
+      "import katex from \"katex\"; let html = katex.renderToString(~s, { throwOnError: false, displayMode: true }); console.log(html)"
+      formula))
   (with-output-to-string (λ () (system* (find-executable-path "bun") "-e" js-code))))
 
 (define test-formulas
@@ -107,7 +107,7 @@
     (sleep 0.2))
 
   (run-stdio-benchmark "deno" "deno" #:prefix "d" "run" katex-stdio-deno)
-  (run-stdio-benchmark "bun"  "bun"  #:prefix "d" "run" katex-stdio-bun)
+  (run-stdio-benchmark "bun" "bun" #:prefix "d" "run" katex-stdio-bun)
 
   (displayln "\n========================================")
   (displayln "Test Complete!"))

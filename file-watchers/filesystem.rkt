@@ -6,15 +6,15 @@
 
 (provide
   (contract-out
-    [path-on-disk?                      (-> path? boolean?)]
-    [recursive-file-list                (->* () (directory-exists? procedure?) (listof path?))]
-    [transparent-filesystem-change-evt  (-> path? evt?)]
-    [bulk-filesystem-change-evt         (->* () ((listof path?)) evt?)]
-    [file-kind                          (-> path? symbol?)]
-    [ls                                 (-> directory-exists? (listof path?))]))
+    [path-on-disk? (-> path? boolean?)]
+    [recursive-file-list (->* () (directory-exists? procedure?) (listof path?))]
+    [transparent-filesystem-change-evt (-> path? evt?)]
+    [bulk-filesystem-change-evt (->* () ((listof path?)) evt?)]
+    [file-kind (-> path? symbol?)]
+    [ls (-> directory-exists? (listof path?))]))
 
 
-;; ------------------------------------------------------------------ 
+;; ------------------------------------------------------------------
 ;; Implementation
 
 (require
@@ -57,8 +57,8 @@
 
   (define (create-file path [data ""])
     (with-output-to-file #:exists 'truncate
-                         path
-                         (lambda () (displayln data))))
+      path
+      (lambda () (displayln data))))
 
   (define (create-temp-directory)
     (define p (make-temporary-file))

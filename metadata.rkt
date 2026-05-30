@@ -51,9 +51,9 @@
            [form (handle-form form)]))
        (enqueue! local-cards-queue
                  (make-immutable-hash (list
-                                       (cons 'title local-card-title)
-                                       (cons 'taxon local-card-taxon)
-                                       (cons 'transclude (queue->list local-transclude-queue)))))
+                                        (cons 'title local-card-title)
+                                        (cons 'taxon local-card-taxon)
+                                        (cons 'transclude (queue->list local-transclude-queue)))))
 
        (enqueue! transclude-queue (format "~a:~a" addr (sub1 (queue-length local-cards-queue))))]
       [t (handle-form t)]))
@@ -78,7 +78,7 @@
       [`(tr/code ,@forms) (void)]
       [`(tr/card ,@forms) (handle-card-form `(tr/card ,@forms) transclude-queue)]
       [t #:when (string? t)
-         (enqueue! content-queue t)]
+       (enqueue! content-queue t)]
       [`(,_ ,@forms)
        (for ([form forms])
          (handle-form form))]
@@ -96,26 +96,26 @@
   (define collected-text (string-join (queue->list content-queue) " "))
 
   (make-immutable-hash (list
-                        (cons 'id addr)
-                        (cons 'date (self-date))
-                        (cons 'doi (self-doi))
-                        (cons 'orcid (self-orcid))
-                        (cons 'authors (queue->list author-queue))
-                        (cons 'name-authors (queue->list literal-author-queue))
-                        (cons 'title title)
-                        (cons 'taxon taxon)
-                        (cons 'text collected-text)
-                        (cons 'toc/depth (self-toc/depth))
-                        ; a list of addresses, later we should update context of these addresses
-                        (cons 'transclude (queue->list transclude-queue))
-                        ; a list of addresses, later we should split some of them to references, by checking taxon
-                        (cons 'related (queue->list related-queue))
-                        ; metadata entry: text
-                        (cons 'meta (queue->list meta-queue))
-                        ; metadata entry: external link
-                        (cons 'metalink (queue->list metalink-queue))
-                        (cons 'locals (queue->list local-cards-queue))
-                        )))
+                         (cons 'id addr)
+                         (cons 'date (self-date))
+                         (cons 'doi (self-doi))
+                         (cons 'orcid (self-orcid))
+                         (cons 'authors (queue->list author-queue))
+                         (cons 'name-authors (queue->list literal-author-queue))
+                         (cons 'title title)
+                         (cons 'taxon taxon)
+                         (cons 'text collected-text)
+                         (cons 'toc/depth (self-toc/depth))
+                         ; a list of addresses, later we should update context of these addresses
+                         (cons 'transclude (queue->list transclude-queue))
+                         ; a list of addresses, later we should split some of them to references, by checking taxon
+                         (cons 'related (queue->list related-queue))
+                         ; metadata entry: text
+                         (cons 'meta (queue->list meta-queue))
+                         ; metadata entry: external link
+                         (cons 'metalink (queue->list metalink-queue))
+                         (cons 'locals (queue->list local-cards-queue))
+                         )))
 
 (define (compute-racket addr-path)
   (define forms

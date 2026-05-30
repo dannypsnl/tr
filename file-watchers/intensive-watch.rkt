@@ -5,9 +5,9 @@
 
 (provide
   (contract-out
-    [intensive-watch  (->* () (path-on-disk?) thread?)]))
+    [intensive-watch (->* () (path-on-disk?) thread?)]))
 
-;; ------------------------------------------------------------------ 
+;; ------------------------------------------------------------------
 ;; Implementation
 
 (require
@@ -44,25 +44,25 @@
   (define (shutdown) (report-status 'thread-done path))
   (thread
     (lambda () (let loop ()
-      (with-handlers ([exn:fail? (lambda (ex) (shutdown))])
-        (sync/enable-break (filesystem-change-evt path))
-        (if (file-exists? path)
-          (begin
-            (report-activity 'change path)
-            (loop))
-          (shutdown)))))))
+                 (with-handlers ([exn:fail? (lambda (ex) (shutdown))])
+                   (sync/enable-break (filesystem-change-evt path))
+                   (if (file-exists? path)
+                       (begin
+                         (report-activity 'change path)
+                         (loop))
+                       (shutdown)))))))
 
 (define (monitor-directory path)
   (thread
     (λ ()
       (let loop ([listing-memo '()] [should-signal #f])
         (if (directory-exists? path)
-          (with-handlers ([exn:fail:filesystem? (lambda (ex) (stop-monitoring-directory path))])
-            (let ([next-listing (ls path)])
-              (respond-to-listing-change listing-memo next-listing should-signal)
-              (sync/enable-break (filesystem-change-evt path))
-              (loop next-listing #t)))
-          (stop-monitoring-directory path))))))
+            (with-handlers ([exn:fail:filesystem? (lambda (ex) (stop-monitoring-directory path))])
+              (let ([next-listing (ls path)])
+                (respond-to-listing-change listing-memo next-listing should-signal)
+                (sync/enable-break (filesystem-change-evt path))
+                (loop next-listing #t)))
+            (stop-monitoring-directory path))))))
 
 (define (stop-monitoring-directory path)
   (unless (directory-exists? path) (report-activity 'remove path))

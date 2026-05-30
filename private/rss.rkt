@@ -21,12 +21,12 @@
 
   (define (itemize items)
     (add-between (for/list ([meta-object items])
-                    (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
-                    (item
-                      (title (hash-ref meta-object 'title))
-                      (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
-                      (description (file->string (string-append "_tmp/" (hash-ref meta-object 'id) ".embed.html")))
-                      (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
+                   (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
+                   (item
+                     (title (hash-ref meta-object 'title))
+                     (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
+                     (description (file->string (string-append "_tmp/" (hash-ref meta-object 'id) ".embed.html")))
+                     (pubDate (~t pub-date "EEE, dd MMM yyyy HH:mm:ss +0800"))))
                  "\n"))
   (define addrs
     (sort
@@ -47,8 +47,8 @@
   ~a
 </channel>
 </rss>
-" site-title 
-  site-url
-  site-description
-  (xml->string (itemize addrs)))
+" site-title
+           site-url
+           site-description
+           (xml->string (itemize addrs)))
   (close-output-port out))
