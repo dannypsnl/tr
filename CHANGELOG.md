@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- improve build cache, stop rebuilding unchanged card, and recover from partial output (e.g. metadata exists but embed HTMLs gone)
+
 ## [1.3.1] 2026-05-28
 
 ### Changed

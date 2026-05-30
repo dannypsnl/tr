@@ -1,5 +1,6 @@
 #lang racket
 (provide root?
+         index-output-path
          produce-indexes)
 (require scribble/html/html
          scribble/html/extra
@@ -17,6 +18,11 @@
 (define (root? addr)
   (string=? addr "index"))
 
+(define (index-output-path addr)
+  (if (root? addr)
+      (build-path (get-output-path) "index.html")
+      (build-path (get-output-path) addr "index.html")))
+
 (define (produce-indexes addr-list excludes addr-maps-to-metajson)
   (for ([addr addr-list]
         #:unless (set-member? excludes addr))
@@ -24,10 +30,7 @@
     (define output-dir (build-path (get-output-path) addr))
     (make-directory* output-dir)
     (define out
-      (open-output-file #:exists 'truncate/replace
-                        (if (root? addr)
-                            (build-path (get-output-path) "index.html")
-                            (build-path (get-output-path) addr "index.html"))))
+      (open-output-file #:exists 'truncate/replace (index-output-path addr)))
 
     (define metaobj (hash-ref addr-maps-to-metajson addr))
     (define title (hash-ref metaobj 'title))

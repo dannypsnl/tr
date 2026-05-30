@@ -13,6 +13,12 @@
          "private/rss.rkt"
          "generate-index.rkt")
 
+; set->list has no stable order, so serializing it directly makes metadata
+; changed every build and the detector keeps re-flagging the addr. Use
+; sorted list to avoid that.
+(define (set->sorted-list s)
+  (sort (set->list s) string<?))
+
 (define (embed-header addr content)
   (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
   (format "#lang scribble/text
@@ -93,13 +99,27 @@
 
   (define excludes (mutable-set))
 
-  ; exclude files those no change
+  ; exclude unchanged files - but only when the addr's outputs are all present,
+  ; otherwise a partial/interrupted build (metadata.json present, html missing)
+  ; keeps the addr excluded every build and the page never comes back
+  ; cause `raco tr` crash eventually and cannot recover the build
   (for/async ([addr addr-list])
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (when (file-exists? meta-path)
-      (when (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
-               (file-or-directory-modify-seconds meta-path))
-        (set-add! excludes addr))))
+    (when (and (file-exists? meta-path)
+               (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
+                  (file-or-directory-modify-seconds meta-path))
+               (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
+               (file-exists? (index-output-path addr)))
+      (set-add! excludes addr)))
+  ; tex/typ graphics live under _tmp; if a leftover source's svg is gone from the
+  ; output dir, its owning addr must be rebuilt too
+  (for ([gfx (append (find-files (λ (p) (path-has-extension? p #".tex")) "_tmp")
+                     (find-files (λ (p) (path-has-extension? p #".typ")) "_tmp"))])
+    (define svg-path
+      (string-replace (path->string (path-replace-extension gfx #".svg"))
+                      "_tmp" (get-output-path)))
+    (unless (file-exists? svg-path)
+      (set-remove! excludes (basename (dirname gfx)))))
   ; record all metadata
   (define addr-maps-to-metajson (make-hash))
   ; record their differential updates
@@ -135,23 +155,23 @@
                 #:when (non-local? addr))
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define ctx-set (list->set (hash-ref obj 'context '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->list (set-add ctx-set top-addr)))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->sorted-list (set-add ctx-set top-addr)))))
     (for/async ([addr (hash-ref meta-obj 'related)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->sorted-list (set-add links-set top-addr))))
       (match (hash-ref obj 'taxon)
         ["Reference" (set-add! references-set addr)]
         [_ (set-add! related-set addr)]))
     (for/async ([addr (hash-ref meta-obj 'authors)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
-      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->list (set-add links-set top-addr)))))
+      (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->sorted-list (set-add links-set top-addr)))))
 
     (hash-set! addr-maps-to-metajson top-addr
                (hash-set* meta-obj
-                          'related (set->list related-set)
-                          'references (set->list references-set))))
+                          'related (set->sorted-list related-set)
+                          'references (set->sorted-list references-set))))
   (for/async ([addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson addr))
     (define refs (list->mutable-set (hash-ref meta-obj 'references)))
@@ -164,7 +184,7 @@
         (set-add! refs ref)))
 
     (hash-set! addr-maps-to-metajson addr
-               (hash-set* meta-obj 'references (set->list refs))))
+               (hash-set* meta-obj 'references (set->sorted-list refs))))
 
   (for/async ([addr addr-list])
     (define new-meta (hash-ref addr-maps-to-metajson addr))
