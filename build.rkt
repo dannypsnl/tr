@@ -11,6 +11,7 @@
          "private/common.rkt"
          "private/config.rkt"
          "private/rss.rkt"
+         "private/signature.rkt"
          "generate-index.rkt")
 
 ; set->list has no stable order, so serializing it directly makes metadata
@@ -45,10 +46,10 @@
     (define f (open-output-file #:exists 'truncate/replace tmp-path))
     (define in (open-input-file source-path))
     (displayln
-     (embed-header
-      addr
-      (port->string in))
-     f)
+      (embed-header
+        addr
+        (port->string in))
+      f)
     (close-input-port in)
     (close-output-port f)
 
@@ -82,50 +83,25 @@
 
   (when (dev-mode?)
     (with-output-to-file
-        #:exists 'truncate/replace
+      #:exists 'truncate/replace
       (build-path (get-output-path) "sourcemap.json")
       (lambda ()
         (printf "{")
         (printf
-         (string-join
-          (hash-map addr->path
-                    (lambda (key value)
-                      (format "~s: ~s" key (path->string (path->complete-path value)))))
-          ","))
+          (string-join
+            (hash-map addr->path
+                      (lambda (key value)
+                        (format "~s: ~s" key (path->string (path->complete-path value)))))
+            ","))
         (printf "}"))))
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
 
-  (define excludes (mutable-set))
+  (define cache-dir (build-path tmp "cache"))
+  (make-directory* cache-dir)
 
-  ; exclude unchanged files - but only when the addr's outputs are all present,
-  ; otherwise a partial/interrupted build (metadata.json present, html missing)
-  ; keeps the addr excluded every build and the page never comes back
-  ; cause `raco tr` crash eventually and cannot recover the build
-  (for/async ([addr addr-list])
-    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (when (and (file-exists? meta-path)
-               (< (file-or-directory-modify-seconds (hash-ref addr->path addr))
-                  (file-or-directory-modify-seconds meta-path))
-               (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
-               (file-exists? (index-output-path addr)))
-      (set-add! excludes addr)))
-  ; tex/typ graphics live under _tmp; if a leftover source's svg is gone from the
-  ; output dir, its owning addr must be rebuilt too
-  (for ([gfx (append (find-files (λ (p) (path-has-extension? p #".tex")) "_tmp")
-                     (find-files (λ (p) (path-has-extension? p #".typ")) "_tmp"))])
-    (define svg-path
-      (string-replace (path->string (path-replace-extension gfx #".svg"))
-                      "_tmp" (get-output-path)))
-    (unless (file-exists? svg-path)
-      (set-remove! excludes (basename (dirname gfx)))))
-  ; record all metadata
-  (define addr-maps-to-metajson (make-hash))
-  ; record their differential updates
-  (define metadata-changed (mutable-set)) ; track what's changed
-  (define metadata-changes (make-hash)) ; track what's changed
-
+  ; emit per-card racket helpers extracted from @tr/code forms
   (for/async ([addr addr-list])
     (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
     (define lst (compute-racket (hash-ref addr->path addr)))
@@ -134,17 +110,10 @@
       (for ([text lst])
         (displayln text out))
       (close-output-port out)))
+  (define addr-maps-to-metajson (make-hash))
   (for/async ([addr addr-list])
-    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (cond
-      [(not (file-exists? meta-path))
-       (define obj (compute-metadata addr (hash-ref addr->path addr)))
-       (json->file obj meta-path)
-       (hash-set! addr-maps-to-metajson addr obj)]
-      [(set-member? excludes addr)
-       (hash-set! addr-maps-to-metajson addr (file->json meta-path))]
-      [else
-       (hash-set! addr-maps-to-metajson addr (compute-metadata addr (hash-ref addr->path addr)))]))
+    (hash-set! addr-maps-to-metajson addr
+               (compute-metadata addr (hash-ref addr->path addr))))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
@@ -186,49 +155,42 @@
     (hash-set! addr-maps-to-metajson addr
                (hash-set* meta-obj 'references (set->sorted-list refs))))
 
+  ; update <addr>.metadata.json if computed metadata differs from disk
   (for/async ([addr addr-list])
     (define new-meta (hash-ref addr-maps-to-metajson addr))
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (when (file-exists? meta-path)
-      (define old-meta (file->json meta-path))
-      (unless (equal-jsexprs? old-meta new-meta)
-        (set-add! metadata-changed addr)
+    (unless (and (file-exists? meta-path)
+                 (equal-jsexprs? (file->json meta-path) new-meta))
+      (printf "update ~a.metadata.json ~n" addr)
+      (json->file new-meta meta-path)))
 
-        (define changes (make-hash))
-        (for ([key '(transclude related authors context references backlinks)])
-          (define old-set (list->set (hash-ref old-meta key '())))
-          (define new-set (list->set (hash-ref new-meta key '())))
-          (define added (set-subtract new-set old-set))
-          (define removed (set-subtract old-set new-set))
-          (unless (and (set-empty? added) (set-empty? removed))
-            (hash-set! changes key (cons added removed))))
-        (unless (hash-empty? changes)
-          (hash-set! metadata-changes addr changes)))))
+  ; content-addressed invalidation: a card is excluded from rebuild iff its
+  ; build signature matches the marker its last successful build's cache
+  ; AND its outputs are still on disk.
+  ;
+  ; Any neighbor change that affects a card's output flows into that card's signature.
+  (define addr-list* (topo-order addr-list addr-maps-to-metajson))
+  (define signatures (compute-signatures addr-list* addr->path addr-maps-to-metajson tmp))
+  (define cache-map (read-cache-map cache-dir))
+  (define excludes (mutable-set))
+  ; the output-existence guard keeps a partial/interrupted build (marker
+  ; present, html missing) from excluding the addr forever
+  (for ([addr addr-list])
+    (when (and (cache-hit? cache-map addr (hash-ref signatures addr))
+               (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
+               (file-exists? (index-output-path addr)))
+      (set-add! excludes addr)))
+  ; tex/typ graphics live under _tmp; if a leftover source's svg is gone from the
+  ; output dir, its owning addr must be rebuilt too
+  (for ([gfx (append (find-files (λ (p) (path-has-extension? p #".tex")) "_tmp")
+                     (find-files (λ (p) (path-has-extension? p #".typ")) "_tmp"))])
+    (define svg-path
+      (string-replace (path->string (path-replace-extension gfx #".svg"))
+                      "_tmp" (get-output-path)))
+    (unless (file-exists? svg-path)
+      (set-remove! excludes (basename (dirname gfx)))))
 
-  ; produce/update <addr>.metadata.json
-  (set-for-each metadata-changed
-                (λ (addr)
-                  (define json (hash-ref addr-maps-to-metajson addr))
-                  (printf "update ~a.metadata.json ~n" addr)
-                  (json->file json (build-path "_tmp" (string-append addr ".metadata.json")))))
-
-  ; Use differential changes to mark precise neighbors for update
-  (for* ([changes (in-hash-values metadata-changes)]
-         [(_ added-removed-pair) (in-hash changes)])
-    (define added (car added-removed-pair))
-    (define removed (cdr added-removed-pair))
-    ; Mark newly added neighbors for update
-    (set-subtract! excludes added)
-    ; Mark removed neighbors for update (they need to clean up backlink style links)
-    (set-subtract! excludes removed))
-  (for/async ([addr addr-list]
-              #:unless (set-member? excludes addr))
-    (define obj (hash-ref addr-maps-to-metajson addr))
-    (define ctx (hash-ref obj 'context '()))
-    (for ([addr ctx])
-      (set-remove! excludes addr)))
-
-  (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
+  (produce-embeds addr-list* addr->path excludes)
   (produce-indexes addr-list excludes addr-maps-to-metajson)
 
   (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
@@ -271,16 +233,31 @@
              svg-path))
 
   (produce-search)
-  (produce-rss))
+  (produce-rss)
 
-(define (produce-embeds addr-list addr->path excludes addr-maps-to-metajson)
+  ; record successful builds: write a fresh signature marker for every card we
+  ; (re)built whose outputs are now present, replacing any stale marker. Written
+  ; last so an interrupted build never leaves a marker without its output.
+  (for ([addr addr-list]
+        #:unless (set-member? excludes addr))
+    (when (and (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
+               (file-exists? (index-output-path addr)))
+      (clear-addr-markers! cache-dir addr)
+      (write-cache-marker! cache-dir addr (hash-ref signatures addr)))))
+
+; topological order (based on transclude): a transcluded child sorts before
+; the parent that embeds it. Used both to compute build signatures
+; (a child's signature must exist before its parent's) and to generate embeds
+; (a parent's embed reads its children's embed.html).
+(define (topo-order addr-list addr-maps-to-metajson)
   (define neighbors
     (dict->procedure (hash-map/copy addr-maps-to-metajson
                                     (λ (addr json)
                                       (values addr
                                               (filter non-local? (hash-ref json 'transclude '())))))))
+  (remove-duplicates (topological-sort addr-list neighbors)))
 
-  (define addr-list* (remove-duplicates (topological-sort addr-list neighbors)))
+(define (produce-embeds addr-list* addr->path excludes)
   (define embed-cards (produce-scrbl addr-list* addr->path "embed"))
 
   (for ([c embed-cards]

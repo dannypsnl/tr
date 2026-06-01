@@ -1,8 +1,8 @@
 #lang racket
 (provide
- file->json json->file
- non-local?
- m mm)
+  file->json json->file
+  non-local?
+  m mm)
 (require json
          racket/runtime-path)
 
@@ -43,13 +43,13 @@
 
 (define (latex->html tex #:display? [display? #f])
   (call-with-semaphore
-   katex-worker-lock
-   (lambda ()
-     (unless katex-worker-ctrl (start-katex-worker!))
-     (write-json (hash 'display display? 'tex tex) katex-worker-stdin)
-     (newline katex-worker-stdin)
-     (flush-output katex-worker-stdin)
-     (read-until-null katex-worker-stdout))))
+    katex-worker-lock
+    (lambda ()
+      (unless katex-worker-ctrl (start-katex-worker!))
+      (write-json (hash 'display display? 'tex tex) katex-worker-stdin)
+      (newline katex-worker-stdin)
+      (flush-output katex-worker-stdin)
+      (read-until-null katex-worker-stdout))))
 
 (define (m formula) (latex->html formula))
 (define (mm . forms)

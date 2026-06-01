@@ -1,42 +1,42 @@
 #lang racket
 (provide
- self-addr
+  self-addr
 
- generate-toc
- generate-context
- generate-references
- generate-backlinks
- generate-related
+  generate-toc
+  generate-context
+  generate-references
+  generate-backlinks
+  generate-related
 
- tree
+  tree
 
- toc/depth
- (rename-out [pre* pre]
-             [pre* bibtex]
-             [ignore title]
-             [ignore taxon]
-             [ignore date]
-             [ignore author]
-             [ignore author/literal]
-             [ignore doi]
-             [ignore orcid]
-             [ignore meta/text]
-             [ignore meta/link]
-             [ignore tm]
-             [ignore tr/code])
- transclude
- tr/card
- card-counting
- reset-metadata-cache!
- m mm tikzcd texfig typst
- mention external
- hentry
- doctype
- (except-out (all-from-out scribble/html/html) title pre)
- (all-from-out scribble/html/extra)
- summary
- article
- footer svg path)
+  toc/depth
+  (rename-out [pre* pre]
+              [pre* bibtex]
+              [ignore title]
+              [ignore taxon]
+              [ignore date]
+              [ignore author]
+              [ignore author/literal]
+              [ignore doi]
+              [ignore orcid]
+              [ignore meta/text]
+              [ignore meta/link]
+              [ignore tm]
+              [ignore tr/code])
+  transclude
+  tr/card
+  card-counting
+  reset-metadata-cache!
+  m mm tikzcd texfig typst
+  mention external
+  hentry
+  doctype
+  (except-out (all-from-out scribble/html/html) title pre)
+  (all-from-out scribble/html/extra)
+  summary
+  article
+  footer svg path)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml)
@@ -58,11 +58,11 @@
         (string-append "/" addr)))
   (define link-to-self (a 'class: "link-self" 'href: url 'target: "_parent" "[" addr "]"))
   (h1
-   (when taxon
-     (list (span 'class: "taxon" (string-append taxon ".")) " "))
-   text
-   " "
-   link-to-self))
+    (when taxon
+      (list (span 'class: "taxon" (string-append taxon ".")) " "))
+    text
+    " "
+    link-to-self))
 
 (define cached-metadata (make-hash))
 (define (reset-metadata-cache!) (hash-clear! cached-metadata))
@@ -93,8 +93,8 @@
            (unless (= 0 depth)
              (unless (empty? entries)
                (ol
-                (for/list ([addr entries])
-                  (recur-toc addr (sub1 depth)))))))))
+                 (for/list ([addr entries])
+                   (recur-toc addr (sub1 depth)))))))))
 
   (cond
     [(string-contains? addr ":")
@@ -149,22 +149,22 @@
 
   (details 'open: #t
            (summary
-            (header
-             (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
-             (div 'class: "metadata"
-                  (ul
-                   (add-between (queue->list meta-queue) " · ")))))
+             (header
+               (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
+               (div 'class: "metadata"
+                    (ul
+                      (add-between (queue->list meta-queue) " · ")))))
            (literal (file->string path))))
 
 (define (transclude #:open [open? #t] addr)
   (details 'open: open? 'id: addr
            (summary
-            (header
-             (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
-             (div 'class: "metadata"
-                  (ul
-                   (li (fetch-metadata addr 'date))
-                   (li (fetch-metadata addr 'author))))))
+             (header
+               (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
+               (div 'class: "metadata"
+                    (ul
+                      (li (fetch-metadata addr 'date))
+                      (li (fetch-metadata addr 'author))))))
            (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
 
 (define card-counting (make-parameter 0))
@@ -180,13 +180,13 @@
   (card-counting (add1 cc))
   (details 'open: #t 'id: location
            (summary
-            (header
-             (h1
-              (when taxon
-                (list (span 'class: "taxon" (string-append taxon ".")) " "))
-              title
-              " "
-              link-to-self)))
+             (header
+               (h1
+                 (when taxon
+                   (list (span 'class: "taxon" (string-append taxon ".")) " "))
+                 title
+                 " "
+                 link-to-self)))
            (article content)))
 
 (define (pre* . content)

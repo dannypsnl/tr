@@ -13,7 +13,7 @@
     [file-activity-channel (parameter/c async-channel?)]))
 
 
-;; ------------------------------------------------------------------ 
+;; ------------------------------------------------------------------
 ;; Implementation
 
 (require
@@ -53,10 +53,10 @@
 (module+ test
   (provide
     (contract-out
-      [set-alarm       (->* () (positive-integer?) evt?)]
-      [expect-status   (-> list? any)]
+      [set-alarm (->* () (positive-integer?) evt?)]
+      [expect-status (-> list? any)]
       [expect-activity (-> list? any)]
-      [expect-silence  (-> any)]))
+      [expect-silence (-> any)]))
 
   (require
     rackunit

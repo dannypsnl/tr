@@ -21,8 +21,8 @@
     (match n
       [0 acc]
       [_ (define q (quotient n base))
-         (define r (remainder n base))
-         (convert q (string-append (string (string-ref alphabet r)) acc))]))
+       (define r (remainder n base))
+       (convert q (string-append (string (string-ref alphabet r)) acc))]))
 
   (define (pad-zeros str len)
     (define str-len (string-length str))

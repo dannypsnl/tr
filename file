@@ -1,0 +1,5 @@
+build.rkt:      (json->file new-meta meta-path)))
+build.rkt:  (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
+build.rkt:  (displayln (itemize json-list) out)
+private/common.rkt: file->json json->file
+private/common.rkt:(define (json->file json path)
