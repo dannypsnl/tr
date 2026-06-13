@@ -169,7 +169,7 @@
            (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
 
 (define card-counting (make-parameter 0))
-(define (tr/card . content)
+(define (tr/card #:open [open? #t] . content)
   (define cc (card-counting))
   (define locals (fetch-metadata (self-addr) 'locals '()))
   (define local-metadata (list-ref locals cc))
@@ -179,7 +179,7 @@
   (define location (format "~a:~a" (self-addr) cc))
   (define link-to-self (a 'class: "link-self" 'href: (string-append "#" location) 'target: "_parent" "[" addr "]"))
   (card-counting (add1 cc))
-  (details 'open: #t 'id: location
+  (details 'open: open? 'id: location
            (summary
              (header
                (h1
