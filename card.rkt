@@ -23,7 +23,8 @@
               [ignore meta/text]
               [ignore meta/link]
               [ignore tm]
-              [ignore tr/code])
+              [ignore tr/code]
+              [ignore mention/hidden])
   transclude
   tr/card
   card-counting

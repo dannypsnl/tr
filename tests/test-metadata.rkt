@@ -36,6 +36,20 @@
     (check-equal? (hash-ref metadata 'date) "2023-01-01")
     (check-equal? (hash-ref metadata 'authors) '("test-author"))
     (check-true (string-contains? (hash-ref metadata 'text) "This is test content"))
+
+    ; @mention/hidden feeds the backlink graph (related) just like @mention,
+    ; even though it renders nothing in the body.
+    (define hidden-file (build-path "content" "hidden.scrbl"))
+    (call-with-output-file hidden-file
+      #:exists 'replace
+      (lambda (out)
+        (displayln "@title{H}" out)
+        (displayln "@mention{visible-target}" out)
+        (displayln "@mention/hidden{agda-target}" out)
+        (displayln "@p{body}" out)))
+    (define hidden-meta (compute-metadata "hidden" hidden-file))
+    (check-not-false (member "visible-target" (hash-ref hidden-meta 'related)) "plain mention recorded")
+    (check-not-false (member "agda-target" (hash-ref hidden-meta 'related)) "hidden mention recorded in related")
     )
 
   (cleanup-test-dir))

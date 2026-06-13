@@ -74,6 +74,11 @@
       [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
       [`(mention ,addr) (enqueue! related-queue addr)]
       [`(mention ,addr ,@_) (enqueue! related-queue addr)]
+      ; metadata-only mention: feeds the backlink graph (related) but renders
+      ; nothing, because the real clickable link lives in @include'd external
+      ; html (e.g. agda output).
+      [`(mention/hidden ,addr) (enqueue! related-queue addr)]
+      [`(mention/hidden ,addr ,@_) (enqueue! related-queue addr)]
       [`(tr/code ,form) (void)]
       [`(tr/code ,@forms) (void)]
       [`(tr/card ,@forms) (handle-card-form `(tr/card ,@forms) transclude-queue)]
