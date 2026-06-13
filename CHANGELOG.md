@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `@mention/hidden{...}` form
+
 ### Changed
 
 - replace modified time based cache invalidation with a content-addressed build signature (`_tmp/cache/<addr>:<hash>`). A card is skipped only when its signature (source bytes, `@include`d files, final metadata, transcluded child signatures, and referenced-neighbor display digests) matches its last successful build
