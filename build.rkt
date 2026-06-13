@@ -3,6 +3,7 @@
 (require racket/runtime-path
          racket/rerequire)
 (require dirname
+         json
          mischief/dict
          mischief/sort
          argo/equal)
@@ -159,8 +160,16 @@
   (for/async ([addr addr-list])
     (define new-meta (hash-ref addr-maps-to-metajson addr))
     (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    (unless (and (file-exists? meta-path)
-                 (equal-jsexprs? (file->json meta-path) new-meta))
+    ; an interrupted build can leave an empty/corrupt metadata file (json->file
+    ; truncates before writing); read-json then yields <eof>, which is not a
+    ; jsexpr?. Treat any unreadable existing file as a cache miss and rewrite it.
+    (define existing
+      (and (file-exists? meta-path)
+           (with-handlers ([exn:fail? (lambda (_) #f)])
+             (define obj (file->json meta-path))
+             (and (jsexpr? obj) obj))))
+    (unless (and existing
+                 (equal-jsexprs? existing new-meta))
       (printf "update ~a.metadata.json ~n" addr)
       (json->file new-meta meta-path)))
 
