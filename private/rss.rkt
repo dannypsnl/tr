@@ -19,9 +19,21 @@
   (define site-title (hash-ref site-obj 'title))
   (define site-description (hash-ref site-obj 'description))
 
+  ; A post in content/post whose .scrbl omits a `date` line gets 'date => #f in
+  ; its metadata. iso8601->datetime then fails with an opaque contract violation
+  ; that blames rss.rkt without naming the post. Surface a message that does.
+  (define (meta->datetime meta-object)
+    (define date (hash-ref meta-object 'date #f))
+    (unless (string? date)
+      (error 'produce-rss
+             "post ~s (id ~s) has no `date`; add a `date` line to its .scrbl so it can appear in the RSS feed"
+             (hash-ref meta-object 'title "<untitled>")
+             (hash-ref meta-object 'id "<unknown>")))
+    (iso8601->datetime date))
+
   (define (itemize items)
     (add-between (for/list ([meta-object items])
-                   (define pub-date (iso8601->datetime (hash-ref meta-object 'date)))
+                   (define pub-date (meta->datetime meta-object))
                    (item
                      (title (hash-ref meta-object 'title))
                      (link (string-append "https://" (path->string (build-path site-url (hash-ref meta-object 'id)))))
@@ -35,7 +47,7 @@
                          "content/post")])
         (get-metadata (basename (path-replace-extension path ""))))
       (λ (a b)
-        (datetime>=? (iso8601->datetime (hash-ref a 'date)) (iso8601->datetime (hash-ref b 'date))))))
+        (datetime>=? (meta->datetime a) (meta->datetime b)))))
 
   (define out (open-output-file #:exists 'truncate/replace (build-path (get-output-path) "rss.xml")))
   (fprintf out "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>
