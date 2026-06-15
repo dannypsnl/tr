@@ -131,7 +131,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Asset management
 - Tree function implementation
 
-[Unreleased]: https://github.com/dannypsnl/tr-notes/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/dannypsnl/tr-notes/compare/v1.0...v1.1.0
-[1.0]: https://github.com/dannypsnl/tr-notes/compare/v0.0.1...v1.0
-[0.0.1]: https://github.com/dannypsnl/tr-notes/releases/tag/v0.0.1
+[Unreleased]: https://github.com/dannypsnl/tr/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/dannypsnl/tr/compare/v1.3...v1.3.1
+[1.3]: https://github.com/dannypsnl/tr/compare/v1.2...v1.3
+[1.2]: https://github.com/dannypsnl/tr/compare/v1.1.0...v1.2
+[1.1.0]: https://github.com/dannypsnl/tr/compare/v1.0...v1.1.0
+[1.0]: https://github.com/dannypsnl/tr/compare/v0.0.1...v1.0
+[0.0.1]: https://github.com/dannypsnl/tr/releases/tag/v0.0.1
