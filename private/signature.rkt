@@ -93,9 +93,9 @@
 ; - its own computed metadata (own fields + propagated backlinks/context/...)
 ; - the full signature of each transcluded child (its embedded output, and,
 ;   recursively, the transitive TOC titles) -- a DAG, so this is well-founded
-; - the source-hash *digest* of every other referenced neighbor whose title/
-;   taxon it renders (context/references/backlinks/related/authors). Digests
-;   are folded instead of signatures so mutual references cannot cycle.
+; - the title/taxon of every other referenced neighbor -- the only fields it
+;   renders (context/references/backlinks/related/authors). Headings are not
+;   source hash, so editing a parent never rebuilds its transcluded children
 (define (compute-signatures topo-addrs addr->path addr->meta tmp-dir)
   (define src-cache (make-hash))
   (define (source-hash-of addr)
@@ -103,6 +103,11 @@
                (lambda ()
                  (define p (hash-ref addr->path addr #f))
                  (if p (compute-source-hash p tmp-dir) ""))))
+  (define (neighbor-heading addr)
+    (define m (hash-ref addr->meta addr #f))
+    (if m
+        (format "~a/~a" (hash-ref m 'title "") (hash-ref m 'taxon ""))
+        ""))
   (define (frame-str s) (frame (string->bytes/utf-8 s)))
   (define sigs (make-hash))
   (for ([addr topo-addrs])
@@ -120,7 +125,7 @@
     (define child-sigs
       (sort (for/list ([c children]) (hash-ref sigs c "")) string<?))
     (define neighbor-digests
-      (sort (for/list ([n neighbors]) (format "~a=~a" n (source-hash-of n))) string<?))
+      (sort (for/list ([n neighbors]) (format "~a=~a" n (neighbor-heading n))) string<?))
     (hash-set! sigs addr
                (sha1 (open-input-bytes
                        (apply bytes-append

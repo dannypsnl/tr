@@ -151,17 +151,28 @@
     (define s2 (hash-ref (compute-signatures '("b" "a") a->p a->m tmp) "a"))
     (check-not-equal? s1 s2 "parent rebuilds when embedded child changes"))
 
-  (test-case "signature changes when a non-transclude neighbor's source changes"
+  (test-case "signature changes when a non-transclude neighbor's title changes"
     (reset!)
     (define a->p (hash "a" (scrbl! "a" "@p{a}")
                        "b" (scrbl! "b" "@title{B title}")))
-    ; a renders b's title via its 'related list (footer-common)
+    ; a renders b's title via its 'related list, so a depends on b's title/taxon
+    (define (m b-title) (hash "a" (meta "a" #:related '("b"))
+                              "b" (hash-set (meta "b") 'title b-title)))
+    (define s1 (hash-ref (compute-signatures '("a" "b") a->p (m '("B title")) tmp) "a"))
+    (define s2 (hash-ref (compute-signatures '("a" "b") a->p (m '("B new title")) tmp) "a"))
+    (check-not-equal? s1 s2 "neighbor display change invalidates referrer"))
+
+  (test-case "signature is stable when a non-transclude neighbor's body changes"
+    (reset!)
+    (define a->p (hash "a" (scrbl! "a" "@p{a}")
+                       "b" (scrbl! "b" "@title{B}" "@p{body one}")))
+    ; a only renders b's title/taxon, so editing b's body must NOT rebuild a
     (define a->m (hash "a" (meta "a" #:related '("b"))
                        "b" (meta "b")))
     (define s1 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp) "a"))
-    (scrbl! "b" "@title{B new title}")
+    (scrbl! "b" "@title{B}" "@p{body two}")
     (define s2 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp) "a"))
-    (check-not-equal? s1 s2 "neighbor display change invalidates referrer"))
+    (check-equal? s1 s2 "neighbor body edit does not invalidate referrer"))
 
   (test-case "signature is stable when an unrelated card changes"
     (reset!)

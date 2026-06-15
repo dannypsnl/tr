@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - replace modified time based cache invalidation with a content-addressed build signature (`_tmp/cache/<addr>:<hash>`). A card is skipped only when its signature (source bytes, `@include`d files, final metadata, transcluded child signatures, and referenced-neighbor display digests) matches its last successful build
 - improve build cache, stop rebuilding unchanged card, and recover from partial output (e.g. metadata exists but embed HTMLs gone)
 
+### Fixed
+
+- Editing a card no longer rebuilds every card it transcludes. A neighbor relation (`context`/`references`/`backlinks`/`related`/`authors`) now contributes only the neighbor's rendered part (a.k.a title/taxon) to a card's build signature, instead of the neighbor's whole source hash - so transclude stays one-directional except for the breadcrumb title
+
 ## [1.3.1] 2026-05-28
 
 ### Changed
