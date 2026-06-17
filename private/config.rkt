@@ -3,6 +3,7 @@
          get-config
          get-output-path
          get-assets-path
+         get-build-mode
          dev-mode?)
 (require "common.rkt")
 
@@ -19,5 +20,8 @@
 (define (get-assets-path)
   (get-config 'assets '("assets")))
 
+(define (get-build-mode)
+  (get-config 'mode "release"))
+
 (define (dev-mode?)
-  (equal? "dev" (get-config 'mode "release")))
+  (equal? "dev" (get-build-mode)))

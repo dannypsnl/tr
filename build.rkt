@@ -75,12 +75,25 @@
   (reset-metadata-cache!)
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
+  (define private-scrbl-list
+    (find-files 
+      (lambda (x) (path-has-extension? x #".scrbl"))
+      (build-path dir "private")))
   (define addr->path (make-hash))
   (define addr-list
-    (for/list ([path scrbl-list])
-      (define addr (compute-addr path))
-      (hash-set! addr->path addr path)
-      addr))
+    (cond
+      [(equal? "release" (get-build-mode))
+       (define private-files (list->set private-scrbl-list))
+       (for/list ([path scrbl-list]
+                  #:when (not (set-member? private-files path)))
+          (define addr (compute-addr path))
+          (hash-set! addr->path addr path)
+          addr)]
+      [else
+       (for/list ([path scrbl-list])
+          (define addr (compute-addr path))
+          (hash-set! addr->path addr path)
+          addr)]))
 
   (when (dev-mode?)
     (with-output-to-file

@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Directory `content/private/` now is special location, when `site.json` using release mode, cards in this directory will not be used in result
 - Form `@tr/card` now has an option to be folded by default: `@tr/card[#:open #f]{...}`
 - replace modified time based cache invalidation with a content-addressed build signature (`_tmp/cache/<addr>:<hash>`). A card is skipped only when its signature (source bytes, `@include`d files, final metadata, transcluded child signatures, and referenced-neighbor display digests) matches its last successful build
 - improve build cache, stop rebuilding unchanged card, and recover from partial output (e.g. metadata exists but embed HTMLs gone)
