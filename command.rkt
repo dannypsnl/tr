@@ -59,8 +59,8 @@
     #:args _
     (unless root-path (raise "You're not in a tr project"))
     (setup-config! config-path)
-    ; If user didn't assign one, use our setup
-    (define assets-directories (get-config 'assets '("assets")))
+
+    (define assets-directories (get-assets-path))
     (for ([path assets-directories])
       (copy-directory-recursively path (get-output-path)))
     (search-and-build "content")))
