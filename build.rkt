@@ -74,6 +74,8 @@
 (define (search-and-build dir)
   (reset-metadata-cache!)
 
+  (make-directory* (build-path dir "private"))
+
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define private-scrbl-list
     (find-files 
