@@ -31,6 +31,21 @@
 
 (define (rebuilt? built addr) (set-member? built addr))
 
+;; build the same content into a different output dir (its own site config),
+;; returning the set of (re)rendered addrs; used to exercise the cross-target
+;; content store
+(define (build-into! out)
+  (parameterize ([current-directory proj])
+    (define cfg (format "site-~a.json" out))
+    (write-file! (build-path cfg)
+                 (format "{\"domain\":\"example.com\",\"title\":\"T\",\"description\":\"D\",\"output-path\":~s}" out))
+    (setup-config! cfg))
+  (build!))
+
+;; the rendered <output>/<addr>/index.html as a string
+(define (output-index out addr)
+  (file->string (build-path proj out addr "index.html")))
+
 (module+ test
   (require rackunit)
 
@@ -108,4 +123,89 @@
     (define built (build!))
     (check-true (rebuilt? built "b") "b itself changed")
     (check-true (rebuilt? built "a")
-                "a renders b's title in its Related section, so a must rebuild")))
+                "a renders b's title in its Related section, so a must rebuild"))
+
+  ;; NOTE: these two cases assert on rendered output *content*, so they use addrs
+  ;; (sx/sy, rv) not built by any earlier case. produce-html renders an embed via
+  ;; dynamic-rerequire, which caches a module by path for the lifetime of the
+  ;; process and only re-instantiates it on a fresh load; reusing an addr a prior
+  ;; case already loaded would yield an empty re-render here.
+
+  (test-case "a second output target copies from the store instead of re-rendering"
+    ;; The deploy path builds two trees (e.g. dev then release) from one shared
+    ;; _tmp. Identical content + identical render-config means identical
+    ;; signatures, so the second target is a pure copy out of the content store:
+    ;; nothing re-renders, yet its output is present and byte-correct.
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "sx.scrbl")
+                   "@title{SX}" "@date{2024-01-01}" "@p{alpha} @transclude{sy}")
+      (write-file! (build-path "content" "post" "sy.scrbl")
+                   "@title{SY}" "@date{2024-01-02}" "@p{beta one}"))
+    (build-into! "_out1")
+    (define out2 (build-into! "_out2"))
+    (check-equal? out2 (set) "second target renders nothing; it copies from the store")
+    (check-true (regexp-match? #rx"beta one" (output-index "_out2" "sy"))
+                "_out2/sy/index.html was materialized from the store")
+    (check-true (regexp-match? #rx"beta one" (output-index "_out2" "sx"))
+                "_out2/sx/index.html (which transcludes sy) was materialized too"))
+
+  (test-case "reverting a card materializes the earlier output from the store"
+    ;; A content store makes a revert a cache HIT: the earlier signature's entry
+    ;; is still on disk, so the on-disk output is restored to the earlier render
+    ;; rather than being left at the intermediate one.
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "rv.scrbl")
+                   "@title{RV}" "@date{2024-01-01}" "@p{version one}"))
+    (build!)
+    ;; produce-html re-renders via dynamic-rerequire, which only reloads a module
+    ;; when its source's modify-SECONDS advanced; a same-second rewrite would not
+    ;; re-instantiate, so wait out the 1s resolution before the real edit.
+    (sleep 1)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "rv.scrbl")
+                   "@title{RV}" "@date{2024-01-01}" "@p{version two}"))
+    (build!)
+    (check-true (regexp-match? #rx"version two" (output-index "_build" "rv")))
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "rv.scrbl")
+                   "@title{RV}" "@date{2024-01-01}" "@p{version one}"))
+    (define built (build!))
+    (check-equal? built (set) "revert hits the still-cached earlier entry, no re-render")
+    (check-true (regexp-match? #rx"version one" (output-index "_build" "rv"))
+                "on-disk output reverted to version one, not left at version two"))
+
+  (test-case "an unchanged rebuild does not rewrite index.html (per-target stamp)"
+    ;; the .sig stamp records which signature this target's output was built for;
+    ;; when it still matches, produce-index! is skipped, so index.html is left
+    ;; untouched on disk (its mtime does not advance).
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "st.scrbl")
+                   "@title{ST}" "@date{2024-01-01}" "@p{stamped}"))
+    (build!)
+    (define idx (build-path proj "_build" "st" "index.html"))
+    (check-true (file-exists? (build-path proj "_build" "st" ".sig"))
+                "a per-card stamp is written next to the output")
+    (define mtime0 (file-or-directory-modify-seconds idx))
+    (sleep 1) ; modify-seconds has 1s resolution; advance the clock past it
+    (build!)
+    (check-equal? (file-or-directory-modify-seconds idx) mtime0
+                  "unchanged rebuild leaves index.html untouched (produce-index! skipped)"))
+
+  (test-case "a deleted output re-materializes despite a matching stamp"
+    ;; output-fresh? does not trust the stamp alone: if a cached output file is
+    ;; missing (here index.html, deleted to simulate an interrupted/tampered
+    ;; build) the next build rebuilds the output from the still-cached entry.
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "hl.scrbl")
+                   "@title{HL}" "@date{2024-01-01}" "@p{healed}"))
+    (build!)
+    (define idx (build-path proj "_build" "hl" "index.html"))
+    (delete-file idx)
+    (define built (build!))
+    (check-equal? built (set) "still a store hit -- no re-render")
+    (check-true (and (file-exists? idx) (regexp-match? #rx"healed" (output-index "_build" "hl")))
+                "the missing index.html was regenerated")))

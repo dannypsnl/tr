@@ -1,7 +1,7 @@
 #lang racket
 (provide root?
          index-output-path
-         produce-indexes)
+         produce-index!)
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml
@@ -23,49 +23,46 @@
       (build-path (get-output-path) "index.html")
       (build-path (get-output-path) addr "index.html")))
 
-(define (produce-indexes addr-list excludes addr-maps-to-metajson)
-  (for ([addr addr-list]
-        #:unless (set-member? excludes addr))
-    (printf "generate ~a/index.html ~n" addr)
-    (define output-dir (build-path (get-output-path) addr))
-    (make-directory* output-dir)
-    (define out
-      (open-output-file #:exists 'truncate/replace (index-output-path addr)))
+(define (produce-index! addr addr-maps-to-metajson)
+  (define output-dir (build-path (get-output-path) addr))
+  (make-directory* output-dir)
+  (define out
+    (open-output-file #:exists 'truncate/replace (index-output-path addr)))
 
-    (define metaobj (hash-ref addr-maps-to-metajson addr))
-    (define title (hash-ref metaobj 'title))
-    (parameterize ([self-addr addr]
-                   [toc/depth (if (hash-ref metaobj 'toc/depth) (hash-ref metaobj 'toc/depth) 2)]
-                   [generate-root? (root? addr)])
-      (output-xml
-        (list
-          (doctype 'html)
-          (cond
-            [(root? addr)
-             (define fedi (get-config 'fedi #f))
-             (common-share #:title title
-                           #:fedi-validation (and fedi
-                                                  (link 'rel: "me"
-                                                        'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle))))
-                           (div 'class: "top-wrapper"
-                                (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
-            [else
-             (define fedi (get-config 'fedi #f))
-             (common-share #:title title
-                           #:fedi-signature
-                           (and fedi
-                                (meta 'name: "fediverse:creator"
-                                      'content: (format "@~a@~a" (hash-ref fedi 'handle) (hash-ref fedi 'site))))
-                           (div 'class: "top-wrapper"
-                                (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
-                                (generate-toc))
-                           (footer
-                             (generate-context)
-                             (generate-references)
-                             (generate-backlinks)
-                             (generate-related)))]))
-        out))
-    (close-output-port out)))
+  (define metaobj (hash-ref addr-maps-to-metajson addr))
+  (define title (hash-ref metaobj 'title))
+  (parameterize ([self-addr addr]
+                 [toc/depth (if (hash-ref metaobj 'toc/depth) (hash-ref metaobj 'toc/depth) 2)]
+                 [generate-root? (root? addr)])
+    (output-xml
+      (list
+        (doctype 'html)
+        (cond
+          [(root? addr)
+           (define fedi (get-config 'fedi #f))
+           (common-share #:title title
+                         #:fedi-validation (and fedi
+                                                (link 'rel: "me"
+                                                      'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle))))
+                         (div 'class: "top-wrapper"
+                              (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
+          [else
+           (define fedi (get-config 'fedi #f))
+           (common-share #:title title
+                         #:fedi-signature
+                         (and fedi
+                              (meta 'name: "fediverse:creator"
+                                    'content: (format "@~a@~a" (hash-ref fedi 'handle) (hash-ref fedi 'site))))
+                         (div 'class: "top-wrapper"
+                              (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
+                              (generate-toc))
+                         (footer
+                           (generate-context)
+                           (generate-references)
+                           (generate-backlinks)
+                           (generate-related)))]))
+      out))
+  (close-output-port out))
 
 (define generate-root? (make-parameter #f))
 

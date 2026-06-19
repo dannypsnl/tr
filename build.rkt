@@ -13,6 +13,7 @@
          "private/config.rkt"
          "private/rss.rkt"
          "private/signature.rkt"
+         "private/store.rkt"
          "generate-index.rkt")
 
 ; set->list has no stable order, so serializing it directly makes metadata
@@ -78,7 +79,7 @@
 
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
   (define private-scrbl-list
-    (find-files 
+    (find-files
       (lambda (x) (path-has-extension? x #".scrbl"))
       (build-path dir "private")))
   (define addr->path (make-hash))
@@ -88,14 +89,14 @@
        (define private-files (list->set private-scrbl-list))
        (for/list ([path scrbl-list]
                   #:when (not (set-member? private-files path)))
-          (define addr (compute-addr path))
-          (hash-set! addr->path addr path)
-          addr)]
+         (define addr (compute-addr path))
+         (hash-set! addr->path addr path)
+         addr)]
       [else
        (for/list ([path scrbl-list])
-          (define addr (compute-addr path))
-          (hash-set! addr->path addr path)
-          addr)]))
+         (define addr (compute-addr path))
+         (hash-set! addr->path addr path)
+         addr)]))
 
   (when (dev-mode?)
     (with-output-to-file
@@ -114,8 +115,8 @@
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
 
-  (define cache-dir (build-path tmp "cache"))
-  (make-directory* cache-dir)
+  (define cache-root (build-path tmp "cache"))
+  (init-store! cache-root)
 
   ; emit per-card racket helpers extracted from @tr/code forms
   (for/async ([addr addr-list])
@@ -188,86 +189,83 @@
       (printf "update ~a.metadata.json ~n" addr)
       (json->file new-meta meta-path)))
 
-  ; content-addressed invalidation: a card is excluded from rebuild iff its
-  ; build signature matches the marker its last successful build's cache
-  ; AND its outputs are still on disk.
-  ;
-  ; Any neighbor change that affects a card's output flows into that card's signature.
-  (define addr-list* (topo-order addr-list addr-maps-to-metajson))
-  (define signatures (compute-signatures addr-list* addr->path addr-maps-to-metajson tmp))
-  (define cache-map (read-cache-map cache-dir))
-  (define excludes (mutable-set))
-  ; the output-existence guard keeps a partial/interrupted build (marker
-  ; present, html missing) from excluding the addr forever
-  (for ([addr addr-list])
-    (when (and (cache-hit? cache-map addr (hash-ref signatures addr))
-               (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
-               (file-exists? (index-output-path addr)))
-      (set-add! excludes addr)))
-  ; tex/typ graphics live under _tmp; if a leftover source's svg is gone from the
-  ; output dir, its owning addr must be rebuilt too
-  (for ([gfx (append (find-files (λ (p) (path-has-extension? p #".tex")) "_tmp")
-                     (find-files (λ (p) (path-has-extension? p #".typ")) "_tmp"))])
-    (define svg-path
-      (string-replace (path->string (path-replace-extension gfx #".svg"))
-                      "_tmp" (get-output-path)))
-    (unless (file-exists? svg-path)
-      (set-remove! excludes (basename (dirname gfx)))))
+  #|
+  content-addressed build: a card's build signature captures everything its
+  rendered output depends on. The canonical store is keyed by that signature,
+  so a card is rendered at most once per distinct output: a store hit copies
+  the cached artifacts into place, a miss renders and snapshots them.
 
-  (produce-embeds addr-list* addr->path excludes)
-  (produce-indexes addr-list excludes addr-maps-to-metajson)
+  This makes a second output target a copy of the first, and reverting a card
+  a copy of its still-cached entry.
+  |#
+  (define sorted-addr-list (topo-order addr-list addr-maps-to-metajson))
+  (define signatures
+    (compute-signatures sorted-addr-list addr->path addr-maps-to-metajson tmp
+                        (render-config-tag)))
+  (define embed-cards (produce-scrbl sorted-addr-list addr->path "embed"))
+  (define card-of (for/hash ([c embed-cards]) (values (final-card-addr c) c)))
 
-  (define tex-list (find-files (lambda (x) (path-has-extension? x #".tex")) "_tmp"))
-  (for/async ([tex-path tex-list]
-              #:unless (set-member? excludes (basename (dirname tex-path))))
-    (printf "compile ~a ~n" (path->string tex-path))
-    (parameterize ([current-directory (dirname tex-path)]
-                   [current-output-port (open-output-string "")])
-      (system* (find-executable-path "latex")
-               "-halt-on-error"
-               "-interaction=nonstopmode"
-               (basename tex-path)))
-
-    (define svg-path
-      (string-replace (path->string (path-replace-extension tex-path #".svg"))
-                      "_tmp"
-                      (get-output-path)))
-    (system* (find-executable-path "dvisvgm")
-             "--exact"
-             "--clipjoin"
-             "--font-format=woff"
-             "--bbox=papersize"
-             "--zoom=1.5"
-             "-o" svg-path
-             (path->string (path-replace-extension tex-path #".dvi"))))
-
-  (define typ-list (find-files (lambda (x) (path-has-extension? x #".typ")) "_tmp"))
-  (for/async ([typ-path typ-list]
-              #:unless (set-member? excludes (basename (dirname typ-path))))
-    (printf "compile ~a ~n" (path->string typ-path))
-    (define svg-path
-      (string-replace (path->string (path-replace-extension typ-path #".svg"))
-                      "_tmp"
-                      (get-output-path)))
-    (make-directory* (dirname svg-path))
-    (system* (find-executable-path "typst")
-             "compile"
-             "--format" "svg"
-             (path->string typ-path)
-             svg-path))
+  (for ([addr sorted-addr-list])
+    (define sig (hash-ref signatures addr))
+    (cond
+      [(root? addr)
+       (printf "generate ~a.embed.html ~n" addr)
+       (produce-html (hash-ref card-of addr))
+       (produce-index! addr addr-maps-to-metajson)]
+      [(store-hit? cache-root sig)
+       ; always refresh the embed into _tmp (a transcluding parent may read it);
+       ; the per-target output is rebuilt only when this target's stamp is stale.
+       (restore-embed! cache-root sig addr)
+       (unless (output-fresh? cache-root sig addr)
+         (restore-output! cache-root sig addr)
+         (produce-index! addr addr-maps-to-metajson)
+         (write-output-stamp! addr sig))]
+      [else
+       (printf "generate ~a.embed.html ~n" addr)
+       (produce-html (hash-ref card-of addr))
+       (compile-graphics addr)
+       (save-to-store! cache-root sig addr)
+       (produce-index! addr addr-maps-to-metajson)
+       (write-output-stamp! addr sig)]))
 
   (produce-search)
-  (produce-rss)
+  (produce-rss))
 
-  ; record successful builds: write a fresh signature marker for every card we
-  ; (re)built whose outputs are now present, replacing any stale marker. Written
-  ; last so an interrupted build never leaves a marker without its output.
-  (for ([addr addr-list]
-        #:unless (set-member? excludes addr))
-    (when (and (file-exists? (build-path "_tmp" (string-append addr ".embed.html")))
-               (file-exists? (index-output-path addr)))
-      (clear-addr-markers! cache-dir addr)
-      (write-cache-marker! cache-dir addr (hash-ref signatures addr)))))
+; Compile a card's @m/tikz/typst graphics: the embed render emits tex/typ
+; sources under _tmp/<addr>/; each becomes an svg under <output>/<addr>/.
+(define (compile-graphics addr)
+  (define base (build-path "_tmp" addr))
+  (when (directory-exists? base)
+    (define (svg-target src)
+      (string-replace (path->string (path-replace-extension src #".svg"))
+                      "_tmp" (get-output-path)))
+    (for ([tex-path (find-files (lambda (x) (path-has-extension? x #".tex")) base)])
+      (printf "compile ~a ~n" (path->string tex-path))
+      (parameterize ([current-directory (dirname tex-path)]
+                     [current-output-port (open-output-string "")])
+        (system* (find-executable-path "latex")
+                 "-halt-on-error"
+                 "-interaction=nonstopmode"
+                 (basename tex-path)))
+      (define svg-path (svg-target tex-path))
+      (make-directory* (dirname svg-path))
+      (system* (find-executable-path "dvisvgm")
+               "--exact"
+               "--clipjoin"
+               "--font-format=woff"
+               "--bbox=papersize"
+               "--zoom=1.5"
+               "-o" svg-path
+               (path->string (path-replace-extension tex-path #".dvi"))))
+    (for ([typ-path (find-files (lambda (x) (path-has-extension? x #".typ")) base)])
+      (printf "compile ~a ~n" (path->string typ-path))
+      (define svg-path (svg-target typ-path))
+      (make-directory* (dirname svg-path))
+      (system* (find-executable-path "typst")
+               "compile"
+               "--format" "svg"
+               (path->string typ-path)
+               svg-path))))
 
 ; topological order (based on transclude): a transcluded child sorts before
 ; the parent that embeds it. Used both to compute build signatures
@@ -280,14 +278,6 @@
                                       (values addr
                                               (filter non-local? (hash-ref json 'transclude '())))))))
   (remove-duplicates (topological-sort addr-list neighbors)))
-
-(define (produce-embeds addr-list* addr->path excludes)
-  (define embed-cards (produce-scrbl addr-list* addr->path "embed"))
-
-  (for ([c embed-cards]
-        #:unless (set-member? excludes (final-card-addr c)))
-    (printf "generate ~a.embed.html ~n" (final-card-addr c))
-    (produce-html c)))
 
 (define (produce-search)
   (define (itemize items)

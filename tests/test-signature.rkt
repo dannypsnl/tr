@@ -79,39 +79,6 @@
     (write-file! src "@title{A}" "@include{html/missing.html}")
     (check-true (string? (compute-source-hash src tmp))))
 
-  ;; --- cache markers ---
-  (test-case "write/read cache markers and cache-hit?"
-    (reset!)
-    (define cache (build-path tmp "cache"))
-    (make-directory* cache)
-    (write-cache-marker! cache "foo" "deadbeef")
-    (write-cache-marker! cache "bar" "cafe")
-    (define m (read-cache-map cache))
-    (check-true (cache-hit? m "foo" "deadbeef"))
-    (check-true (cache-hit? m "bar" "cafe"))
-    (check-false (cache-hit? m "foo" "cafe") "wrong sig -> miss")
-    (check-false (cache-hit? m "baz" "deadbeef") "unknown addr -> miss"))
-
-  (test-case "clear-addr-markers! removes only the named addr's markers"
-    (reset!)
-    (define cache (build-path tmp "cache"))
-    (make-directory* cache)
-    (write-cache-marker! cache "foo" "oldsig")
-    (write-cache-marker! cache "foobar" "keepme")
-    (clear-addr-markers! cache "foo")
-    (write-cache-marker! cache "foo" "newsig")
-    (define m (read-cache-map cache))
-    (check-false (cache-hit? m "foo" "oldsig") "stale marker gone")
-    (check-true (cache-hit? m "foo" "newsig") "fresh marker present")
-    (check-true (cache-hit? m "foobar" "keepme") "prefix-similar addr untouched"))
-
-  (test-case "read-cache-map on empty/fresh cache dir is a miss for everything"
-    (reset!)
-    (define cache (build-path tmp "cache"))
-    (make-directory* cache)
-    (define m (read-cache-map cache))
-    (check-false (cache-hit? m "anything" "whatever")))
-
   ;; --- compute-signatures ---
   ;; helpers to build a metadata hash and a backing .scrbl per addr
   (define (meta addr
@@ -134,9 +101,9 @@
     (reset!)
     (define a->p (hash "a" (scrbl! "a" "@title{A}" "@p{one}")))
     (define a->m (hash "a" (meta "a")))
-    (define s1 (hash-ref (compute-signatures '("a") a->p a->m tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("a") a->p a->m tmp "cfg") "a"))
     (scrbl! "a" "@title{A}" "@p{two}")
-    (define s2 (hash-ref (compute-signatures '("a") a->p a->m tmp) "a"))
+    (define s2 (hash-ref (compute-signatures '("a") a->p a->m tmp "cfg") "a"))
     (check-not-equal? s1 s2))
 
   (test-case "signature changes when a transcluded child's content changes"
@@ -146,9 +113,9 @@
     (define a->m (hash "a" (meta "a" #:transclude '("b"))
                        "b" (meta "b")))
     ; topo order: child b before parent a
-    (define s1 (hash-ref (compute-signatures '("b" "a") a->p a->m tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("b" "a") a->p a->m tmp "cfg") "a"))
     (scrbl! "b" "@title{B}" "@p{child two}")
-    (define s2 (hash-ref (compute-signatures '("b" "a") a->p a->m tmp) "a"))
+    (define s2 (hash-ref (compute-signatures '("b" "a") a->p a->m tmp "cfg") "a"))
     (check-not-equal? s1 s2 "parent rebuilds when embedded child changes"))
 
   (test-case "signature changes when a non-transclude neighbor's title changes"
@@ -158,8 +125,8 @@
     ; a renders b's title via its 'related list, so a depends on b's title/taxon
     (define (m b-title) (hash "a" (meta "a" #:related '("b"))
                               "b" (hash-set (meta "b") 'title b-title)))
-    (define s1 (hash-ref (compute-signatures '("a" "b") a->p (m '("B title")) tmp) "a"))
-    (define s2 (hash-ref (compute-signatures '("a" "b") a->p (m '("B new title")) tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("a" "b") a->p (m '("B title")) tmp "cfg") "a"))
+    (define s2 (hash-ref (compute-signatures '("a" "b") a->p (m '("B new title")) tmp "cfg") "a"))
     (check-not-equal? s1 s2 "neighbor display change invalidates referrer"))
 
   (test-case "signature is stable when a non-transclude neighbor's body changes"
@@ -169,9 +136,9 @@
     ; a only renders b's title/taxon, so editing b's body must NOT rebuild a
     (define a->m (hash "a" (meta "a" #:related '("b"))
                        "b" (meta "b")))
-    (define s1 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp "cfg") "a"))
     (scrbl! "b" "@title{B}" "@p{body two}")
-    (define s2 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp) "a"))
+    (define s2 (hash-ref (compute-signatures '("a" "b") a->p a->m tmp "cfg") "a"))
     (check-equal? s1 s2 "neighbor body edit does not invalidate referrer"))
 
   (test-case "signature is stable when an unrelated card changes"
@@ -179,17 +146,17 @@
     (define a->p (hash "a" (scrbl! "a" "@p{a}")
                        "c" (scrbl! "c" "@p{c}")))
     (define a->m (hash "a" (meta "a") "c" (meta "c")))
-    (define s1 (hash-ref (compute-signatures '("a" "c") a->p a->m tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("a" "c") a->p a->m tmp "cfg") "a"))
     (scrbl! "c" "@p{c changed}")
-    (define s2 (hash-ref (compute-signatures '("a" "c") a->p a->m tmp) "a"))
+    (define s2 (hash-ref (compute-signatures '("a" "c") a->p a->m tmp "cfg") "a"))
     (check-equal? s1 s2 "unrelated edits do not invalidate a"))
 
   (test-case "signature changes when the card's own metadata changes"
     (reset!)
     (define a->p (hash "a" (scrbl! "a" "@p{a}")))
-    (define s1 (hash-ref (compute-signatures '("a") a->p (hash "a" (meta "a")) tmp) "a"))
+    (define s1 (hash-ref (compute-signatures '("a") a->p (hash "a" (meta "a")) tmp "cfg") "a"))
     (define s2 (hash-ref (compute-signatures '("a") a->p
-                                             (hash "a" (meta "a" #:backlinks '("z"))) tmp) "a"))
+                                             (hash "a" (meta "a" #:backlinks '("z"))) tmp "cfg") "a"))
     (check-not-equal? s1 s2 "a new incoming backlink invalidates the card"))
 
   (test-case "mutual references (cycle) terminate"
@@ -199,6 +166,17 @@
     ; a relates b, b relates a -> would cycle if digests folded full sigs
     (define a->m (hash "a" (meta "a" #:related '("b") #:backlinks '("b"))
                        "b" (meta "b" #:related '("a") #:backlinks '("a"))))
-    (define sigs (compute-signatures '("a" "b") a->p a->m tmp))
+    (define sigs (compute-signatures '("a" "b") a->p a->m tmp "cfg"))
     (check-true (string? (hash-ref sigs "a")))
-    (check-true (string? (hash-ref sigs "b")))))
+    (check-true (string? (hash-ref sigs "b"))))
+
+  (test-case "signature changes when the render-affecting config changes"
+    (reset!)
+    ; identical content + identical output target, but a different config-tag
+    ; (e.g. a different `fedi`) bakes different bytes into the per-card HTML, so
+    ; the two must not share a content-store entry
+    (define a->p (hash "a" (scrbl! "a" "@p{a}")))
+    (define a->m (hash "a" (meta "a")))
+    (define s1 (hash-ref (compute-signatures '("a") a->p a->m tmp "cfg-one") "a"))
+    (define s2 (hash-ref (compute-signatures '("a") a->p a->m tmp "cfg-two") "a"))
+    (check-not-equal? s1 s2 "render-affecting config change yields a distinct signature")))

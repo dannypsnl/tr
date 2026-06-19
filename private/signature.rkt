@@ -1,11 +1,7 @@
 #lang racket
 (provide scrbl-include-paths
          compute-source-hash
-         compute-signatures
-         read-cache-map
-         write-cache-marker!
-         clear-addr-markers!
-         cache-hit?)
+         compute-signatures)
 (require scribble/reader
          file/sha1
          "common.rkt")
@@ -41,40 +37,9 @@
     (for/list ([p (scrbl-include-paths source-path)])
       (define full (build-path tmp-dir p))
       (frame (bytes-append (string->bytes/utf-8 p) #"\0"
-                           (if (file-exists? full) (file->bytes full) #""))))
-    )
+                           (if (file-exists? full) (file->bytes full) #"")))))
+    
   (sha1 (open-input-bytes (apply bytes-append (frame scrbl) included))))
-
-; A cache marker is an empty file named "<addr>:<sig>". Top-level addrs never
-; contain ":" (that is exactly what `non-local?` keys on), so the split is
-; unambiguous. Reading the directory once yields the full set of built
-; (addr, sig) pairs; a cache hit is pure presence-testing, no file reads.
-(define (marker-name addr sig) (format "~a:~a" addr sig))
-
-(define (read-cache-map cache-dir)
-  (cond
-    [(directory-exists? cache-dir)
-     (list->set (map path->string (directory-list cache-dir)))]
-    [else (set)]))
-
-(define (cache-hit? cache-map addr sig)
-  (set-member? cache-map (marker-name addr sig)))
-
-(define (write-cache-marker! cache-dir addr sig)
-  (close-output-port
-    (open-output-file (build-path cache-dir (marker-name addr sig))
-                      #:exists 'truncate/replace)))
-
-(define (marker-addr name)
-  (define i (for/first ([c (in-string name)] [k (in-naturals)] #:when (char=? c #\:)) k))
-  (and i (substring name 0 i)))
-
-(define (clear-addr-markers! cache-dir addr)
-  (when (directory-exists? cache-dir)
-    (for ([entry (directory-list cache-dir)])
-      (define name (path->string entry))
-      (when (equal? (marker-addr name) addr)
-        (delete-file (build-path cache-dir entry))))))
 
 ; Deterministic textual encoding of a jsexpr: hash keys are sorted so the
 ; serialization (and thus the signature) never depends on hash iteration order.
@@ -96,7 +61,12 @@
 ; - the title/taxon of every other referenced neighbor -- the only fields it
 ;   renders (context/references/backlinks/related/authors). Headings are not
 ;   source hash, so editing a parent never rebuilds its transcluded children
-(define (compute-signatures topo-addrs addr->path addr->meta tmp-dir)
+; - config-tag: the render-affecting site config (see render-config-tag). The
+;   signature keys the canonical content store, which is shared across output
+;   targets; folding config in means two targets whose rendered bytes would
+;   differ (e.g. different `fedi`) get distinct signatures and never copy each
+;   other's output. Targets that differ only in where files land share the store.
+(define (compute-signatures topo-addrs addr->path addr->meta tmp-dir config-tag)
   (define src-cache (make-hash))
   (define (source-hash-of addr)
     (hash-ref! src-cache addr
@@ -129,6 +99,7 @@
     (hash-set! sigs addr
                (sha1 (open-input-bytes
                        (apply bytes-append
+                              (frame-str config-tag)
                               (frame-str (source-hash-of addr))
                               (frame-str (canonical meta))
                               (append (map frame-str child-sigs)
