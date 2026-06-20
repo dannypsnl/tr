@@ -231,9 +231,31 @@
   (produce-search)
   (produce-rss))
 
+; Homebrew installs dvisvgm in its own cellar prefix, separate from TeX Live.
+; dvisvgm's bundled kpathsea searches for texmf.cnf relative to the dvisvgm
+; binary, so it never finds TeX Live's config -> "none of the default map
+; files could be found" and font embedding fails. Point kpathsea at TeX Live
+; by deriving the locations from TeX Live's own kpsewhich.
+(define (setup-dvisvgm-texmf!)
+  (define kpsewhich (find-executable-path "kpsewhich"))
+  (define (kpse . args)
+    (and kpsewhich
+         (let ([out (with-output-to-string
+                      (lambda () (apply system* kpsewhich args)))])
+           (string-trim out))))
+  (define cnf (kpse "texmf.cnf"))
+  (define root (kpse "--var-value=TEXMFROOT"))
+  (when (and cnf (not (string=? cnf "")))
+    ; TEXMFCNF wants the directory containing texmf.cnf.
+    (define-values (dir _name _dir?) (split-path (string->path cnf)))
+    (putenv "TEXMFCNF" (path->string dir)))
+  (when (and root (not (string=? root "")))
+    (putenv "TEXMFROOT" root)))
+
 ; Compile a card's @m/tikz/typst graphics: the embed render emits tex/typ
 ; sources under _tmp/<addr>/; each becomes an svg under <output>/<addr>/.
 (define (compile-graphics addr)
+  (setup-dvisvgm-texmf!)
   (define base (build-path "_tmp" addr))
   (when (directory-exists? base)
     (define (svg-target src)
