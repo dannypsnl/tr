@@ -39,20 +39,11 @@
         (doctype 'html)
         (cond
           [(root? addr)
-           (define fedi (get-config 'fedi #f))
            (common-share #:title title
-                         #:fedi-validation (and fedi
-                                                (link 'rel: "me"
-                                                      'href: (format "https://~a/@~a" (hash-ref fedi 'site) (hash-ref fedi 'handle))))
                          (div 'class: "top-wrapper"
                               (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
           [else
-           (define fedi (get-config 'fedi #f))
            (common-share #:title title
-                         #:fedi-signature
-                         (and fedi
-                              (meta 'name: "fediverse:creator"
-                                    'content: (format "@~a@~a" (hash-ref fedi 'handle) (hash-ref fedi 'site))))
                          (div 'class: "top-wrapper"
                               (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
                               (generate-toc))
@@ -67,18 +58,15 @@
 (define generate-root? (make-parameter #f))
 
 (define (common-share #:title this-title
-                      #:fedi-validation [fedi-validation #f]
-                      #:fedi-signature [fedi-signature #f]
                       . content)
   (html
     (head
       (meta 'http-equiv: "Content-Type" 'content: "text/html; charset=utf-8")
       (meta 'name: "viewport" 'content: "width=device-width, initial-scale=1")
-      fedi-signature
       (title this-title)
       (link 'rel: "stylesheet" 'href: "/katex.min.css")
       (link 'rel: "stylesheet" 'href: "/style.css")
-      fedi-validation
+      (get-config 'head '())
 
       (script 'src: "/minisearch/index.min.js")
       (script 'src: "/tiny.js"))

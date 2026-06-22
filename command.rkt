@@ -35,20 +35,27 @@
         (displayln "_tmp/" out)
         (displayln "_build/" out)
         (displayln "assets/" out)))
-    (call-with-output-file "site.json"
+    (call-with-output-file "site.rkt"
       (λ (out)
-        (define x (make-hasheq
-                    '((domain . "your domain")
-                      (title . "your site title")
-                      (description . "your site description"))))
-        (write-json x out)))
+        (for ([line '("#lang racket/base"
+                      "(require scribble/html)"
+                      "(provide site)"
+                      ""
+                      "(define site"
+                      "  (hash 'domain \"your domain\""
+                      "        'title \"your site title\""
+                      "        'description \"your site description\""
+                      "        'head (list)))")])
+          (displayln line out))))
     (system* (find-executable-path "git") "clone" "https://codeberg.org/dannypsnl/tr-assets.git" "assets")
     (system* (find-executable-path "git") "init")
     (make-directory* "content/post")
     (displayln "init done")))
 
 (define root-path (find-root-dir (current-directory)))
-(define config-path "site.json")
+; Prefer site.rkt; a lingering site.json is migrated by setup-config!.
+(define config-path
+  (if (file-exists? "site.rkt") "site.rkt" "site.json"))
 
 (define (run-tr-build)
   (command-line

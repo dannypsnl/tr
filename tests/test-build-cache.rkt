@@ -19,9 +19,11 @@
   (make-directory* proj)
   (parameterize ([current-directory proj])
     (make-directory* "_build")
-    (write-file! (build-path "site.json")
-                 "{\"domain\":\"example.com\",\"title\":\"T\",\"description\":\"D\",\"output-path\":\"_build\"}")
-    (setup-config! "site.json")))
+    (write-file! (build-path "site.rkt")
+                 "#lang racket/base"
+                 "(provide site)"
+                 "(define site (hash 'domain \"example.com\" 'title \"T\" 'description \"D\" 'output-path \"_build\"))")
+    (setup-config! "site.rkt")))
 
 ;; run a build, return the set of addrs whose embed.html was (re)generated
 (define (build!)
@@ -36,9 +38,11 @@
 ;; content store
 (define (build-into! out)
   (parameterize ([current-directory proj])
-    (define cfg (format "site-~a.json" out))
+    (define cfg (format "site-~a.rkt" out))
     (write-file! (build-path cfg)
-                 (format "{\"domain\":\"example.com\",\"title\":\"T\",\"description\":\"D\",\"output-path\":~s}" out))
+                 "#lang racket/base"
+                 "(provide site)"
+                 (format "(define site (hash 'domain \"example.com\" 'title \"T\" 'description \"D\" 'output-path ~s))" out))
     (setup-config! cfg))
   (build!))
 

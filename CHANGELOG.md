@@ -12,13 +12,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Directory `content/private/` now is special location, when `site.json` using release mode, cards in this directory will not be used in result
+- **Breaking:** configuration is now a Racket module `site.rkt` that `(provide site)` a hash (config-as-code), replacing `site.json`. `raco tr init` scaffolds `site.rkt`. A leftover `site.json` is no longer a runtime format: on the next build `tr` auto-generates the equivalent `site.rkt` from it and asks you to delete the JSON (fallback shim, slated for removal in a future release)
+- Directory `content/private/` now is special location, when config using release mode, cards in this directory will not be used in result
 - Form `@tr/card` now has an option to be folded by default: `@tr/card[#:open #f]{...}`
 - replace modified time based cache invalidation with a content-addressed build signature (`_tmp/cache/<addr>:<hash>`). A card is skipped only when its signature (source bytes, `@include`d files, final metadata, transcluded child signatures, and referenced-neighbor display digests) matches its last successful build
 - improve build cache, stop rebuilding unchanged card, and recover from partial output (e.g. metadata exists but embed HTMLs gone)
 
+### Removed
+
+- **Breaking:** the `fedi` config option, replaced by the generic `head` list. The `site.json` to `site.rkt` migration upgrades `fedi` into the equivalent `head` entries automatically.
+
 ### Fixed
 
+- RSS generation now reads `domain`/`title`/`description` through the config system instead of re-opening a hardcoded `site.json`
 - Editing a card no longer rebuilds every card it transcludes. A neighbor relation (`context`/`references`/`backlinks`/`related`/`authors`) now contributes only the neighbor's rendered part (a.k.a title/taxon) to a card's build signature, instead of the neighbor's whole source hash - so transclude stays one-directional except for the breadcrumb title
 
 ## [1.3.1] 2026-05-28

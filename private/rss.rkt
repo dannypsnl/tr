@@ -14,10 +14,9 @@
 (define (produce-rss)
   (define (get-metadata addr)
     (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json"))))
-  (define site-obj (file->json "site.json"))
-  (define site-url (hash-ref site-obj 'domain))
-  (define site-title (hash-ref site-obj 'title))
-  (define site-description (hash-ref site-obj 'description))
+  (define site-url (get-config 'domain #f))
+  (define site-title (get-config 'title #f))
+  (define site-description (get-config 'description #f))
 
   ; A post in content/post whose .scrbl omits a `date` line gets 'date => #f in
   ; its metadata. iso8601->datetime then fails with an opaque contract violation

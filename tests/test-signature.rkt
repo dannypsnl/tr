@@ -172,9 +172,6 @@
 
   (test-case "signature changes when the render-affecting config changes"
     (reset!)
-    ; identical content + identical output target, but a different config-tag
-    ; (e.g. a different `fedi`) bakes different bytes into the per-card HTML, so
-    ; the two must not share a content-store entry
     (define a->p (hash "a" (scrbl! "a" "@p{a}")))
     (define a->m (hash "a" (meta "a")))
     (define s1 (hash-ref (compute-signatures '("a") a->p a->m tmp "cfg-one") "a"))
