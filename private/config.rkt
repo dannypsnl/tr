@@ -31,9 +31,9 @@ and then load the freshly written .rkt so this very build keeps working.
                 rkt-cfg-path path-str)]
       [else
         (call-with-output-file rkt-cfg-path
-          (lambda (out) (upgrade-json-config! (file->json filepath) out))
-          (eprintf "tr: already produce ~a from ~a - please use ~a and delete ~a\n"
-                   rkt-cfg-path path-str rkt-cfg-path path-str))
+          (lambda (out) (upgrade-json-config! (file->json filepath) out)))
+        (eprintf "tr: already produce ~a from ~a - please use ~a and delete ~a\n"
+                 rkt-cfg-path path-str rkt-cfg-path path-str)
         rkt-cfg-path]))
   (set! configuration (dynamic-require (path->complete-path rkt-path) 'site)))
 
