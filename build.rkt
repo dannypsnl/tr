@@ -69,7 +69,7 @@
   (define out (open-output-file #:exists 'truncate/replace target))
   (parameterize ([current-output-port out]
                  [card-counting 0])
-    (dynamic-rerequire (path->complete-path src)))
+    (dynamic-rerequire (path->complete-path src) #:verbosity 'none))
   (close-output-port out))
 
 (define (search-and-build dir)
