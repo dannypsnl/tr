@@ -72,10 +72,16 @@
       (script 'src: "/tiny.js"))
     (body 'id: "whole"
           (dialog 'id: "search-dialog"
-                  (input 'type: "text" 'id: "search-bar"
-                         'spellcheck: "false" 'autocomplete: "off"
-                         'placeholder: "Start typing a note title or ID")
-                  (div 'id: "search-result"))
+                  (div 'class: "search-header"
+                       (a 'class: "search-home" 'href: "/" 'title: "Home" "⌂ Home")
+                       (input 'type: "text" 'id: "search-bar"
+                              'spellcheck: "false" 'autocomplete: "off"
+                              'placeholder: "Type title or ID to search……"))
+                  (div 'id: "search-result")
+                  (div 'class: "search-footer"
+                       (span (kbd "↑") (kbd "↓") " Move")
+                       (span (kbd "↵") " Open")
+                       (span (kbd "esc") " Close")))
           (unless (generate-root?)
             (a 'class: "link-home" 'href: "/" "« Home"))
           content
