@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Transitive track transclusion in form of local card `@tr/card{...}` so topological sort and context tracking can be correct
 - RSS generation now reads `domain`/`title`/`description` through the config system instead of re-opening a hardcoded `site.json`
 - Editing a card no longer rebuilds every card it transcludes. A neighbor relation (`context`/`references`/`backlinks`/`related`/`authors`) now contributes only the neighbor's rendered part (a.k.a title/taxon) to a card's build signature, instead of the neighbor's whole source hash - so transclude stays one-directional except for the breadcrumb title
 

@@ -137,8 +137,7 @@
     (define related-set (mutable-set))
     (define references-set (mutable-set))
 
-    (for/async ([addr (hash-ref meta-obj 'transclude)]
-                #:when (non-local? addr))
+    (for/async ([addr (transclude-deps meta-obj)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define ctx-set (list->set (hash-ref obj 'context '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->sorted-list (set-add ctx-set top-addr)))))
@@ -162,8 +161,7 @@
     (define meta-obj (hash-ref addr-maps-to-metajson addr))
     (define refs (list->mutable-set (hash-ref meta-obj 'references)))
 
-    (for/async ([addr (hash-ref meta-obj 'transclude)]
-                #:when (non-local? addr))
+    (for/async ([addr (transclude-deps meta-obj)])
       (define obj (hash-ref addr-maps-to-metajson addr))
       (define references (hash-ref obj 'references))
       (for ([ref references])
@@ -289,6 +287,22 @@
                (path->string typ-path)
                svg-path))))
 
+; A card's top-level 'transclude also lists local `parent:N` refs for each
+; nested @tr/card block; the real children of those blocks live in
+; locals[N].transclude. Expand those local refs into the non-local addrs they
+; embed, so a child transcluded only inside an @tr/card still sorts before its
+; parent (otherwise the parent's embed reads a not-yet-generated embed.html).
+(define (transclude-deps json)
+  (define locals (hash-ref json 'locals '()))
+  (append*
+    (for/list ([addr (hash-ref json 'transclude '())])
+      (cond
+        [(non-local? addr) (list addr)]
+        [else
+         (define idx (string->number (second (string-split addr ":"))))
+         (if (and idx (< idx (length locals)))
+             (filter non-local? (hash-ref (list-ref locals idx) 'transclude '()))
+             '())]))))
 ; topological order (based on transclude): a transcluded child sorts before
 ; the parent that embeds it. Used both to compute build signatures
 ; (a child's signature must exist before its parent's) and to generate embeds
@@ -297,8 +311,7 @@
   (define neighbors
     (dict->procedure (hash-map/copy addr-maps-to-metajson
                                     (λ (addr json)
-                                      (values addr
-                                              (filter non-local? (hash-ref json 'transclude '())))))))
+                                      (values addr (transclude-deps json))))))
   (remove-duplicates (topological-sort addr-list neighbors)))
 
 (define (produce-search)
