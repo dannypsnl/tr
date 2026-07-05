@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.4] 2026-07-05
+
 ### Added
 
 - `@mention/hidden{...}` form
@@ -139,7 +141,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Asset management
 - Tree function implementation
 
-[Unreleased]: https://github.com/dannypsnl/tr/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/dannypsnl/tr/compare/v1.4...HEAD
+[1.4]: https://github.com/dannypsnl/tr/compare/v1.3.1...v1.4
 [1.3.1]: https://github.com/dannypsnl/tr/compare/v1.3...v1.3.1
 [1.3]: https://github.com/dannypsnl/tr/compare/v1.2...v1.3
 [1.2]: https://github.com/dannypsnl/tr/compare/v1.1.0...v1.2
