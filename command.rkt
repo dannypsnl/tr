@@ -47,7 +47,7 @@
                       "        'description \"your site description\""
                       "        'head (list)))")])
           (displayln line out))))
-    (system* (find-executable-path "git") "clone" "https://codeberg.org/dannypsnl/tr-assets.git" "assets")
+    (system* (find-executable-path "git") "clone" "https://repo.dannypsnl.me/tr-notes/tr-assets.git" "assets")
     (system* (find-executable-path "git") "init")
     (make-directory* "content/post")
     (displayln "init done")))
