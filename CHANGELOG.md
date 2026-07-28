@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Removed
+
+- **Breaking:** search is no longer part of the page shell. The `<dialog id="search-dialog">` markup and the `<script>` tags for `/minisearch/index.min.js`, `/tiny.js` and `/fullTextSearch.js` are gone from generated pages. Whether a site has search, which engine drives it, and what the search box looks like are all the site's business now — declared through the generic `head` config:
+
+  ```racket
+  'head (list (script 'src: "/tiny.js" 'defer: #t)
+              (script 'src: "/fullTextSearch.js" 'defer: #t))
+  ```
+
+  Existing sites must add those entries to their own `site.rkt`, and their `fullTextSearch.js` must build the dialog itself (`tiny.js` provides the element builders) instead of expecting `tr` to have rendered it.
+
+- **Breaking:** `search.json` is no longer generated. Building a search index is the site's job, same as the search UI. Every card's metadata is still written to `_tmp/<addr>.metadata.json` during a build (`title`, `taxon`, `text`, `date`, `context`, ...), so a site's own build step can produce whatever index its engine wants — concatenating them into a JSON array reproduces the old `search.json` exactly.
+
 ## [1.4] 2026-07-05
 
 ### Added

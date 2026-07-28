@@ -66,23 +66,8 @@
       (title this-title)
       (link 'rel: "stylesheet" 'href: "/katex.min.css")
       (link 'rel: "stylesheet" 'href: "/style.css")
-      (get-config 'head '())
-
-      (script 'src: "/minisearch/index.min.js")
-      (script 'src: "/tiny.js"))
+      (get-config 'head '()))
     (body 'id: "whole"
-          (dialog 'id: "search-dialog"
-                  (div 'class: "search-header"
-                       (a 'class: "search-home" 'href: "/" 'title: "Home" "⌂ Home")
-                       (input 'type: "text" 'id: "search-bar"
-                              'spellcheck: "false" 'autocomplete: "off"
-                              'placeholder: "Type title or ID to search……"))
-                  (div 'id: "search-result")
-                  (div 'class: "search-footer"
-                       (span (kbd "↑") (kbd "↓") " Move")
-                       (span (kbd "↵") " Open")
-                       (span (kbd "esc") " Close")))
           (unless (generate-root?)
             (a 'class: "link-home" 'href: "/" "« Home"))
-          content
-          (script 'src: "/fullTextSearch.js"))))
+          content)))

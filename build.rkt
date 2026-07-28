@@ -226,7 +226,6 @@
        (produce-index! addr addr-maps-to-metajson)
        (write-output-stamp! addr sig)]))
 
-  (produce-search)
   (produce-rss))
 
 ; Homebrew installs dvisvgm in its own cellar prefix, separate from TeX Live.
@@ -314,12 +313,3 @@
                                       (values addr (transclude-deps json))))))
   (remove-duplicates (topological-sort addr-list neighbors)))
 
-(define (produce-search)
-  (define (itemize items)
-    (string-join (for/list ([p items]) (file->string p)) ","))
-  (define json-list (find-files (lambda (x) (path-has-extension? x #".metadata.json")) "_tmp"))
-  (define out (open-output-file #:exists 'truncate/replace (build-path (get-output-path) "search.json")))
-  (displayln "[" out)
-  (displayln (itemize json-list) out)
-  (displayln "]" out)
-  (close-output-port out))
