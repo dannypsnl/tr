@@ -15,30 +15,30 @@
 #|
 Config is a Racket module (site.rkt) that `(provide site)` a hash.
 
-Old `.json` config is no longer a runtime format: seeing one is a one-time
-migration trigger: we generate the equivalent site.rkt, then suggest deleting the .json,
+Old `.json` config is no longer a runtime format: seeing one trigger a one-time
+migration: we generate the equivalent site.rkt, then suggest deleting the .json,
 and then load the freshly written .rkt so this very build keeps working.
 |#
 (define (setup-config! filepath)
   (define path-str (if (path? filepath) (path->string filepath) filepath))
   (define rkt-cfg-path (path-replace-extension filepath #".rkt"))
-  (define rkt-path
-    (cond
-      [(path-has-extension? filepath #".rkt") filepath]
-      [(and (path-has-extension? filepath #".json")
-            (file-exists? rkt-cfg-path))
-       (eprintf "tr: ~a is already existed, please use it instead (ignore ~a)\n" 
-                rkt-cfg-path path-str)]
-      [else
-        (call-with-output-file rkt-cfg-path
-          (lambda (out) (upgrade-json-config! (file->json filepath) out)))
-        (eprintf "tr: already produce ~a from ~a - please use ~a and delete ~a\n"
-                 rkt-cfg-path path-str rkt-cfg-path path-str)
-        rkt-cfg-path]))
-  (set! configuration (dynamic-require (path->complete-path rkt-path) 'site)))
+  (cond
+    [(path-has-extension? filepath #".rkt") (void)]
+    [(and (path-has-extension? filepath #".json")
+          (file-exists? rkt-cfg-path))
+     (eprintf "tr: ~a is already existed, please use it and delete ~a (JSON config is ignored by tr)\n"
+              rkt-cfg-path path-str)]
+    [else
+     ; migrate old JSON configuration to new racket configuration
+     (call-with-output-file rkt-cfg-path
+       (lambda (out) (upgrade-json-config! (file->json filepath) out)))
+     (eprintf "tr: already produce ~a from ~a - please use ~a and delete ~a\n"
+              rkt-cfg-path path-str rkt-cfg-path path-str)])
+
+  (set! configuration (dynamic-require (path->complete-path rkt-cfg-path) 'site)))
 
 ; Upgrade old JSON config as a site.rkt source module.
-(define (upgrade-json-config! j out)
+(define (upgrade-json-config! cfg out)
   (define (emit-value v)
     (if (or (string? v) (number? v) (boolean? v))
         (format "~s" v)
@@ -46,12 +46,12 @@ and then load the freshly written .rkt so this very build keeps working.
   (fprintf out "#lang racket/base\n(require scribble/html)\n(provide site)\n\n")
   (fprintf out "(define site\n  (hash")
   (define first? #t)
-  (for ([k (sort (hash-keys j) symbol<?)]
+  (for ([k (sort (hash-keys cfg) symbol<?)]
         #:unless (eq? k 'fedi))
-    (fprintf out "~a'~a ~a" (if first? " " "\n        ") k (emit-value (hash-ref j k)))
+    (fprintf out "~a'~a ~a" (if first? " " "\n        ") k (emit-value (hash-ref cfg k)))
     (set! first? #f))
   ; the legacy `fedi` key is expanded into the two head) elements it used to inject (rel=me link + fediverse:creator meta)
-  (define fedi (hash-ref j 'fedi #f))
+  (define fedi (hash-ref cfg 'fedi #f))
   (when fedi
     (define site* (hash-ref fedi 'site))
     (define handle (hash-ref fedi 'handle))
