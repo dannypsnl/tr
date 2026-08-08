@@ -1,7 +1,6 @@
 #lang racket
 (provide search-and-build)
-(require racket/runtime-path
-         racket/rerequire)
+(require racket/rerequire)
 (require dirname
          json
          mischief/dict
@@ -10,7 +9,7 @@
 (require "card.rkt"
          "metadata.rkt"
          "private/common.rkt"
-         "private/config.rkt"
+         (prefix-in config: "private/config.rkt")
          "private/rss.rkt"
          "private/signature.rkt"
          "private/store.rkt"
@@ -58,8 +57,8 @@
     (define output-path
       (cond
         [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]
-        [(root? addr) (build-path (get-output-path) (string-append mode ".html"))]
-        [else (build-path (get-output-path) addr (string-append mode ".html"))]))
+        [(root? addr) (build-path (config:get-output-path) (string-append mode ".html"))]
+        [else (build-path (config:get-output-path) addr (string-append mode ".html"))]))
     (final-card source-path addr tmp-path output-path)))
 
 (define (produce-html c)
@@ -75,33 +74,19 @@
 (define (search-and-build dir)
   (reset-metadata-cache!)
 
-  (make-directory* (build-path dir "private"))
-
   (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) dir))
-  (define private-scrbl-list
-    (find-files
-      (lambda (x) (path-has-extension? x #".scrbl"))
-      (build-path dir "private")))
   (define addr->path (make-hash))
   (define addr-list
-    (cond
-      [(equal? "release" (get-build-mode))
-       (define private-files (list->set private-scrbl-list))
-       (for/list ([path scrbl-list]
-                  #:when (not (set-member? private-files path)))
-         (define addr (compute-addr path))
-         (hash-set! addr->path addr path)
-         addr)]
-      [else
-       (for/list ([path scrbl-list])
-         (define addr (compute-addr path))
-         (hash-set! addr->path addr path)
-         addr)]))
+    (for/list ([path scrbl-list]
+               #:unless (config:remove-scrbl? path))
+      (define addr (compute-addr path))
+      (hash-set! addr->path addr path)
+      addr))
 
-  (when (dev-mode?)
+  (when (config:dev-mode?)
     (with-output-to-file
       #:exists 'truncate/replace
-      (build-path (get-output-path) "sourcemap.json")
+      (build-path (config:get-output-path) "sourcemap.json")
       (lambda ()
         (printf "{")
         (printf
@@ -199,7 +184,7 @@
   (define sorted-addr-list (topo-order addr-list addr-maps-to-metajson))
   (define signatures
     (compute-signatures sorted-addr-list addr->path addr-maps-to-metajson tmp
-                        (render-config-tag)))
+                        (config:render-config-tag)))
   (define embed-cards (produce-scrbl sorted-addr-list addr->path "embed"))
   (define card-of (for/hash ([c embed-cards]) (values (final-card-addr c) c)))
 
@@ -257,7 +242,7 @@
   (when (directory-exists? base)
     (define (svg-target src)
       (string-replace (path->string (path-replace-extension src #".svg"))
-                      "_tmp" (get-output-path)))
+                      "_tmp" (config:get-output-path)))
     (for ([tex-path (find-files (lambda (x) (path-has-extension? x #".tex")) base)])
       (printf "compile ~a ~n" (path->string tex-path))
       (parameterize ([current-directory (dirname tex-path)]

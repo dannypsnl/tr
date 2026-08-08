@@ -3,7 +3,7 @@
          get-config
          get-output-path
          get-assets-path
-         get-build-mode
+         remove-scrbl?
          dev-mode?
          render-config-tag)
 (require racket/path
@@ -71,11 +71,19 @@ and then load the freshly written .rkt so this very build keeps working.
 (define (get-assets-path)
   (get-config 'assets '("assets")))
 
-(define (get-build-mode)
-  (get-config 'mode "release"))
+#|
+remove-scrbl? is a predicate on source path of a card.
+
+When it returns #t, it eliminate the card from the further pipeline.
+|#
+(define (remove-scrbl? source-path)
+  (define p? (get-config 'remove-content-if #f))
+  (if p?
+      (p? source-path)
+      #f))
 
 (define (dev-mode?)
-  (equal? "dev" (get-build-mode)))
+  (equal? "dev" (get-config 'mode "release")))
 
 ; A stable string of the config that the per-card renderer bakes into output.
 ; This feeds the build signature so two output targets with different such
