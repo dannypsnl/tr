@@ -1,4 +1,4 @@
-import katex from "npm:katex";
+import katex from "npm:katex@0.18.1";
 
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
