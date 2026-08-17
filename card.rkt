@@ -84,20 +84,31 @@
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
 (define (generate-related) (footer-common "Related" 'related))
 
-(define (recur-toc addr depth)
+(define (recur-toc addr depth number)
+  (define is-local? (string-contains? addr ":"))
+  (define anchor (format "#~a" addr))
+  (define page-url
+    (cond
+      [is-local? anchor]
+      [(string=? "index" addr) "/"]
+      [else (string-append "/" addr)]))
   (define (common-part taxon title entries)
-    (li (a 'class: "toc" 'href: (format "#~a" addr)
-           (when taxon
-             (span 'class: "taxon" (format "~a. " taxon)))
-           (literal (or title addr))
-           (unless (= 0 depth)
-             (unless (empty? entries)
-               (ol
-                 (for/list ([addr entries])
-                   (recur-toc addr (sub1 depth)))))))))
+    (li (a 'class: "toc-bullet" 'href: page-url 'target: "_parent" "■")
+        (a 'class: "toc-title" 'href: anchor 'target: "_parent"
+           (span 'class: "taxon"
+                 (if taxon
+                     (format "~a ~a." taxon number)
+                     (format "~a." number)))
+           " "
+           (literal (or title addr)))
+        (unless (= 0 depth)
+          (unless (empty? entries)
+            (ol
+              (for/list ([addr entries] [i (in-naturals 1)])
+                (recur-toc addr (sub1 depth) (format "~a.~a" number i))))))))
 
   (cond
-    [(string-contains? addr ":")
+    [is-local?
      ; a local addr has form `addr:count`
      (define tmp (string-split addr ":"))
      (define locals (fetch-metadata (first tmp) 'locals))
@@ -115,8 +126,8 @@
   (unless (empty? entries)
     (element 'nav 'id: "toc"
              (h1 "Table of Contents")
-             (ol (for/list ([addr entries])
-                   (recur-toc addr (sub1 (toc/depth))))))))
+             (ol (for/list ([addr entries] [i (in-naturals 1)])
+                   (recur-toc addr (sub1 (toc/depth)) (number->string i)))))))
 
 (define (tree path)
   (define meta-queue (make-queue))
@@ -182,8 +193,11 @@
            (summary
              (header
                (h1
-                 (when taxon
-                   (list (span 'class: "taxon" (string-append taxon ".")) " "))
+                 (span 'class: "taxon"
+                       (if taxon
+                           (format "~a ~a." taxon (add1 cc))
+                           (format "~a." (add1 cc))))
+                 " "
                  title
                  " "
                  link-to-self)))

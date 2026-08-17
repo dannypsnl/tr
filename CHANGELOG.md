@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - config: new option `remove-content-if` for cards filtering
 
+### Changed
+
+- Table of contents entries now render as a small `■` bullet permalink followed by `taxon? N. title`, with hierarchical numbering (`1.`, `1.1.`, ...) bundled into the same `.taxon` span as the taxon
+- `@tr/card{...}` headers now render as `taxon? N. title`, numbered sequentially within the page, with the number bundled into the same `.taxon` span as the taxon
+
 ### Removed
 
 - **Breaking:** search is no longer part of the page shell. The `<dialog id="search-dialog">` markup and the `<script>` tags for `/minisearch/index.min.js`, `/tiny.js` and `/fullTextSearch.js` are gone from generated pages. Whether a site has search, which engine drives it, and what the search box looks like are all the site's business now — declared through the generic `head` config:
