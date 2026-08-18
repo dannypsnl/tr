@@ -249,8 +249,7 @@
   (displayln "\n\\end{document}" tex)
   (close-output-port tex)
 
-  (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
-          (img 'class: "center"
+  (figure (img 'class: "center"
                'src: (string-append "/" (self-addr) "/" job-id ".svg")
                'alt: (string-append "figure " job-id))))
 
@@ -270,7 +269,6 @@
   (for-each (λ (s) (display s typ)) formula)
   (close-output-port typ)
 
-  (figure 'xmlns:mml: "http://www.w3.org/1998/Math/MathML" 'xmlns: "http://www.w3.org/1999/xhtml"
-          (img 'class: "center"
+  (figure (img 'class: "center"
                'src: (string-append "/" (self-addr) "/" job-id ".svg")
                'alt: (string-append "figure " job-id))))
