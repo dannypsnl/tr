@@ -145,50 +145,46 @@
 (define (tree path)
   (define meta-queue (make-queue))
   (when (fetch-metadata (self-addr) 'date)
-    (enqueue! meta-queue (li (fetch-metadata (self-addr) 'date))))
+    (enqueue! meta-queue (span (fetch-metadata (self-addr) 'date))))
   (define authors
     (for/list ([addr (fetch-metadata (self-addr) 'authors)])
       (a 'class: "link-self" 'href: (string-append "/" addr) (fetch-metadata addr 'title))))
   (define name-authors (fetch-metadata (self-addr) 'name-authors))
   (unless (empty? (append authors name-authors))
-    (enqueue! meta-queue (li (add-between (append authors name-authors) ", "))))
+    (enqueue! meta-queue (span (add-between (append authors name-authors) ", "))))
   (when (fetch-metadata (self-addr) 'doi)
-    (enqueue! meta-queue (li (a 'class: "link-self"
-                                'href: (string-append "https://doi.org/" (fetch-metadata (self-addr) 'doi))
-                                'target: "_blank"
-                                (fetch-metadata (self-addr) 'doi)))))
+    (enqueue! meta-queue (span (a 'class: "link-self"
+                                  'href: (string-append "https://doi.org/" (fetch-metadata (self-addr) 'doi))
+                                  'target: "_blank"
+                                  (fetch-metadata (self-addr) 'doi)))))
   (define meta-entries (fetch-metadata (self-addr) 'meta '()))
   (unless (empty? meta-entries)
     (for ([meta meta-entries])
-      (enqueue! meta-queue (li meta))))
+      (enqueue! meta-queue (span meta))))
   (when (fetch-metadata (self-addr) 'orcid)
-    (enqueue! meta-queue (li (a 'class: "link-self"
-                                'href: (string-append "https://orcid.org/" (fetch-metadata (self-addr) 'orcid))
-                                'target: "_blank"
-                                (string-append "ORCID: " (fetch-metadata (self-addr) 'orcid))))))
+    (enqueue! meta-queue (span (a 'class: "link-self"
+                                  'href: (string-append "https://orcid.org/" (fetch-metadata (self-addr) 'orcid))
+                                  'target: "_blank"
+                                  (string-append "ORCID: " (fetch-metadata (self-addr) 'orcid))))))
   (define metalink-entries (fetch-metadata (self-addr) 'metalink '()))
   (unless (empty? metalink-entries)
     (for ([metalink metalink-entries])
-      (enqueue! meta-queue (li (a 'href: metalink 'target: "_blank" metalink)))))
+      (enqueue! meta-queue (span (a 'href: metalink 'target: "_blank" metalink)))))
 
   (details 'open: #t
            (summary
-             (header
-               (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
-               (div 'class: "metadata"
-                    (ul
-                      (add-between (queue->list meta-queue) " · ")))))
+             (tr-h1 (self-addr) (literal (fetch-metadata (self-addr) 'title)) (fetch-metadata (self-addr) 'taxon))
+             (span 'class: "metadata"
+                   (add-between (queue->list meta-queue) " · ")))
            (literal (file->string path))))
 
 (define (transclude #:open [open? #t] addr)
   (details 'open: open? 'id: addr
            (summary
-             (header
-               (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon) #:numbered? #t)
-               (div 'class: "metadata"
-                    (ul
-                      (li (fetch-metadata addr 'date))
-                      (li (fetch-metadata addr 'author))))))
+             (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon) #:numbered? #t)
+             (span 'class: "metadata"
+                   (span (fetch-metadata addr 'date))
+                   (span (fetch-metadata addr 'author))))
            (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
 
 (define card-counting (make-parameter 0))
@@ -204,13 +200,12 @@
   (card-counting (add1 cc))
   (details 'open: open? 'id: location
            (summary
-             (header
-               (h1
-                 (span 'class: "taxon numbered" (if taxon (string-append taxon " ") ""))
-                 " "
-                 title
-                 " "
-                 link-to-self)))
+             (h1
+               (span 'class: "taxon numbered" (if taxon (string-append taxon " ") ""))
+               " "
+               title
+               " "
+               link-to-self))
            (article 'class: "tr-body" content)))
 
 (define (pre* . content)

@@ -70,7 +70,7 @@ h1 {
   margin: 0;
   font-size: 1.5em;
 }
-article > details > summary > header > h1 {
+article > details > summary > h1 {
   font-size: 1.2em;
 }
 
@@ -87,7 +87,7 @@ details > summary {
 details > summary::-webkit-details-marker {
   display: none;
 }
-details > summary > header > h1 {
+details > summary > h1 {
   display: inline;
 }
 
@@ -191,13 +191,8 @@ a.colored-link {
   margin-left: 0.5rem;
 }
 
-.metadata ul {
-  padding: 0;
-  list-style-type: disc;
-}
-.metadata ul,
-.metadata ul li {
-  display: inline;
+.metadata {
+  display: block;
 }
 
 body {
