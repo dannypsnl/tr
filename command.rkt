@@ -7,7 +7,65 @@
          "build.rkt"
          "metadata.rkt")
 (require racket/logging
-         racket/random)
+         racket/random
+         racket/runtime-path)
+
+(define-runtime-path default-assets-dir "default-assets")
+
+; katex.min.css/js/contrib are the official npm:katex@0.18.1 dist build —
+; the exact version katex-stdio-deno.ts's `renderToString` pins. Bump both
+; together; a CSS/JS version drifting from the renderer's HTML output breaks
+; math layout.
+(define (files-in subdir kind)
+  (for/list ([f (directory-list (build-path default-assets-dir subdir))])
+    (cons (path->string (build-path subdir f)) kind)))
+(define default-assets
+  (append
+    (list (cons "style.css" 'stylesheet)
+          (cons "katex.min.css" 'stylesheet)
+          (cons "katex.min.js" 'script))
+    (files-in "fonts" 'font)
+    (files-in "contrib" 'script)))
+
+(define (warn-shadowed-asset! name kind own-path)
+  (define migrated-name (string-append "custom-" (path->string (file-name-from-path name))))
+  (case kind
+    [(stylesheet)
+     (eprintf
+       (string-append
+         "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
+         "    To keep them: rename it to ~a, then add to site.rkt's 'head:\n"
+         "      (link 'rel: \"stylesheet\" 'href: \"/~a\")\n")
+       name own-path own-path migrated-name migrated-name)]
+    [(script)
+     (eprintf
+       (string-append
+         "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
+         "    To keep them: rename it to ~a, then add to site.rkt's 'head:\n"
+         "      (script 'src: \"/~a\" 'defer: #t)\n")
+       name own-path own-path migrated-name migrated-name)]
+    [(font)
+     (eprintf
+       (string-append
+         "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
+         "    tr's own style.css/katex.min.css only load their bundled font files by these exact names; to use\n"
+         "    a different font, override the relevant CSS in a rule added via site.rkt's 'head instead.\n")
+       name own-path own-path)]))
+
+(define (install-default-assets! user-assets-directories)
+  (for ([entry default-assets])
+    (define name (car entry))
+    (define kind (cdr entry))
+    (define src (build-path default-assets-dir name))
+    (define target (build-path (get-output-path) name))
+    (make-directory* (path-only target))
+    ; warnings
+    (for ([dir user-assets-directories]
+          #:when (file-exists? (build-path dir name)))
+      (define own-path (build-path dir name))
+      (unless (equal? (file->bytes own-path) (file->bytes src))
+        (warn-shadowed-asset! name kind own-path)))
+    (copy-file src target #t)))
 
 (define (find-root-dir dir)
   (cond
@@ -70,6 +128,7 @@
     (define assets-directories (get-assets-path))
     (for ([path assets-directories])
       (copy-directory-recursively path (get-output-path)))
+    (install-default-assets! assets-directories)
     (search-and-build "content")))
 (define (run-tr-watch)
   (command-line
