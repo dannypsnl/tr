@@ -51,18 +51,30 @@
 (define toc/depth (make-parameter 2))
 (define (ignore . _) (void))
 
-(define (tr-h1 addr text taxon)
+; numbered? controls whether the taxon gets a CSS-counter-generated number:
+; a page's own heading (rendered by `tree`) has no parent context to count
+; against, so it stays bare; a heading rendered where a page is transcluded
+; (by `transclude`) sits inside the enclosing .tr-body/#toc counter scope, so
+; it gets numbered the same way TOC entries and tr/card entries do.
+(define (tr-h1 addr text taxon #:numbered? [numbered? #f])
   (define url
     (if (string=? "index" addr)
         "/"
         (string-append "/" addr)))
   (define link-to-self (a 'class: "link-self" 'href: url 'target: "_parent" "[" addr "]"))
-  (h1
-    (when taxon
-      (list (span 'class: "taxon" (string-append taxon ".")) " "))
-    text
-    " "
-    link-to-self))
+  (define taxon-span
+    (cond
+      [(and numbered? taxon)
+       (list (span 'class: "taxon numbered" (string-append taxon " ")) " ")]
+      [numbered?
+       (list (span 'class: "taxon numbered" "") " ")]
+      [taxon
+       (list (span 'class: "taxon" (string-append taxon ".")) " ")]
+      [else (void)]))
+  (h1 taxon-span
+      text
+      " "
+      link-to-self))
 
 (define cached-metadata (make-hash))
 (define (reset-metadata-cache!) (hash-clear! cached-metadata))
@@ -84,7 +96,11 @@
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))
 (define (generate-related) (footer-common "Related" 'related))
 
-(define (recur-toc addr depth number)
+; numbering is left entirely to CSS counters (scoped to #toc ol / .tr-body,
+; see the .taxon.numbered rule a site is expected to define) so it stays in
+; sync with the equally CSS-driven numbering in transcluded content, instead
+; of being computed here and baked into static text.
+(define (recur-toc addr depth)
   (define is-local? (string-contains? addr ":"))
   (define anchor (format "#~a" addr))
   (define page-url
@@ -95,17 +111,14 @@
   (define (common-part taxon title entries)
     (li (a 'class: "toc-bullet" 'href: page-url 'target: "_parent" "■")
         (a 'class: "toc-title" 'href: anchor 'target: "_parent"
-           (span 'class: "taxon"
-                 (if taxon
-                     (format "~a ~a." taxon number)
-                     (format "~a." number)))
+           (span 'class: "taxon numbered" (if taxon (string-append taxon " ") ""))
            " "
            (literal (or title addr)))
         (unless (= 0 depth)
           (unless (empty? entries)
             (ol
-              (for/list ([addr entries] [i (in-naturals 1)])
-                (recur-toc addr (sub1 depth) (format "~a.~a" number i))))))))
+              (for/list ([addr entries])
+                (recur-toc addr (sub1 depth))))))))
 
   (cond
     [is-local?
@@ -126,8 +139,8 @@
   (unless (empty? entries)
     (element 'nav 'id: "toc"
              (h1 "Table of Contents")
-             (ol (for/list ([addr entries] [i (in-naturals 1)])
-                   (recur-toc addr (sub1 (toc/depth)) (number->string i)))))))
+             (ol (for/list ([addr entries])
+                   (recur-toc addr (sub1 (toc/depth))))))))
 
 (define (tree path)
   (define meta-queue (make-queue))
@@ -171,7 +184,7 @@
   (details 'open: open? 'id: addr
            (summary
              (header
-               (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon))
+               (tr-h1 addr (fetch-metadata addr 'title) (fetch-metadata addr 'taxon) #:numbered? #t)
                (div 'class: "metadata"
                     (ul
                       (li (fetch-metadata addr 'date))
@@ -193,15 +206,12 @@
            (summary
              (header
                (h1
-                 (span 'class: "taxon"
-                       (if taxon
-                           (format "~a ~a." taxon (add1 cc))
-                           (format "~a." (add1 cc))))
+                 (span 'class: "taxon numbered" (if taxon (string-append taxon " ") ""))
                  " "
                  title
                  " "
                  link-to-self)))
-           (article content)))
+           (article 'class: "tr-body" content)))
 
 (define (pre* . content)
   (disable-prefix (pre (literal content))))

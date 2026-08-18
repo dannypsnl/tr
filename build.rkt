@@ -27,7 +27,7 @@
 @(require tr/card)
 ~a
 @self-addr{~a}
-@article{~a}
+@article['class: \"tr-body\"]{~a}
 "
           (if (file-exists? rkt-path)
               (string-append "@(require \"" addr ".rkt\")")
