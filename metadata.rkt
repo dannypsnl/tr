@@ -18,6 +18,7 @@
 (define (compute-metadata addr addr-path)
   (define self-title (make-parameter #f))
   (define self-taxon (make-parameter #f))
+  (define self-lang (make-parameter #f))
   (define self-date (make-parameter #f))
   (define self-doi (make-parameter #f))
   (define self-orcid (make-parameter #f))
@@ -61,6 +62,7 @@
     (match form
       [`(title ,@forms) (self-title (for/list ([f forms]) (execute f)))]
       [`(taxon ,text) (self-taxon text)]
+      [`(html/lang ,text) (self-lang text)]
       [`(date ,text) (self-date text)]
       [`(doi ,text) (self-doi text)]
       [`(orcid ,text) (self-orcid text)]
@@ -109,6 +111,7 @@
                          (cons 'name-authors (queue->list literal-author-queue))
                          (cons 'title title)
                          (cons 'taxon taxon)
+                         (cons 'lang (self-lang))
                          (cons 'text collected-text)
                          (cons 'toc/depth (self-toc/depth))
                          ; a list of addresses, later we should update context of these addresses

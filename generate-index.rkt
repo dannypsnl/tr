@@ -31,6 +31,7 @@
 
   (define metaobj (hash-ref addr-maps-to-metajson addr))
   (define title (hash-ref metaobj 'title))
+  (define lang (or (hash-ref metaobj 'lang #f) (get-config 'html-lang "")))
   (parameterize ([self-addr addr]
                  [toc/depth (if (hash-ref metaobj 'toc/depth) (hash-ref metaobj 'toc/depth) 2)]
                  [generate-root? (root? addr)])
@@ -39,11 +40,11 @@
         (doctype 'html)
         (cond
           [(root? addr)
-           (common-share #:title title
+           (common-share #:title title #:lang lang
                          (div 'class: "top-wrapper"
                               (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
           [else
-           (common-share #:title title
+           (common-share #:title title #:lang lang
                          (div 'class: "top-wrapper"
                               (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
                               (generate-toc))
@@ -58,8 +59,10 @@
 (define generate-root? (make-parameter #f))
 
 (define (common-share #:title this-title
+                      #:lang [this-lang ""]
                       . content)
   (html
+    'lang: (and (non-empty-string? this-lang) this-lang)
     (head
       (meta 'http-equiv: "Content-Type" 'content: "text/html; charset=utf-8")
       (meta 'name: "viewport" 'content: "width=device-width, initial-scale=1")

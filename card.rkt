@@ -15,6 +15,7 @@
               [pre* bibtex]
               [ignore title]
               [ignore taxon]
+              [ignore html/lang]
               [ignore date]
               [ignore author]
               [ignore author/literal]

@@ -86,11 +86,13 @@ When it returns #t, it eliminate the card from the further pipeline.
   (equal? "dev" (get-config 'mode "release")))
 
 ; A stable string of the config that the per-card renderer bakes into output.
-; This feeds the build signature so two output targets with different such
-; config get distinct signatures and never share a content-store entry.
+; This feeds the build signature (and thus the per-target .sig freshness
+; stamp), so a config change that changes rendered output forces a rebuild
+; instead of leaving a stale index.html/store entry in place.
 ;
-; Today the only config that reaches per-card HTML is `head` (see
-; generate-index.rkt). We key on the rendered bytes (xml->string) rather than
-; the element values, which print opaquely and unstably.
+; Config reaching per-card HTML today: `head` and `html-lang` (see
+; generate-index.rkt). `head` is keyed on its rendered bytes (xml->string)
+; rather than the element values, which print opaquely and unstably.
 (define (render-config-tag)
-  (format "~s" (map xml->string (get-config 'head '()))))
+  (format "~s" (list (map xml->string (get-config 'head '()))
+                      (get-config 'html-lang ""))))

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - config: new option `remove-content-if` for cards filtering
+- Per-page `@html/lang{...}` metadata sets the rendered page's `<html lang>`, overriding the new `html-lang` site config option (default: none, so `lang` is omitted).
 
 ### Changed
 
