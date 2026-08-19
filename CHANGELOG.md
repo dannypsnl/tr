@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Per-page `@html/lang{...}` metadata sets the rendered page's `<html lang>`, overriding the new `html-lang` site config option (default: none, so `lang` is omitted).
 - `@tr/depends{path}` declares an extra file a card's build signature depends on, without splicing it into the rendered output like `@include` does. Renders nothing; `path` is resolved relative to the project root (not `_tmp`, unlike `@include`). Use it for a hand-authored asset (e.g. an animation `.js` a card links to via a raw `<script src>`) so editing that file invalidates the card's cache even though the card's own `.scrbl` never changes. (#58)
 - config: new option `extension-module`, a path (resolved relative to the current directory, same as `assets`/`output-path`) to a Racket module of extra bindings — e.g. custom `@`-callable LaTeX macros — auto-required into every card, so a card can call `@my-macro{...}` with no per-card `require`. Editing the module's content (even with every `.scrbl` untouched) invalidates the build cache.
+- Provide `tr/rss`, a library for a site to build its own RSS feed(s) from cards.
+- config: new option `after-build`, a 1-arity procedure over the build's output path, invoked once after every card is rendered.
 
 ### Changed
 
@@ -47,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   Existing sites must add those entries to their own `site.rkt`, and their `fullTextSearch.js` must build the dialog itself (`tiny.js` provides the element builders) instead of expecting `tr` to have rendered it.
 
 - **Breaking:** `search.json` is no longer generated. Building a search index is the site's job, same as the search UI. Every card's metadata is still written to `_tmp/<addr>.metadata.json` during a build (`title`, `taxon`, `text`, `date`, `context`, ...), so a site's own build step can produce whatever index its engine wants — concatenating them into a JSON array reproduces the old `search.json` exactly.
+- **Breaking:** RSS is no longer generated automatically. The old `private/rss.rkt` hard-coded a `content/post` directory scan and read `title`/`date`/`id` off each card's metadata. A site that wants a feed now writes its own selection/formatting logic against the new `tr/rss` library and wires it in via the `after-build` config option. (#55)
 
 ## [1.4] 2026-07-05
 

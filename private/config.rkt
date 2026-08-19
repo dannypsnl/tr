@@ -5,6 +5,7 @@
          get-assets-path
          get-extension-module
          remove-scrbl?
+         run-after-build!
          dev-mode?
          render-config-tag)
 (require racket/file
@@ -87,6 +88,11 @@ When it returns #t, it eliminate the card from the further pipeline.
   (if p?
       (p? source-path)
       #f))
+
+(define (run-after-build!)
+  (define hook (get-config 'after-build #f))
+  (when hook
+    (hook (get-output-path))))
 
 (define (dev-mode?)
   (equal? "dev" (get-config 'mode "release")))

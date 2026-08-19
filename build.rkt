@@ -10,7 +10,6 @@
          "metadata.rkt"
          "private/common.rkt"
          (prefix-in config: "private/config.rkt")
-         "private/rss.rkt"
          "private/signature.rkt"
          "private/store.rkt"
          "generate-index.rkt")
@@ -218,7 +217,7 @@
        (produce-index! addr addr-maps-to-metajson)
        (write-output-stamp! addr sig)]))
 
-  (produce-rss))
+  (config:run-after-build!))
 
 ; Homebrew installs dvisvgm in its own cellar prefix, separate from TeX Live.
 ; dvisvgm's bundled kpathsea searches for texmf.cnf relative to the dvisvgm
