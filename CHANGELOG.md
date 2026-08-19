@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Per-page `@html/lang{...}` metadata sets the rendered page's `<html lang>`, overriding the new `html-lang` site config option (default: none, so `lang` is omitted).
 - `@tr/depends{path}` declares an extra file a card's build signature depends on, without splicing it into the rendered output like `@include` does. Renders nothing; `path` is resolved relative to the project root (not `_tmp`, unlike `@include`). Use it for a hand-authored asset (e.g. an animation `.js` a card links to via a raw `<script src>`) so editing that file invalidates the card's cache even though the card's own `.scrbl` never changes. (#58)
 - config: new option `extension-module`, a path (resolved relative to the current directory, same as `assets`/`output-path`) to a Racket module of extra bindings — e.g. custom `@`-callable LaTeX macros — auto-required into every card, so a card can call `@my-macro{...}` with no per-card `require`. Editing the module's content (even with every `.scrbl` untouched) invalidates the build cache.
+- Provide `tr/meta`, a library exposing metadata related stuff.
 - Provide `tr/rss`, a library for a site to build its own RSS feed(s) from cards.
 - config: new option `after-build`, a 1-arity procedure over the build's output path, invoked once after every card is rendered.
 

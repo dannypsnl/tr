@@ -5,7 +5,6 @@
 (require racket/list)
 (require scribble/html/html
          scribble/html/xml)
-(require "private/common.rkt")
 
 (define/provide-elements/not-empty item pubDate description)
 
