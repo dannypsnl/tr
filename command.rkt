@@ -4,8 +4,8 @@
          "file-watchers/main.rkt")
 (require "private/next.rkt"
          "private/config.rkt"
-         "build.rkt"
-         "metadata.rkt")
+         "private/build.rkt"
+         "private/metadata.rkt")
 (require racket/logging
          racket/random
          racket/runtime-path)

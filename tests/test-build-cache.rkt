@@ -3,7 +3,7 @@
 ;; Plain-text cards only (no @m math / no tikz/typst) so no external tools are
 ;; needed. A card counts as "rebuilt" when its embed.html is regenerated.
 (require json
-         "../build.rkt"
+         "../private/build.rkt"
          "../private/config.rkt")
 
 (define proj "/tmp/tr-test-build-cache")

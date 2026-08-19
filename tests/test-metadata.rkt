@@ -1,5 +1,5 @@
 #lang racket
-(require "../metadata.rkt")
+(require "../private/metadata.rkt")
 
 (define temp-dir "/tmp/tr-test-metadata")
 

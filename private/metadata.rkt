@@ -6,7 +6,7 @@
          scribble/html/html
          data/queue
          dirname)
-(require "private/common.rkt")
+(require "common.rkt")
 
 (define (execute f)
   (match f

@@ -5,8 +5,8 @@
 (require scribble/html/html
          scribble/html/extra
          scribble/html/xml
-         "private/config.rkt"
-         (only-in "card.rkt"
+         "config.rkt"
+         (only-in "../card.rkt"
                   self-addr toc/depth
                   tree
                   generate-toc

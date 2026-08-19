@@ -1,5 +1,5 @@
 #lang racket
-(require "../metadata.rkt"
+(require "../private/metadata.rkt"
          "../card.rkt")
 
 (module+ test

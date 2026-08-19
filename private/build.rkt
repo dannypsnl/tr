@@ -6,12 +6,12 @@
          mischief/dict
          mischief/sort
          argo/equal)
-(require "card.rkt"
+(require "../card.rkt"
          "metadata.rkt"
-         "private/common.rkt"
-         (prefix-in config: "private/config.rkt")
-         "private/signature.rkt"
-         "private/store.rkt"
+         "common.rkt"
+         (prefix-in config: "config.rkt")
+         "signature.rkt"
+         "store.rkt"
          "generate-index.rkt")
 
 ; set->list has no stable order, so serializing it directly makes metadata
