@@ -10,7 +10,7 @@
     "http-easy-lib"
     "scribble-html-lib"
     "scribble-text-lib"))
-(define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc"))
+(define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc" "rackcheck"))
 (define scribblings '(("scribblings/tr.scrbl" (multi-page) ("site generator"))))
 (define pkg-desc "A site generator")
 (define version "1.4")
