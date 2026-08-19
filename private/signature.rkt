@@ -1,5 +1,5 @@
 #lang racket
-(provide scrbl-include-paths
+(provide scrbl-form-paths
          compute-source-hash
          compute-signatures)
 (require scribble/reader
@@ -7,17 +7,15 @@
          "common.rkt")
 
 ; Walk the scribble forms of a .scrbl source and collect every path referenced
-; by a `@include{path}` (scribble/text include), including nested occurrences.
-; These extra inputs feed into the source hash so external HTMLs change invalidate
-; the card even when the .scrbl bytes are untouched.
-(define (scrbl-include-paths source-path)
+; by every top-level occurrence of `(tag "path")`, including nested occurrences.
+(define (scrbl-form-paths source-path tag)
   (define forms
     (call-with-input-file source-path
       (lambda (in) (read-inside in))))
   (define paths (box '()))
   (let walk ([form forms])
     (match form
-      [`(include ,(? string? p)) (set-box! paths (cons p (unbox paths)))]
+      [(list (== tag) (? string? p)) (set-box! paths (cons p (unbox paths)))]
       [(? list?) (for-each walk form)]
       [_ (void)]))
   (reverse (unbox paths)))
@@ -27,19 +25,24 @@
 (define (frame bs)
   (bytes-append (string->bytes/utf-8 (number->string (bytes-length bs))) #":" bs))
 
-; Hash of everything a card's rendered body depends on in its own source:
-; the .scrbl bytes plus the bytes of every file it @includes. Include paths are
-; resolved against tmp-dir, which is where the generated embed scrbl lives and
-; therefore where scribble/text's `include` resolves them at render time.
+; Hash of everything a card's rendered body depends on in its own source: the
+; .scrbl bytes, the bytes of every file it @includes, and the bytes of every
+; file it @tr/depends on. Include paths are resolved against tmp-dir, which is
+; where the generated embed scrbl lives and therefore where scribble/text's
+; `include` resolves them at render time. Depends paths are resolved against
+; the project's current-directory, since a @tr/depends file is never spliced
+; in by scribble/text and so has no render-time resolution rule of its own.
 (define (compute-source-hash source-path tmp-dir)
   (define scrbl (file->bytes source-path))
+  (define (framed-file base p)
+    (define full (build-path base p))
+    (frame (bytes-append (string->bytes/utf-8 p) #"\0"
+                         (if (file-exists? full) (file->bytes full) #""))))
   (define included
-    (for/list ([p (scrbl-include-paths source-path)])
-      (define full (build-path tmp-dir p))
-      (frame (bytes-append (string->bytes/utf-8 p) #"\0"
-                           (if (file-exists? full) (file->bytes full) #"")))))
-    
-  (sha1 (open-input-bytes (apply bytes-append (frame scrbl) included))))
+    (for/list ([p (scrbl-form-paths source-path 'include)]) (framed-file tmp-dir p)))
+  (define depended
+    (for/list ([p (scrbl-form-paths source-path 'tr/depends)]) (framed-file (current-directory) p)))
+  (sha1 (open-input-bytes (apply bytes-append (frame scrbl) (append included depended)))))
 
 ; Deterministic textual encoding of a jsexpr: hash keys are sorted so the
 ; serialization (and thus the signature) never depends on hash iteration order.

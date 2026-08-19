@@ -12,6 +12,11 @@
   (call-with-output-file path #:exists 'replace
     (lambda (out) (for ([l lines]) (displayln l out)))))
 
+(define (scrbl-include-paths source-path)
+  (scrbl-form-paths source-path 'include))
+(define (scrbl-depends-paths source-path)
+  (scrbl-form-paths source-path 'tr/depends))
+
 (module+ test
   (require rackunit)
 
@@ -31,6 +36,23 @@
     (define src (build-path temp-dir "a.scrbl"))
     (write-file! src "@title{A}" "@p{just text}")
     (check-equal? (scrbl-include-paths src) '()))
+
+  ;; --- scrbl-depends-paths ---
+  (test-case "scrbl-depends-paths finds top-level and nested @tr/depends forms"
+    (reset!)
+    (define src (build-path temp-dir "a.scrbl"))
+    (write-file! src
+                 "@title{A}"
+                 "@tr/depends{js/anim.js}"
+                 "@p{body @tr/depends{css/anim.css}}")
+    (check-equal? (list->set (scrbl-depends-paths src))
+                  (set "js/anim.js" "css/anim.css")))
+
+  (test-case "scrbl-depends-paths returns empty when no depends"
+    (reset!)
+    (define src (build-path temp-dir "a.scrbl"))
+    (write-file! src "@title{A}" "@p{just text}")
+    (check-equal? (scrbl-depends-paths src) '()))
 
   ;; --- compute-source-hash ---
   (define tmp (build-path temp-dir "_tmp"))
@@ -77,6 +99,43 @@
     (reset!)
     (define src (build-path temp-dir "a.scrbl"))
     (write-file! src "@title{A}" "@include{html/missing.html}")
+    (check-true (string? (compute-source-hash src tmp))))
+
+  (test-case "compute-source-hash changes when a @tr/depends file changes"
+    (reset!)
+    (parameterize ([current-directory temp-dir])
+      (define src (build-path temp-dir "a.scrbl"))
+      (write-file! src "@title{A}" "@tr/depends{js/anim.js}")
+      (define dep (build-path temp-dir "js" "anim.js"))
+      (make-directory* (build-path temp-dir "js"))
+      (write-file! dep "ANIM ONE")
+      (define h1 (compute-source-hash src tmp))
+      (write-file! dep "ANIM TWO")
+      (check-not-equal? h1 (compute-source-hash src tmp)
+                        "rewriting the @tr/depends file (scrbl untouched) -> new hash")))
+
+  (test-case "compute-source-hash resolves depends paths relative to current-directory, not tmp-dir"
+    (reset!)
+    (parameterize ([current-directory temp-dir])
+      (define src (build-path temp-dir "a.scrbl"))
+      (write-file! src "@title{A}" "@tr/depends{js/anim.js}")
+      ; a same-named file under tmp-dir must NOT affect the hash
+      (make-directory* (build-path tmp "js"))
+      (write-file! (build-path tmp "js" "anim.js") "DECOY")
+      (make-directory* (build-path temp-dir "js"))
+      (write-file! (build-path temp-dir "js" "anim.js") "REAL")
+      (define h1 (compute-source-hash src tmp))
+      (write-file! (build-path tmp "js" "anim.js") "DECOY CHANGED")
+      (check-equal? h1 (compute-source-hash src tmp)
+                    "file under tmp-dir is irrelevant to @tr/depends")
+      (write-file! (build-path temp-dir "js" "anim.js") "REAL CHANGED")
+      (check-not-equal? h1 (compute-source-hash src tmp)
+                        "file under current-directory is the one that counts")))
+
+  (test-case "compute-source-hash tolerates a missing depends file"
+    (reset!)
+    (define src (build-path temp-dir "a.scrbl"))
+    (write-file! src "@title{A}" "@tr/depends{js/missing.js}")
     (check-true (string? (compute-source-hash src tmp))))
 
   ;; --- compute-signatures ---

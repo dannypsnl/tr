@@ -25,7 +25,8 @@
               [ignore meta/link]
               [ignore tm]
               [ignore tr/code]
-              [ignore mention/hidden])
+              [ignore mention/hidden]
+              [ignore tr/depends])
   transclude
   tr/card
   card-counting

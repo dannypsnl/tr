@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - config: new option `remove-content-if` for cards filtering
 - Per-page `@html/lang{...}` metadata sets the rendered page's `<html lang>`, overriding the new `html-lang` site config option (default: none, so `lang` is omitted).
+- `@tr/depends{path}` declares an extra file a card's build signature depends on, without splicing it into the rendered output like `@include` does. Renders nothing; `path` is resolved relative to the project root (not `_tmp`, unlike `@include`). Use it for a hand-authored asset (e.g. an animation `.js` a card links to via a raw `<script src>`) so editing that file invalidates the card's cache even though the card's own `.scrbl` never changes. (#58)
 
 ### Changed
 

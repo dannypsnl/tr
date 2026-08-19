@@ -113,6 +113,18 @@
     (check-true (rebuilt? (build!) "a")
                 "regenerated Agda html invalidates the card (no Makefile rm -f needed)"))
 
+  (test-case "changing a @tr/depends file rebuilds the card with the scrbl untouched"
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "a.scrbl")
+                   "@title{A}" "@date{2024-01-01}" "@p{alpha}" "@tr/depends{assets/anim.js}")
+      (write-file! (build-path "assets" "anim.js") "console.log('one')"))
+    (build!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "assets" "anim.js") "console.log('two')"))
+    (check-true (rebuilt? (build!) "a")
+                "editing the hand-authored asset invalidates the card even though it is never spliced into the scrbl"))
+
   (test-case "editing a mentioned neighbor's title rebuilds the referrer"
     (fresh-project!)
     (parameterize ([current-directory proj])
