@@ -224,4 +224,37 @@
     (define built (build!))
     (check-equal? built (set) "still a store hit -- no re-render")
     (check-true (and (file-exists? idx) (regexp-match? #rx"healed" (output-index "_build" "hl")))
-                "the missing index.html was regenerated")))
+                "the missing index.html was regenerated"))
+
+  (test-case "site.rkt's extension-module is auto-required into every card, and editing it invalidates the store"
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "macro.rkt")
+                   "#lang racket/base"
+                   "(provide hi)"
+                   "(define (hi x) (format \"hello-~a\" x))")
+      ; a distinct filename from "site.rkt": dynamic-require caches by resolved
+      ; path, so re-requiring the same "site.rkt" fresh-project! already loaded
+      ; would silently return its stale (no-extension-module) config.
+      (write-file! (build-path "site-em.rkt")
+                   "#lang racket/base"
+                   "(provide site)"
+                   (string-append "(define site (hash 'domain \"example.com\" 'title \"T\" 'description \"D\""
+                                  " 'output-path \"_build\" 'extension-module \"macro.rkt\"))"))
+      (setup-config! "site-em.rkt")
+      (write-file! (build-path "content" "post" "em.scrbl")
+                   "@title{EM}" "@date{2024-01-01}" "@p{@hi{world}}"))
+    (check-true (rebuilt? (build!) "em"))
+    (check-true (regexp-match? #rx"hello-world" (output-index "_build" "em"))
+                "the extension-module's binding is callable from the card with no per-card require")
+
+    (sleep 1) ; dynamic-rerequire's mtime check has 1s resolution; see the revert test above
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "macro.rkt")
+                   "#lang racket/base"
+                   "(provide hi)"
+                   "(define (hi x) (format \"goodbye-~a\" x))"))
+    (check-true (rebuilt? (build!) "em")
+                "editing the extension-module (scrbl untouched) must invalidate the store")
+    (check-true (regexp-match? #rx"goodbye-world" (output-index "_build" "em"))
+                "the rebuild picks up the extension-module's new definition")))

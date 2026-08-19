@@ -23,15 +23,22 @@
 
 (define (embed-header addr content)
   (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
+  (define ext-mod (config:get-extension-module))
+  (define extra-requires
+    (string-append
+      (if ext-mod
+          (format "@(require (file ~s))\n" (path->string ext-mod))
+          "")
+      (if (file-exists? rkt-path)
+          (string-append "@(require \"" addr ".rkt\")")
+          "")))
   (format "#lang scribble/text
 @(require tr/card)
 ~a
 @self-addr{~a}
 @article['class: \"tr-body\"]{~a}
 "
-          (if (file-exists? rkt-path)
-              (string-append "@(require \"" addr ".rkt\")")
-              "")
+          extra-requires
           addr
           content))
 
