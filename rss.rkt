@@ -1,12 +1,12 @@
 #lang racket/base
-(provide item title link description pubDate
+(provide item title link description pubDate guid
          content-encoded cdata
          create-feed)
 (require racket/list)
 (require scribble/html/html
          scribble/html/xml)
 
-(define/provide-elements/not-empty item pubDate description)
+(define/provide-elements/not-empty item pubDate description guid)
 
 (define (content-encoded . body)
   (apply element/not-empty "content:encoded" body))
