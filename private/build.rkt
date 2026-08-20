@@ -2,6 +2,7 @@
 (provide search-and-build)
 (require racket/rerequire)
 (require dirname
+         file/sha1
          json
          mischief/dict
          mischief/sort
@@ -44,21 +45,45 @@
 (struct final-card (src-path addr path target-path) #:transparent)
 
 (define (produce-scrbl addr-list addr->path mode)
+  (define (tmp-scrbl-path addr content-hash mode)
+    (build-path "_tmp"
+                (string-append addr "-" content-hash "." mode ".scrbl")))
+  #|
+  dynamic-rerequire's own staleness check (racket/rerequire.rkt: check-latest)
+  is `(ts . > . mod-timestamp)`, entirely independent of tr's own content-hash
+  signature system.
+
+  Two rebuilds of the same addr within one wall-clock period
+  (plausible under `tr watch`, e.g. an editor's format-on-save chain) can
+  leave its tmp mtime unchanged even though the content genuinely differs,
+  so dynamic-rerequire serves a stale render even though tr already
+  correctly decided this addr needs rebuilding.
+
+  Naming the tmp file after its own content hash sidesteps mtime comparison
+  entirely: distinct content is always making a new path dynamic-rerequire
+  has never seen (hence guaranteed a fresh load).
+  |#
+  (define (content-hash-of content)
+    (sha1 (open-input-bytes (string->bytes/utf-8 content))))
+  (define (marker-path addr mode)
+    (build-path "_tmp" (string-append addr "." mode ".hash")))
+
   (for/list ([addr addr-list])
     (define source-path (hash-ref addr->path addr))
-    (define tmp-path
-      (cond
-        [(root? addr) (build-path "_tmp" (string-append addr ".scrbl"))]
-        [else (build-path "_tmp" (string-append addr "." mode ".scrbl"))]))
-    (define f (open-output-file #:exists 'truncate/replace tmp-path))
-    (define in (open-input-file source-path))
-    (displayln
-      (embed-header
-        addr
-        (port->string in))
-      f)
-    (close-input-port in)
-    (close-output-port f)
+    (define content
+      (embed-header addr (call-with-input-file source-path port->string)))
+    (define content-hash (content-hash-of content))
+    (define tmp-path (tmp-scrbl-path addr content-hash mode))
+    (define marker (marker-path addr mode))
+    (unless (file-exists? tmp-path)
+      (when (file-exists? marker)
+        (define old-hash (file->string marker))
+        (define old-tmp-scrbl-path (tmp-scrbl-path addr old-hash mode))
+        (when (file-exists? old-tmp-scrbl-path) (delete-file old-tmp-scrbl-path)))
+      (call-with-output-file tmp-path
+        (lambda (f) (displayln content f)))
+      (call-with-output-file marker #:exists 'replace
+        (lambda (f) (display content-hash f))))
 
     (define output-path
       (cond
