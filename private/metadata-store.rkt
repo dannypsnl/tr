@@ -3,6 +3,7 @@
          close-metadata-store!
          metadata-store-ref
          metadata-store-set!
+         metadata-store-all
          with-metadata-transaction)
 (require db json)
 
@@ -39,6 +40,10 @@
     (conn!)
     "INSERT INTO metadata(addr, json) VALUES (?, ?) ON CONFLICT(addr) DO UPDATE SET json = excluded.json"
     addr (jsexpr->string obj)))
+
+(define (metadata-store-all)
+  (for/list ([row (in-list (query-rows (conn!) "SELECT json FROM metadata ORDER BY addr"))])
+    (string->jsexpr (vector-ref row 0))))
 
 (define (with-metadata-transaction thunk)
   (call-with-transaction (conn!) thunk))

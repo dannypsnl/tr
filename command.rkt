@@ -5,7 +5,8 @@
 (require "private/next.rkt"
          "private/config.rkt"
          "private/build.rkt"
-         "private/metadata.rkt")
+         "private/metadata.rkt"
+         "private/metadata-store.rkt")
 (require racket/logging
          racket/random
          racket/runtime-path)
@@ -187,13 +188,31 @@
     (displayln (compute-next-addr prefix random?))))
 
 (define (run-tr-meta)
+  (define all? #f)
   (command-line
     #:program "tr meta"
-    #:usage-help "get metadata of <addr>"
-    #:args (addr)
+    #:usage-help "get metadata of <addr>, or every built card's stored metadata with --all"
+    #:once-each
+    [("--all") "dump every card's metadata from the last `tr build`'s store, as a JSON array" (set! all? #t)]
+    #:args args
     (unless root-path (raise "You're not in a tr project"))
-    (define scrbl-list (find-files (lambda (x) (string=? addr (path->string (path-replace-extension (basename x) "")))) "content"))
-    (write-json (compute-metadata addr (first scrbl-list)))))
+    (cond
+      [all?
+       (open-metadata-store!)
+       (write-json (metadata-store-all))
+       (close-metadata-store!)]
+      [else
+       (define addr (first args))
+       (define stored
+         (and (file-exists? (build-path "_tmp" "metadata.sqlite3"))
+              (begin0
+                (metadata-store-ref addr)
+                (close-metadata-store!))))
+       (cond
+         [stored (write-json stored)]
+         [else
+          (define scrbl-list (find-files (lambda (x) (string=? addr (path->string (path-replace-extension (basename x) "")))) "content"))
+          (write-json (compute-metadata addr (first scrbl-list)))])])))
 
 (define (run-tr)
   (command-line
