@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Provide `tr/meta`, a library exposing metadata related stuff.
 - Provide `tr/rss`, a library for a site to build its own RSS feed(s) from cards.
 - config: new option `after-build`, a 1-arity procedure over the build's output path, invoked once after every card is rendered.
+- `tr/rss` exposes `guid`, so a feed can emit a `<guid>` per item.
+- `raco tr meta --all` dumps every card's metadata from the last `tr build`'s store as one JSON array, so a site's own index/feed step doesn't have to enumerate addrs itself.
 
 ### Changed
 
@@ -36,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
   A page's own heading when viewed standalone (not transcluded) is unaffected and still shows the bare taxon with no number.
 
+- Card metadata is now stored in a single SQLite database, `_tmp/metadata.sqlite3`, instead of one `_tmp/<addr>.metadata.json` file per addr. `raco tr meta <addr>` and the `tr/meta` library's `card-metadata` are unaffected externally; `raco tr meta --all` / `all-card-metadata` above replace hand-scanning `_tmp/*.metadata.json`.
 - **Breaking:** `style.css`, `katex.min.css`, `katex.min.js`, KaTeX's official `contrib/` scripts, and every font either stylesheet's `@font-face` points at (Inria Sans, KaTeX's own) are now bundled with `tr` itself and written to the output directory on every build, overwriting any same-named file a site's assets directory provides. `style.css` is tightly coupled to the HTML `tr` itself generates (e.g. the taxon-numbering CSS counters above); `katex.min.css`/`.js`/`contrib/` are the official `npm:katex@0.18.1` dist build — the exact version `katex-stdio-deno.ts`'s `renderToString` is pinned to, so tracking them outside the package let a site's copy drift to a mismatched KaTeX version with subtly broken math layout (confirmed happening: one live site had the current version, another a stale one). Rules that only style markup `tr` doesn't generate — the search dialog (built by a site's own search script, not `tr`) and Agda's `.Agda`-prefixed syntax-highlight classes (emitted by the external `agda` HTML backend, not `tr`) — were dropped from the bundled stylesheet, since correctness there was never `tr`'s to keep in sync. If a site's own copy of any bundled file differs from tr's version, the build now prints a diagnosis explaining it will be overwritten and the exact `site.rkt` `'head` snippet to paste to keep the extra rules applying (rename the file, then link/script it): identical files are left silent.
 
 ### Removed
@@ -49,8 +52,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
   Existing sites must add those entries to their own `site.rkt`, and their `fullTextSearch.js` must build the dialog itself (`tiny.js` provides the element builders) instead of expecting `tr` to have rendered it.
 
-- **Breaking:** `search.json` is no longer generated. Building a search index is the site's job, same as the search UI. Every card's metadata is still written to `_tmp/<addr>.metadata.json` during a build (`title`, `taxon`, `text`, `date`, `context`, ...), so a site's own build step can produce whatever index its engine wants — concatenating them into a JSON array reproduces the old `search.json` exactly.
+- **Breaking:** `search.json` is no longer generated. Building a search index is the site's job, same as the search UI. Every card's metadata (`title`, `taxon`, `text`, `date`, `context`, ...) is still recorded during a build.
 - **Breaking:** RSS is no longer generated automatically. The old `private/rss.rkt` hard-coded a `content/post` directory scan and read `title`/`date`/`id` off each card's metadata. A site that wants a feed now writes its own selection/formatting logic against the new `tr/rss` library and wires it in via the `after-build` config option. (#55)
+
+### Fixed
+
+- `tr watch`: a same-second re-edit of a card (e.g. an editor's format-on-save chain) could serve an empty page. `dynamic-rerequire`'s own staleness check is mtime-based at 1-second resolution and independent of `tr`'s content-hash build signatures, so a second rebuild within the same second reused the already-truncated-but-not-yet-reinstantiated module. Card `.scrbl` tmp files are now named after a hash of their own generated content (`_tmp/<addr>-<hash>.<mode>.scrbl`) instead of a fixed `<addr>.<mode>.scrbl`, so distinct content always gets a path `dynamic-rerequire` hasn't seen; superseded hash-named files are deleted once replaced so `_tmp` doesn't accumulate one file per edit.
 
 ## [1.4] 2026-07-05
 
