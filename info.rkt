@@ -3,7 +3,6 @@
 (define deps
   '("base"
     "dirname"
-    "gregor-lib"
     "mischief"
     "argo"
     "at-exp-lib"
