@@ -4,7 +4,6 @@
   '("base"
     "db-lib"
     "dirname"
-    "gregor-lib"
     "mischief"
     "argo"
     "at-exp-lib"
