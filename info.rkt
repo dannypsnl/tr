@@ -2,6 +2,7 @@
 (define collection "tr")
 (define deps
   '("base"
+    "db-lib"
     "dirname"
     "gregor-lib"
     "mischief"

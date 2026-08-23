@@ -9,6 +9,7 @@
          argo/equal)
 (require "../card.rkt"
          "metadata.rkt"
+         "metadata-store.rkt"
          "common.rkt"
          (prefix-in config: "config.rkt")
          "signature.rkt"
@@ -130,6 +131,7 @@
 
   (define tmp (build-path "_tmp"))
   (make-directory* tmp)
+  (open-metadata-store! tmp)
 
   (define cache-root (build-path tmp "cache"))
   (init-store! cache-root)
@@ -186,22 +188,16 @@
     (hash-set! addr-maps-to-metajson addr
                (hash-set* meta-obj 'references (set->sorted-list refs))))
 
-  ; update <addr>.metadata.json if computed metadata differs from disk
-  (for/async ([addr addr-list])
-    (define new-meta (hash-ref addr-maps-to-metajson addr))
-    (define meta-path (build-path "_tmp" (string-append addr ".metadata.json")))
-    ; an interrupted build can leave an empty/corrupt metadata file (json->file
-    ; truncates before writing); read-json then yields <eof>, which is not a
-    ; jsexpr?. Treat any unreadable existing file as a cache miss and rewrite it.
-    (define existing
-      (and (file-exists? meta-path)
-           (with-handlers ([exn:fail? (lambda (_) #f)])
-             (define obj (file->json meta-path))
-             (and (jsexpr? obj) obj))))
-    (unless (and existing
-                 (equal-jsexprs? existing new-meta))
-      (printf "update ~a.metadata.json ~n" addr)
-      (json->file new-meta meta-path)))
+  ; one transaction for all addrs, not for/async: SQLite serializes writers anyway
+  (with-metadata-transaction
+    (lambda ()
+      (for ([addr addr-list])
+        (define new-meta (hash-ref addr-maps-to-metajson addr))
+        (define existing (metadata-store-ref addr))
+        (unless (and existing
+                     (equal-jsexprs? existing new-meta))
+          (printf "update ~a.metadata ~n" addr)
+          (metadata-store-set! addr new-meta)))))
 
   #|
   content-addressed build: a card's build signature captures everything its
@@ -242,7 +238,8 @@
        (produce-index! addr addr-maps-to-metajson)
        (write-output-stamp! addr sig)]))
 
-  (config:run-after-build!))
+  (config:run-after-build!)
+  (close-metadata-store!))
 
 ; Homebrew installs dvisvgm in its own cellar prefix, separate from TeX Live.
 ; dvisvgm's bundled kpathsea searches for texmf.cnf relative to the dvisvgm

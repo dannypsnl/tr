@@ -44,7 +44,8 @@
          scribble/html/xml)
 (require data/queue)
 (require (only-in scribble/text disable-prefix))
-(require "private/common.rkt")
+(require "private/common.rkt"
+         "private/metadata-store.rkt")
 
 (define/provide-elements/not-empty summary path)
 
@@ -83,7 +84,7 @@
 (define (fetch-metadata addr key [default #f])
   (if (hash-ref cached-metadata addr #f)
       (hash-ref (hash-ref cached-metadata addr) key default)
-      (let ([json (file->json (build-path "_tmp" (string-append addr "." "metadata" ".json")))])
+      (let ([json (metadata-store-ref addr)])
         (hash-set! cached-metadata addr json)
         (hash-ref json key default))))
 (define (footer-common title key)

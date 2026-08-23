@@ -1,10 +1,8 @@
 #lang racket
-;; End-to-end test of content-addressed cache invalidation in search-and-build.
-;; Plain-text cards only (no @m math / no tikz/typst) so no external tools are
-;; needed. A card counts as "rebuilt" when its embed.html is regenerated.
-(require json
-         "../private/build.rkt"
-         "../private/config.rkt")
+;; end-to-end test of content-addressed cache invalidation in search-and-build
+(require "../private/build.rkt"
+         "../private/config.rkt"
+         "../private/metadata-store.rkt")
 
 (define proj "/tmp/tr-test-build-cache")
 
@@ -66,39 +64,32 @@
     (define second (build!))
     (check-equal? second (set) "nothing rebuilds when nothing changed"))
 
-  (test-case "reformatting metadata.json (newer mtime, source untouched) does NOT rebuild"
-    ;; the mtime-based check would falsely skip-or-rebuild on metadata mtime; the
-    ;; hash ignores the filesystem clock entirely.
+  (test-case "rewriting the metadata store row (content unchanged) does NOT rebuild"
     (fresh-project!)
     (parameterize ([current-directory proj])
       (write-file! (build-path "content" "post" "a.scrbl")
                    "@title{A}" "@date{2024-01-01}" "@p{alpha}"))
     (build!)
     (parameterize ([current-directory proj])
-      ;; rewrite the metadata file with reordered whitespace and a fresh mtime,
-      ;; same content - exactly what an external formatter would do
-      (define mp (build-path "_tmp" "a.metadata.json"))
-      (define j (call-with-input-file mp read-json))
-      (call-with-output-file mp #:exists 'replace
-        (lambda (o) (write-json j o) (newline o) (newline o))))
-    (check-equal? (build!) (set) "a formatter touching metadata.json must not trigger a rebuild"))
+      (open-metadata-store!)
+      (metadata-store-set! "a" (metadata-store-ref "a"))
+      (close-metadata-store!))
+    (check-equal? (build!) (set) "rewriting the store row with identical content must not trigger a rebuild"))
 
-  (test-case "editing the scrbl rebuilds even when metadata.json is newer (the original bug)"
+  (test-case "editing the scrbl rebuilds even when the metadata store row was touched after"
     (fresh-project!)
     (parameterize ([current-directory proj])
       (write-file! (build-path "content" "post" "a.scrbl")
                    "@title{A}" "@date{2024-01-01}" "@p{alpha}"))
     (build!)
     (parameterize ([current-directory proj])
-      ;; real edit to the source ...
       (write-file! (build-path "content" "post" "a.scrbl")
                    "@title{A}" "@date{2024-01-01}" "@p{alpha edited}")
-      ;; ... while a formatter bumps metadata.json to be NEWER than the source
-      (define mp (build-path "_tmp" "a.metadata.json"))
-      (define j (call-with-input-file mp read-json))
-      (call-with-output-file mp #:exists 'replace (lambda (o) (write-json j o))))
+      (open-metadata-store!)
+      (metadata-store-set! "a" (metadata-store-ref "a"))
+      (close-metadata-store!))
     (check-true (rebuilt? (build!) "a")
-                "content change must rebuild despite newer metadata mtime"))
+                "content change must rebuild despite the store row being touched"))
 
   (test-case "changing an @included file rebuilds the card with the scrbl untouched"
     (fresh-project!)
