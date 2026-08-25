@@ -262,16 +262,23 @@
   (when (and root (not (string=? root "")))
     (putenv "TEXMFROOT" root)))
 
+; kpsewhich is a subprocess spawn; compile-graphics runs once per built card,
+; so calling this unconditionally there was 2 subprocess spawns per card even
+; for the vast majority of cards with no tex graphics at all. Env vars only
+; need setting once per build, and only when a .tex actually needs compiling.
+(define dvisvgm-texmf-ready
+  (delay (setup-dvisvgm-texmf!)))
+
 ; Compile a card's @m/tikz/typst graphics: the embed render emits tex/typ
 ; sources under _tmp/<addr>/; each becomes an svg under <output>/<addr>/.
 (define (compile-graphics addr)
-  (setup-dvisvgm-texmf!)
   (define base (build-path "_tmp" addr))
   (when (directory-exists? base)
     (define (svg-target src)
       (string-replace (path->string (path-replace-extension src #".svg"))
                       "_tmp" (config:get-output-path)))
     (for ([tex-path (find-files (lambda (x) (path-has-extension? x #".tex")) base)])
+      (force dvisvgm-texmf-ready)
       (printf "compile ~a ~n" (path->string tex-path))
       (parameterize ([current-directory (dirname tex-path)]
                      [current-output-port (open-output-string "")])
