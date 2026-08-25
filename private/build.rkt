@@ -66,26 +66,32 @@
   |#
   (define (content-hash-of content)
     (sha1 (open-input-bytes (string->bytes/utf-8 content))))
-  (define (marker-path addr mode)
-    (build-path "_tmp" (string-append addr "." mode ".hash")))
+  (define (sweep-scrbl-hashes! addr mode #:keep [keep #f])
+    (for ([hash (scrbl-marker-hashes addr mode)]
+          #:unless (equal? hash keep))
+      (define path (tmp-scrbl-path addr hash mode))
+      (when (file-exists? path) (delete-file path))
+      (scrbl-marker-remove! addr mode hash)))
+  #|
+  Order matters:
+  1. the marker is added before the file is written
+  2. sweeping stale hashes happens only after keeping content-hash
+  |#
+  (define (write-tmp-scrbl! addr content content-hash)
+    (define tmp-path (tmp-scrbl-path addr content-hash mode))
+    (scrbl-marker-add! addr mode content-hash)
+    (unless (file-exists? tmp-path)
+      (call-with-output-file tmp-path
+        (lambda (f) (displayln content f))))
+    (sweep-scrbl-hashes! addr mode #:keep content-hash)
+    tmp-path)
 
   (for/list ([addr addr-list])
     (define source-path (hash-ref addr->path addr))
     (define content
       (embed-header addr (call-with-input-file source-path port->string)))
     (define content-hash (content-hash-of content))
-    (define tmp-path (tmp-scrbl-path addr content-hash mode))
-    (define marker (marker-path addr mode))
-    (unless (file-exists? tmp-path)
-      (when (file-exists? marker)
-        (define old-hash (file->string marker))
-        (define old-tmp-scrbl-path (tmp-scrbl-path addr old-hash mode))
-        (when (file-exists? old-tmp-scrbl-path) (delete-file old-tmp-scrbl-path)))
-      (call-with-output-file tmp-path
-        (lambda (f) (displayln content f)))
-      (call-with-output-file marker #:exists 'replace
-        (lambda (f) (display content-hash f))))
-
+    (define tmp-path (write-tmp-scrbl! addr content content-hash))
     (define output-path
       (cond
         [(string=? mode "embed") (build-path "_tmp" (string-append addr "." mode ".html"))]

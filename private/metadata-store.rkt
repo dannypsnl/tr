@@ -4,6 +4,9 @@
          metadata-store-ref
          metadata-store-set!
          metadata-store-all
+         scrbl-marker-hashes
+         scrbl-marker-add!
+         scrbl-marker-remove!
          with-metadata-transaction)
 (require db json)
 
@@ -17,6 +20,7 @@
   (define conn (sqlite3-connect #:database (store-path tmp-dir) #:mode 'create))
   (set-box! current-conn conn)
   (query-exec conn "CREATE TABLE IF NOT EXISTS metadata (addr TEXT PRIMARY KEY, json TEXT NOT NULL)")
+  (query-exec conn "CREATE TABLE IF NOT EXISTS scrbl_marker (addr TEXT NOT NULL, mode TEXT NOT NULL, hash TEXT NOT NULL, PRIMARY KEY (addr, mode, hash))")
   conn)
 
 (define (close-metadata-store!)
@@ -44,6 +48,19 @@
 (define (metadata-store-all)
   (for/list ([row (in-list (query-rows (conn!) "SELECT json FROM metadata ORDER BY addr"))])
     (string->jsexpr (vector-ref row 0))))
+
+(define (scrbl-marker-hashes addr mode)
+  (for/list ([row (in-list (query-rows (conn!) "SELECT hash FROM scrbl_marker WHERE addr = ? AND mode = ?" addr mode))])
+    (vector-ref row 0)))
+
+(define (scrbl-marker-add! addr mode hash)
+  (query-exec
+    (conn!)
+    "INSERT INTO scrbl_marker(addr, mode, hash) VALUES (?, ?, ?) ON CONFLICT(addr, mode, hash) DO NOTHING"
+    addr mode hash))
+
+(define (scrbl-marker-remove! addr mode hash)
+  (query-exec (conn!) "DELETE FROM scrbl_marker WHERE addr = ? AND mode = ? AND hash = ?" addr mode hash))
 
 (define (with-metadata-transaction thunk)
   (call-with-transaction (conn!) thunk))
