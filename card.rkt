@@ -23,6 +23,7 @@
               [ignore orcid]
               [ignore meta/text]
               [ignore meta/link]
+              [ignore custom/metadata]
               [ignore tm]
               [ignore tr/code]
               [ignore mention/hidden]
@@ -54,16 +55,18 @@
 (define toc/depth (make-parameter 2))
 (define (ignore . _) (void))
 
+(define (addr->url addr)
+  (cond
+    [(string=? "index" addr) "/"]
+    [else (string-append "/" addr)]))
+
 ; numbered? controls whether the taxon gets a CSS-counter-generated number:
 ; a page's own heading (rendered by `tree`) has no parent context to count
 ; against, so it stays bare; a heading rendered where a page is transcluded
 ; (by `transclude`) sits inside the enclosing .tr-body/#toc counter scope, so
 ; it gets numbered the same way TOC entries and tr/card entries do.
 (define (tr-h1 addr text taxon #:numbered? [numbered? #f])
-  (define url
-    (if (string=? "index" addr)
-        "/"
-        (string-append "/" addr)))
+  (define url (addr->url addr))
   (define link-to-self (a 'class: "link-self" 'href: url 'target: "_parent" "[" addr "]"))
   (define taxon-span
     (cond
@@ -109,8 +112,7 @@
   (define page-url
     (cond
       [is-local? anchor]
-      [(string=? "index" addr) "/"]
-      [else (string-append "/" addr)]))
+      [else (addr->url addr)]))
   (define (common-part taxon title entries)
     (li (a 'class: "toc-bullet" 'href: page-url 'target: "_parent" "■")
         (a 'class: "toc-title" 'href: anchor 'target: "_parent"
@@ -222,13 +224,13 @@
 (define mention
   (case-lambda
     [(addr)
-     (define url (string-append "/" addr))
+     (define url (addr->url addr))
      (a 'class: "mention"
         'target: "_parent"
         'href: url
         (fetch-metadata addr 'title))]
     [(addr . body)
-     (define url (string-append "/" addr))
+     (define url (addr->url addr))
      (a 'class: "mention"
         'target: "_parent"
         'href: url
