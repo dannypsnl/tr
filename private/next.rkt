@@ -2,7 +2,8 @@
 (provide base36->int
          int->base36
          random-unused-address)
-(require racket/random)
+(require racket/random
+         racket/set)
 
 (define alphabet "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 (define base (string-length alphabet))
@@ -52,8 +53,8 @@
 (define fallback-epsilon 1e-9)
 (define fallback-safety-margin (- (log fallback-epsilon)))
 
-(define (exhaustive-random-unused used-bytes space-size)
-  (random-ref (sequence-filter (lambda (x) (zero? (bytes-ref used-bytes x)))
+(define (exhaustive-random-unused numbers-set space-size)
+  (random-ref (sequence-filter (lambda (x) (not (set-member? numbers-set x)))
                                (in-inclusive-range 0 (sub1 space-size)))))
 
 ; random-unused-address means to compute an address that in the addr space
@@ -66,12 +67,8 @@
 ;
 ; Returns a uniformly random unused integer in [0, space-size)
 (define (random-unused-address used-numbers #:space-size [space-size default-space-size])
-  (define used-bytes (make-bytes space-size 0))
-  (define used
-    (for/sum ([n used-numbers])
-      ; mark and count in one pass
-      (bytes-set! used-bytes n 1)
-      1))
+  (define numbers-set (list->set used-numbers))
+  (define used (set-count numbers-set))
   (define free (- space-size used))
   (when (<= free 0)
     (error 'random-unused-address "All address in this space is used"))
@@ -80,8 +77,8 @@
   (define cap (min space-size (inexact->exact (ceiling (* fallback-safety-margin expected-tries)))))
   (or (for/or ([_ (in-range cap)])
         (define candidate (random space-size))
-        (and (zero? (bytes-ref used-bytes candidate)) candidate))
-      (exhaustive-random-unused used-bytes space-size)))
+        (and (not (set-member? numbers-set candidate)) candidate))
+      (exhaustive-random-unused numbers-set space-size)))
 
 (module+ test
   (require rackunit)
