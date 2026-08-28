@@ -84,28 +84,34 @@
 (module+ test
   (require rackunit)
 
-  (check-false (base36->int ",,,"))
+  (test-case "base36->int returns #f for non-base36 input"
+    (check-false (base36->int ",,,")))
 
-  (check-equal? (int->base36 10) "000A")
-  (check-equal? (int->base36 35) "000Z")
-  (check-equal? (int->base36 36) "0010")
-  (check-equal? (int->base36 1000) "00RS")
-  (check-equal? (int->base36 0) "0000")
-  (check-equal? (int->base36 123456) "2N9C")
-  (check-equal? (int->base36 (base36->int "ZZZZ")) "ZZZZ")
+  (test-case "int->base36 pads to 4 digits and round-trips with base36->int"
+    (check-equal? (int->base36 10) "000A")
+    (check-equal? (int->base36 35) "000Z")
+    (check-equal? (int->base36 36) "0010")
+    (check-equal? (int->base36 1000) "00RS")
+    (check-equal? (int->base36 0) "0000")
+    (check-equal? (int->base36 123456) "2N9C")
+    (check-equal? (int->base36 (base36->int "ZZZZ")) "ZZZZ"))
 
-  (let ([picked (random-unused-address (list 0 1 2))])
+  (test-case "random-unused-address returns an unused address in range"
+    (define picked (random-unused-address (list 0 1 2)))
     (check-true (and (>= picked 0) (< picked space-size)))
     (check-false (member picked (list 0 1 2))))
 
-  (let ([picked (random-unused-address (list 0 0 1 1 2))])
+  (test-case "random-unused-address tolerates duplicate used-numbers"
+    (define picked (random-unused-address (list 0 0 1 1 2)))
     (check-true (and (>= picked 0) (< picked space-size)))
     (check-false (member picked (list 0 1 2))))
 
-  (let* ([all-but-one (remove 42 (range space-size))]
-         [picked (random-unused-address all-but-one)])
+  (test-case "random-unused-address falls back to the exhaustive scan when nearly full"
+    (define all-but-one (remove 42 (range space-size)))
+    (define picked (random-unused-address all-but-one))
     (check-equal? picked 42))
 
-  (check-exn exn:fail?
-             (lambda ()
-               (random-unused-address (range space-size)))))
+  (test-case "random-unused-address raises when the address space is exhausted"
+    (check-exn exn:fail?
+               (lambda ()
+                 (random-unused-address (range space-size))))))
