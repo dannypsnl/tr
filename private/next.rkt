@@ -52,19 +52,24 @@
 (define fallback-epsilon 1e-9)
 (define fallback-safety-margin (- (log fallback-epsilon)))
 
-(define (exhaustive-random-unused numbers-set)
-  (random-ref (sequence-filter (lambda (x) (not (set-member? numbers-set x)))
+(define (exhaustive-random-unused used-bytes)
+  (random-ref (sequence-filter (lambda (x) (zero? (bytes-ref used-bytes x)))
                                (in-inclusive-range 0 (sub1 space-size)))))
 
 ; random-unused-address means to compute an address that in 36^4 addr in the space that is unused
 ;
 ; parameters
-; + numbers-set: a set of already-used base36 values (as integers), scoped
-;   to one prefix
+; + used-numbers: a sequence of used base36 integers, scoped to one prefix.
+;   Duplicates are harmless.
 ;
 ; Returns a uniformly random unused integer in [0, space-size)
-(define (random-unused-address numbers-set)
-  (define used (set-count numbers-set))
+(define (random-unused-address used-numbers)
+  (define used-bytes (make-bytes space-size 0))
+  (define used
+    (for/sum ([n used-numbers])
+      ; mark and count in one pass
+      (bytes-set! used-bytes n 1)
+      1))
   (define free (- space-size used))
   (when (<= free 0)
     (error 'random-unused-address "All address in this space is used"))
@@ -73,8 +78,8 @@
   (define cap (min space-size (inexact->exact (ceiling (* fallback-safety-margin expected-tries)))))
   (or (for/or ([_ (in-range cap)])
         (define candidate (random space-size))
-        (and (not (set-member? numbers-set candidate)) candidate))
-      (exhaustive-random-unused numbers-set)))
+        (and (zero? (bytes-ref used-bytes candidate)) candidate))
+      (exhaustive-random-unused used-bytes)))
 
 (module+ test
   (require rackunit)
@@ -89,14 +94,18 @@
   (check-equal? (int->base36 123456) "2N9C")
   (check-equal? (int->base36 (base36->int "ZZZZ")) "ZZZZ")
 
-  (let ([picked (random-unused-address (set 0 1 2))])
+  (let ([picked (random-unused-address (list 0 1 2))])
     (check-true (and (>= picked 0) (< picked space-size)))
-    (check-false (set-member? (set 0 1 2) picked)))
+    (check-false (member picked (list 0 1 2))))
 
-  (let* ([all-but-one (set-remove (list->set (range space-size)) 42)]
+  (let ([picked (random-unused-address (list 0 0 1 1 2))])
+    (check-true (and (>= picked 0) (< picked space-size)))
+    (check-false (member picked (list 0 1 2))))
+
+  (let* ([all-but-one (remove 42 (range space-size))]
          [picked (random-unused-address all-but-one)])
     (check-equal? picked 42))
 
   (check-exn exn:fail?
              (lambda ()
-               (random-unused-address (list->set (range space-size))))))
+               (random-unused-address (range space-size)))))

@@ -154,8 +154,8 @@
         (and (path-has-extension? path #".scrbl")
              (string-prefix? (basename path) prefix)))
       "content"))
-  (define numbers-set
-    (for/set ([path scrbl-list])
+  (define numbers
+    (for/stream ([path scrbl-list])
       (define b (basename (path-replace-extension path "")))
       (define number-text (string-trim b (string-append prefix "-") #:right? #f))
       (define n (base36->int number-text))
@@ -163,16 +163,9 @@
       (if n n 0)))
   (define suffix
     (cond
-      [random? (int->base36 (random-unused-address numbers-set))]
+      [random? (int->base36 (random-unused-address numbers))]
       ; usual mode: compute new max number
-      [else
-       (define max-num
-         (for/fold ([m -1])
-                   ([n (in-set numbers-set)])
-           (if (> n m)
-               n
-               m)))
-       (int->base36 (add1 max-num))]))
+      [else (int->base36 (add1 (for/fold ([m -1]) ([n numbers]) (max m n))))]))
   (cond
     [(non-empty-string? prefix) (string-append prefix "-" suffix)]
     [else suffix]))
