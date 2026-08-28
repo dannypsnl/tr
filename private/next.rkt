@@ -7,7 +7,7 @@
 (define alphabet "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 (define base (string-length alphabet))
 (define address-digits 4)
-(define space-size (expt base address-digits))
+(define default-space-size (expt base address-digits))
 
 (define (base36->int text)
   (define len (string-length text))
@@ -52,18 +52,20 @@
 (define fallback-epsilon 1e-9)
 (define fallback-safety-margin (- (log fallback-epsilon)))
 
-(define (exhaustive-random-unused used-bytes)
+(define (exhaustive-random-unused used-bytes space-size)
   (random-ref (sequence-filter (lambda (x) (zero? (bytes-ref used-bytes x)))
                                (in-inclusive-range 0 (sub1 space-size)))))
 
-; random-unused-address means to compute an address that in 36^4 addr in the space that is unused
+; random-unused-address means to compute an address that in the addr space
+; that is unused
 ;
 ; parameters
-; + used-numbers: a sequence of used base36 integers, scoped to one prefix.
+; + used-numbers: a sequence of used integers, scoped to one prefix.
 ;   Duplicates are harmless.
+; + #:space-size: size of the address space; defaults to 36^4.
 ;
 ; Returns a uniformly random unused integer in [0, space-size)
-(define (random-unused-address used-numbers)
+(define (random-unused-address used-numbers #:space-size [space-size default-space-size])
   (define used-bytes (make-bytes space-size 0))
   (define used
     (for/sum ([n used-numbers])
@@ -79,7 +81,7 @@
   (or (for/or ([_ (in-range cap)])
         (define candidate (random space-size))
         (and (zero? (bytes-ref used-bytes candidate)) candidate))
-      (exhaustive-random-unused used-bytes)))
+      (exhaustive-random-unused used-bytes space-size)))
 
 (module+ test
   (require rackunit)
@@ -98,20 +100,22 @@
 
   (test-case "random-unused-address returns an unused address in range"
     (define picked (random-unused-address (list 0 1 2)))
-    (check-true (and (>= picked 0) (< picked space-size)))
+    (check-true (and (>= picked 0) (< picked default-space-size)))
     (check-false (member picked (list 0 1 2))))
 
   (test-case "random-unused-address tolerates duplicate used-numbers"
     (define picked (random-unused-address (list 0 0 1 1 2)))
-    (check-true (and (>= picked 0) (< picked space-size)))
+    (check-true (and (>= picked 0) (< picked default-space-size)))
     (check-false (member picked (list 0 1 2))))
 
   (test-case "random-unused-address falls back to the exhaustive scan when nearly full"
+    (define space-size 100)
     (define all-but-one (remove 42 (range space-size)))
-    (define picked (random-unused-address all-but-one))
+    (define picked (random-unused-address all-but-one #:space-size space-size))
     (check-equal? picked 42))
 
   (test-case "random-unused-address raises when the address space is exhausted"
+    (define space-size 100)
     (check-exn exn:fail?
                (lambda ()
-                 (random-unused-address (range space-size))))))
+                 (random-unused-address (range space-size) #:space-size space-size)))))

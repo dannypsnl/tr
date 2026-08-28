@@ -23,3 +23,6 @@ jobs:
       - run: raco test tests/pbt-build-cache.rkt
         env:
           TR_PBT_TESTS: "500"
+      - run: raco test tests/pbt-next.rkt
+        env:
+          TR_PBT_TESTS: "5000"
