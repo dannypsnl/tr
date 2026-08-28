@@ -8,7 +8,6 @@
          "private/metadata.rkt"
          "private/metadata-store.rkt")
 (require racket/logging
-         racket/random
          racket/runtime-path)
 
 (define-runtime-path default-assets-dir "default-assets")
@@ -155,22 +154,25 @@
         (and (path-has-extension? path #".scrbl")
              (string-prefix? (basename path) prefix)))
       "content"))
-  (define numbers
-    (for/list ([path scrbl-list])
+  (define numbers-set
+    (for/set ([path scrbl-list])
       (define b (basename (path-replace-extension path "")))
       (define number-text (string-trim b (string-append prefix "-") #:right? #f))
       (define n (base36->int number-text))
       ; if not a number, we use 0 as value
       (if n n 0)))
-  (define max-num (apply max -1 numbers))
-  (define numbers-set (list->set numbers))
   (define suffix
     (cond
-      [random?
-       (int->base36
-         (random-ref (sequence-filter (lambda (x) (not (set-member? numbers-set x))) (in-inclusive-range 0 1679615))))]
+      [random? (int->base36 (random-unused-address numbers-set))]
       ; usual mode: compute new max number
-      [else (int->base36 (add1 max-num))]))
+      [else
+       (define max-num
+         (for/fold ([m -1])
+                   ([n (in-set numbers-set)])
+           (if (> n m)
+               n
+               m)))
+       (int->base36 (add1 max-num))]))
   (cond
     [(non-empty-string? prefix) (string-append prefix "-" suffix)]
     [else suffix]))
