@@ -44,9 +44,18 @@
 
 .top-wrapper {
   display: grid;
-  grid-template-columns: 1fr;
+  /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes its minimum from the
+     item's min-content size, and a non-wrapping `pre` makes that the longest
+     code line -- the whole page then grows past the viewport and the prose
+     stops wrapping. The `min-width: 0` below does the same for the item
+     itself, so the code block scrolls on its own instead of widening the
+     page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2em;
   padding: 0;
+}
+.top-wrapper > * {
+  min-width: 0;
 }
 
 @media (min-width: 60rem) {
@@ -205,6 +214,10 @@ body {
   font-family: "Inria Sans", sans-serif;
   font-optical-sizing: auto;
   transition: 0.3s filter;
+  /* A bare URL has no wrap opportunity of its own, and on a phone one long
+     link is enough to widen the whole page. Inert inside `pre`, which has no
+     soft wrap opportunities to begin with. */
+  overflow-wrap: break-word;
 }
 /* Match `.katex` font-size to the default text font "Inria Sans". */
 .katex {
