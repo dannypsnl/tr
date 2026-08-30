@@ -1,5 +1,6 @@
 #lang racket
-(require "../private/signature.rkt")
+(require scribble/reader
+         "../private/signature.rkt")
 
 (define temp-dir "/tmp/tr-test-signature")
 
@@ -11,6 +12,9 @@
 (define (write-file! path . lines)
   (call-with-output-file path #:exists 'replace
     (lambda (out) (for ([l lines]) (displayln l out)))))
+
+(define (scrbl-form-paths source-path tag)
+  (form-paths (call-with-input-file source-path (lambda (in) (read-inside in))) tag))
 
 (define (scrbl-include-paths source-path)
   (scrbl-form-paths source-path 'include))

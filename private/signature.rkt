@@ -1,24 +1,22 @@
 #lang racket
-(provide scrbl-form-paths
+(provide form-paths
          compute-source-hash
          compute-signatures)
 (require scribble/reader
          file/sha1
          "common.rkt")
 
-; Walk the scribble forms of a .scrbl source and collect every path referenced
-; by every top-level occurrence of `(tag "path")`, including nested occurrences.
-(define (scrbl-form-paths source-path tag)
-  (define forms
-    (call-with-input-file source-path
-      (lambda (in) (read-inside in))))
-  (define paths (box '()))
-  (let walk ([form forms])
+(define (form-paths forms tag-to-collect)
+  (define (walk acc form)
     (match form
-      [(list (== tag) (? string? p)) (set-box! paths (cons p (unbox paths)))]
-      [(? list?) (for-each walk form)]
-      [_ (void)]))
-  (reverse (unbox paths)))
+      [(list (== tag-to-collect) (? string? p))
+       (cons p acc)]
+      [(? list?)
+       (for/fold ([acc acc])
+                 ([f form])
+         (walk acc f))]
+      [_ acc]))
+  (reverse (walk '() forms)))
 
 ; Length-framed chunk so distinct chunk boundaries won't collide
 ; (e.g. "ab"+"c" vs "a"+"bc").
@@ -34,14 +32,16 @@
 ; in by scribble/text and so has no render-time resolution rule of its own.
 (define (compute-source-hash source-path tmp-dir)
   (define scrbl (file->bytes source-path))
+  ; `read-inside` is slow, so we only want to do it once
+  (define forms (read-inside (open-input-bytes scrbl)))
   (define (framed-file base p)
     (define full (build-path base p))
     (frame (bytes-append (string->bytes/utf-8 p) #"\0"
                          (if (file-exists? full) (file->bytes full) #""))))
   (define included
-    (for/list ([p (scrbl-form-paths source-path 'include)]) (framed-file tmp-dir p)))
+    (for/list ([p (form-paths forms 'include)]) (framed-file tmp-dir p)))
   (define depended
-    (for/list ([p (scrbl-form-paths source-path 'tr/depends)]) (framed-file (current-directory) p)))
+    (for/list ([p (form-paths forms 'tr/depends)]) (framed-file (current-directory) p)))
   (sha1 (open-input-bytes (apply bytes-append (frame scrbl) (append included depended)))))
 
 ; Deterministic textual encoding of a jsexpr: hash keys are sorted so the
