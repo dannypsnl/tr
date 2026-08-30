@@ -207,7 +207,7 @@
          [stored (write-json stored)]
          [else
           (define scrbl-list (find-files (lambda (x) (string=? addr (path->string (path-replace-extension (basename x) "")))) "content"))
-          (write-json (compute-metadata addr (first scrbl-list)))])])))
+          (write-json (compute-metadata addr (read-card-forms (first scrbl-list))))])])))
 
 (define (run-tr)
   (command-line

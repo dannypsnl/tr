@@ -1,5 +1,6 @@
 #lang racket
 (provide compute-addr
+         read-card-forms
          compute-metadata
          compute-racket)
 (require scribble/reader
@@ -8,6 +9,10 @@
          dirname)
 (require "common.rkt")
 
+(define (read-card-forms addr-path)
+  (call-with-input-file addr-path
+    (lambda (in) (read-inside in))))
+
 (define (execute f)
   (match f
     [`(m ,text) (m text)]
@@ -15,7 +20,7 @@
     [`(code ,text) (code text)]
     [t t]))
 
-(define (compute-metadata addr addr-path)
+(define (compute-metadata addr forms)
   (define self-title (make-parameter #f))
   (define self-taxon (make-parameter #f))
   (define self-lang (make-parameter #f))
@@ -91,9 +96,6 @@
          (handle-form form))]
       [_ (void)]))
 
-  (define forms
-    (call-with-input-file addr-path
-      (lambda (in) (read-inside in))))
   (for ([form forms])
     (handle-form form))
 
@@ -125,10 +127,7 @@
                          (cons 'locals (queue->list local-cards-queue))
                          )))
 
-(define (compute-racket addr-path)
-  (define forms
-    (call-with-input-file addr-path
-      (lambda (in) (read-inside in))))
+(define (compute-racket forms)
   (define content-queue (make-queue))
   (for ([form forms])
     (match form

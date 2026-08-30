@@ -29,7 +29,7 @@
 
     (check-equal? (compute-addr "content/test.scrbl") "test")
 
-    (define metadata (compute-metadata "test" test-file))
+    (define metadata (compute-metadata "test" (read-card-forms test-file)))
     (check-equal? (hash-ref metadata 'id) "test")
     (check-equal? (hash-ref metadata 'taxon) "Test")
     (check-equal? (hash-ref metadata 'title) '("A"))
@@ -47,7 +47,7 @@
         (displayln "@mention{visible-target}" out)
         (displayln "@mention/hidden{agda-target}" out)
         (displayln "@p{body}" out)))
-    (define hidden-meta (compute-metadata "hidden" hidden-file))
+    (define hidden-meta (compute-metadata "hidden" (read-card-forms hidden-file)))
     (check-not-false (member "visible-target" (hash-ref hidden-meta 'related)) "plain mention recorded")
     (check-not-false (member "agda-target" (hash-ref hidden-meta 'related)) "hidden mention recorded in related")
     )

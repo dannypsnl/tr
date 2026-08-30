@@ -142,19 +142,18 @@
   (define cache-root (build-path tmp "cache"))
   (init-store! cache-root)
 
-  ; emit per-card racket helpers extracted from @tr/code forms
-  (for/async ([addr addr-list])
-    (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
-    (define lst (compute-racket (hash-ref addr->path addr)))
-    (unless (empty? lst)
-      (define out (open-output-file #:exists 'truncate/replace rkt-path))
-      (for ([text lst])
-        (displayln text out))
-      (close-output-port out)))
   (define addr-maps-to-metajson (make-hash))
-  (for/async ([addr addr-list])
-    (hash-set! addr-maps-to-metajson addr
-               (compute-metadata addr (hash-ref addr->path addr))))
+  (for ([addr addr-list])
+    (define forms (read-card-forms (hash-ref addr->path addr)))
+    ; per-card extracts racket helpers, from `@tr/code` forms
+    (define programs (compute-racket forms))
+    (unless (empty? programs)
+      (define rkt-path (build-path "_tmp" (string-append addr ".rkt")))
+      (define out (open-output-file #:exists 'truncate/replace rkt-path))
+      (for ([text programs])
+        (displayln text out))
+      (close-output-port out))
+    (hash-set! addr-maps-to-metajson addr (compute-metadata addr forms)))
   ; compute relations
   (for/async ([top-addr addr-list])
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
