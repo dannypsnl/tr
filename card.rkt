@@ -33,7 +33,8 @@
   card-counting
   reset-metadata-cache!
   m mm tikzcd texfig typst
-  mention external
+  mention note
+  external
   doctype
   (except-out (all-from-out scribble/html/html) title pre)
   (all-from-out scribble/html/extra)
@@ -235,6 +236,53 @@
         'target: "_parent"
         'href: url
         body)]))
+
+(define-syntax note
+  (syntax-rules ()
+    [(_ item ...) (note* (note-item item) ...)]))
+
+(define-syntax note-item
+  (syntax-rules (mention)
+    [(_ (mention addr)) (mention-card addr)]
+    [(_ other) other]))
+
+(define (note* . content)
+  (span 'class: "sidenote-wrap"
+        (span 'class: "sidenote-ref" 'tabindex: "0" 'role: "button" 'aria-label: "note")
+        (span 'class: "sidenote" content)))
+
+(define (mention-card addr)
+  (define m (metadata-store-ref addr))
+  (define link
+    (a 'class: "mention" 'target: "_parent" 'href: (addr->url addr)
+       (or (and m (hash-ref m 'title #f)) addr)))
+  (cond
+    [(not m) link]
+    [else
+     (define taxon (hash-ref m 'taxon #f))
+     (span 'class: "sn-card"
+           (span 'class: "sn-card-head"
+                 (when taxon (span 'class: "taxon sn-card-taxon" taxon))
+                 (a 'class: "sn-card-title" 'target: "_parent"
+                    'href: (addr->url addr) (or (hash-ref m 'title #f) addr)))
+           (let ([parts (card-facts m)])
+             (unless (null? parts)
+               (span 'class: "sn-card-meta" (add-between parts " · ")))))]))
+
+(define (card-facts m)
+  (define (author-name a)
+    (define am (metadata-store-ref a))
+    (if am (hash-ref am 'title a) a))
+  (define authors
+    (append (for/list ([a (in-list (hash-ref m 'authors '()))]) (author-name a))
+            (hash-ref m 'name-authors '())))
+  (define date (hash-ref m 'date #f))
+  (define doi (hash-ref m 'doi #f))
+  (filter values
+          (list (and (string? date) date)
+                (and (pair? authors) (add-between authors "、"))
+                (and doi (a 'href: (string-append "https://doi.org/" doi)
+                            'target: "_blank" doi)))))
 
 (define (texfig #:header [header-code ""] . formula)
   (define job-id (symbol->string (gensym 'tex)))

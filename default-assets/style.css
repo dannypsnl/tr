@@ -269,3 +269,121 @@ pre,
 code {
   text-autospace: no-autospace;
 }
+
+main {
+  counter-reset: sidenote;
+}
+
+.sidenote-ref {
+  counter-increment: sidenote;
+  cursor: pointer;
+}
+.sidenote-ref::after {
+  content: counter(sidenote);
+  vertical-align: super;
+  font-size: 0.7em;
+  line-height: 0;
+  padding-left: 0.15em;
+  color: #6b6fe0;
+}
+.sidenote::before {
+  content: counter(sidenote);
+  float: left;
+  margin-right: 0.4em;
+  font-size: 0.85em;
+  color: #6b6fe0;
+}
+
+.sidenote {
+  display: none;
+}
+
+@media (min-width: 74rem) {
+  .tr-body {
+    position: relative;
+  }
+  details:not([open]) .sidenote {
+    display: none;
+  }
+  .sidenote {
+    display: inline;
+    position: absolute;
+    left: calc(100% + 2em);
+    width: min(21rem, calc(100vw - 100% - 7em));
+    padding-left: 0.6rem;
+    border-left: 2px solid #ddd;
+    font-size: 0.82em;
+    line-height: 1.4;
+    color: #666;
+    background: #fff;
+    z-index: 2;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .sidenote-wrap:hover .sidenote,
+  .sidenote-wrap:focus-within .sidenote {
+    border-color: #9094fb;
+    color: #333;
+  }
+  .sidenote-wrap:hover .sidenote,
+  .sidenote-wrap:focus-within .sidenote {
+    z-index: 9;
+    padding-right: 0.6rem;
+    box-shadow: 0 2px 12px rgba(20, 20, 50, 0.14);
+  }
+  .top-wrapper > nav#toc {
+    background: #fff;
+    z-index: 3;
+  }
+}
+
+@media (min-width: 60rem) and (max-width: 73.99rem) {
+  .sidenote {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 0.3rem 0.6rem;
+    border-left: 2px solid #ddd;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: #666;
+  }
+  details:not([open]) .sidenote {
+    display: none;
+  }
+}
+
+@media (max-width: 59.99rem) {
+  .sidenote-wrap:focus-within > .sidenote {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 2px solid #9094fb;
+    background: rgba(144, 148, 251, 0.06);
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: #444;
+  }
+}
+.sn-card {
+  display: block;
+}
+.sn-card-head {
+  display: block;
+}
+.sn-card-taxon {
+  margin-right: 0.35em;
+  color: #8c8c8c;
+  font-weight: 400;
+}
+.sn-card-title {
+  color: #4a4a55;
+  text-decoration: none;
+  font-weight: 600;
+}
+.sn-card-title:hover {
+  color: #6b6fe0;
+}
+.sn-card-meta {
+  display: block;
+  margin-top: 0.15em;
+  color: #9a9aa5;
+}

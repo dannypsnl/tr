@@ -61,8 +61,11 @@
 ; - its own computed metadata (own fields + propagated backlinks/context/...)
 ; - the full signature of each transcluded child (its embedded output, and,
 ;   recursively, the transitive TOC titles) -- a DAG, so this is well-founded
-; - the title/taxon of every other referenced neighbor -- the only fields it
-;   renders (context/references/backlinks/related/authors). Headings are not
+; - the rendered fields of every referenced neighbor
+;   (context/references/backlinks/related/authors): title/taxon for headings,
+;   plus the date/author/DOI @mention in @note's calling card shows. A field left
+;   out of this digest goes stale in place -- the neighbor changes it, nothing
+;   rebuilds, the page keeps the old value. Headings are not
 ;   source hash, so editing a parent never rebuilds its transcluded children
 ; - config-tag: the render-affecting site config (see render-config-tag). The
 ;   signature keys the canonical content store, which is shared across output
@@ -79,7 +82,13 @@
   (define (neighbor-heading addr)
     (define m (hash-ref addr->meta addr #f))
     (if m
-        (format "~a/~a" (hash-ref m 'title "") (hash-ref m 'taxon ""))
+        (format "~a/~a/~a/~a/~a/~a"
+                (hash-ref m 'title "")
+                (hash-ref m 'taxon "")
+                (hash-ref m 'date "")
+                (hash-ref m 'authors '())
+                (hash-ref m 'name-authors '())
+                (hash-ref m 'doi ""))
         ""))
   (define (frame-str s) (frame (string->bytes/utf-8 s)))
   (define sigs (make-hash))
