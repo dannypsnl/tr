@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - config: new option `after-build`, a 1-arity procedure over the build's output path, invoked once after every card is rendered.
 - `tr/rss` exposes `guid`, so a feed can emit a `<guid>` per item.
 - `@note{...}` renders a Tufte-style margin note beside the line it comments on instead of at the foot of the page. `@mention["..."]` is treat specially in this form.
-- The table of contents gets an an up arrow in its top-right corner to back to top.
+- The table of contents gets an up arrow in its top-right corner to back to top.
 - `raco tr meta --all` dumps every card's metadata from the last `tr build`'s store as one JSON array, so a site's own index/feed step doesn't have to enumerate addrs itself.
 
 ### Changed
