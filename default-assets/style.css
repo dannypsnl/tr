@@ -327,8 +327,12 @@ main {
   .sidenote-wrap:hover .sidenote,
   .sidenote-wrap:focus-within .sidenote {
     z-index: 9;
-    padding-right: 0.6rem;
+    border-radius: 0 8px 8px 0;
     box-shadow: 0 2px 12px rgba(20, 20, 50, 0.14);
+    margin-top: -0.35rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    padding-right: 0.7rem;
   }
   .top-wrapper > nav#toc {
     background: #fff;
@@ -342,6 +346,7 @@ main {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;
     border-left: 2px solid #ddd;
+    border-radius: 0 8px 8px 0;
     font-size: 0.85em;
     line-height: 1.4;
     color: #666;
@@ -357,6 +362,7 @@ main {
     margin: 0.5rem 0;
     padding: 0.4rem 0.6rem;
     border-left: 2px solid #9094fb;
+    border-radius: 0 8px 8px 0;
     background: rgba(144, 148, 251, 0.06);
     font-size: 0.9em;
     line-height: 1.4;
@@ -365,6 +371,7 @@ main {
 }
 .sn-card {
   display: block;
+  margin-bottom: 0.4em;
 }
 .sn-card-head {
   display: block;
