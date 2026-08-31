@@ -216,12 +216,19 @@
   (define sorted-addr-list (topo-order addr-list addr-maps-to-metajson))
   (define signatures
     (compute-signatures sorted-addr-list addr->path addr-maps-to-metajson tmp
-                        (config:render-config-tag)))
+                        (config:render-content-config-tag)))
+  ; The store key is the content signature alone; the per-target stamp also
+  ; folds in the shell config, so editing `header`/`head`/`html-lang` re-emits
+  ; every index.html off the cached embeds instead of re-rendering them.
+  (define shell-tag (config:render-shell-config-tag))
+  (define (output-sig-of sig)
+    (sha1 (open-input-bytes (string->bytes/utf-8 (string-append sig "\0" shell-tag)))))
   (define embed-cards (produce-scrbl sorted-addr-list addr->path "embed"))
   (define card-of (for/hash ([c embed-cards]) (values (final-card-addr c) c)))
 
   (for ([addr sorted-addr-list])
     (define sig (hash-ref signatures addr))
+    (define out-sig (output-sig-of sig))
     (cond
       [(root? addr)
        (printf "generate ~a.embed.html ~n" addr)
@@ -231,17 +238,17 @@
        ; always refresh the embed into _tmp (a transcluding parent may read it);
        ; the per-target output is rebuilt only when this target's stamp is stale.
        (restore-embed! cache-root sig addr)
-       (unless (output-fresh? cache-root sig addr)
+       (unless (output-fresh? cache-root sig out-sig addr)
          (restore-output! cache-root sig addr)
          (produce-index! addr addr-maps-to-metajson)
-         (write-output-stamp! addr sig))]
+         (write-output-stamp! addr out-sig))]
       [else
        (printf "generate ~a.embed.html ~n" addr)
        (produce-html (hash-ref card-of addr))
        (compile-graphics addr)
        (save-to-store! cache-root sig addr)
        (produce-index! addr addr-maps-to-metajson)
-       (write-output-stamp! addr sig)]))
+       (write-output-stamp! addr out-sig)]))
 
   (config:run-after-build!)
   (close-metadata-store!))

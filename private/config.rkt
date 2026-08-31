@@ -7,7 +7,8 @@
          remove-scrbl?
          run-after-build!
          dev-mode?
-         render-config-tag)
+         render-content-config-tag
+         render-shell-config-tag)
 (require racket/file
          racket/path
          scribble/html/xml
@@ -97,20 +98,29 @@ When it returns #t, it eliminate the card from the further pipeline.
 (define (dev-mode?)
   (equal? "dev" (get-config 'mode "release")))
 
-; A stable string of the config that the per-card renderer bakes into output.
-; This feeds the build signature (and thus the per-target .sig freshness
-; stamp), so a config change that changes rendered output forces a rebuild
-; instead of leaving a stale index.html/store entry in place.
+; Two stable strings of the config that the renderer bakes into output, split
+; by *which* output each key reaches. Both feed build signatures, so a config
+; change that changes rendered output forces the matching rebuild instead of
+; leaving stale files in place.
 ;
-; Config reaching per-card HTML today: `head`, `header`, `html-lang`, and
-; `extension-module` (see generate-index.rkt and build.rkt's embed-header).
-; `head`/`header` are keyed on their rendered bytes (xml->string) rather than
-; the element values, which print opaquely and unstably. `extension-module` is
-; keyed on its file content, not its path, so editing a card's macros
-; invalidates the store even though no .scrbl content hash changed.
-(define (render-config-tag)
+; content: config baked into a card's embed.html (and hence its compiled
+; graphics), which is what the cross-target content store is keyed by. Only
+; `extension-module` today (see build.rkt's embed-header); it is keyed on its
+; file content, not its path, so editing a card's macros invalidates the store
+; even though no .scrbl content hash changed.
+(define (render-content-config-tag)
   (define ext-mod (get-extension-module))
+  (format "~s" (list (and ext-mod (file-exists? ext-mod) (file->bytes ext-mod)))))
+
+; shell: config that only reaches the page shell produce-index! wraps around
+; an already-rendered embed -- `head`, `header`, `html-lang` (see
+; generate-index.rkt). Kept out of the store key on purpose: editing a site's
+; header must re-emit every index.html, but it must not invalidate a single
+; embed and re-run its LaTeX/Typst. Hence it keys only the per-target `.sig`
+; stamp (see store.rkt), which is what decides whether produce-index! reruns.
+; `head`/`header` are keyed on their rendered bytes (xml->string) rather than
+; the element values, which print opaquely and unstably.
+(define (render-shell-config-tag)
   (format "~s" (list (map xml->string (get-config 'head '()))
-                      (xml->string (get-config 'header '()))
-                      (get-config 'html-lang "")
-                      (and ext-mod (file-exists? ext-mod) (file->bytes ext-mod)))))
+                     (xml->string (get-config 'header '()))
+                     (get-config 'html-lang ""))))

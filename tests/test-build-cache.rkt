@@ -217,6 +217,32 @@
     (check-true (and (file-exists? idx) (regexp-match? #rx"healed" (output-index "_build" "hl")))
                 "the missing index.html was regenerated"))
 
+  (test-case "a shell-only config change (header) re-emits index.html without re-rendering any card"
+    ;; `header`/`head`/`html-lang` reach only the page shell, never the embed --
+    ;; so they key the per-target stamp, not the content store. Editing one must
+    ;; update every index.html while re-rendering (and re-LaTeX-ing) nothing.
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "sh.scrbl")
+                   "@title{SH}" "@date{2024-01-01}" "@p{shell}"))
+    (build!)
+    (check-true (regexp-match? #rx"link-home" (output-index "_build" "sh"))
+                "the default header is tr's own « Home link")
+    (parameterize ([current-directory proj])
+      ; a distinct filename from "site.rkt", which dynamic-require has cached
+      (write-file! (build-path "site-hdr.rkt")
+                   "#lang racket/base"
+                   "(require scribble/html)"
+                   "(provide site)"
+                   (string-append "(define site (hash 'domain \"example.com\" 'title \"T\" 'description \"D\""
+                                  " 'output-path \"_build\" 'header (a 'href: \"/\" \"brand\")))"))
+      (setup-config! "site-hdr.rkt"))
+    (check-equal? (build!) (set) "a header-only change must not re-render any embed")
+    (check-true (regexp-match? #rx"brand" (output-index "_build" "sh"))
+                "index.html was re-emitted with the site's own header")
+    (check-false (regexp-match? #rx"link-home" (output-index "_build" "sh"))
+                 "the default « Home link is gone"))
+
   (test-case "site.rkt's extension-module is auto-required into every card, and editing it invalidates the store"
     (fresh-project!)
     (parameterize ([current-directory proj])

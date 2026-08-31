@@ -18,8 +18,10 @@ card's metadata (produce-index).
 
 The store keys correctness across targets, but says nothing about whether a
 *given* output target already holds the current output. Each output dir keeps
-a per-card stamp `<output>/<addr>/.sig` naming the signature its on-disk output
-was produced for. When that stamp matches, the per-target output work (svgs +
+a per-card stamp `<output>/<addr>/.sig` naming the *output* signature its
+on-disk output was produced for: the content signature plus the shell config
+(`head`/`header`/`html-lang`, see config.rkt), which changes index.html without
+changing the embed. When that stamp matches, the per-target output work (svgs +
 index.html) is already current and is skipped -- only the embed is refreshed
 into _tmp, which transcluding parents may still read.
 |#
@@ -85,14 +87,14 @@ into _tmp, which transcluding parents may still read.
     (make-directory* (get-output-path))
     (copy-into! out (out-dir addr))))
 
-; Does this target's on-disk output already correspond to sig? Requires the
-; stamp to match, the index to be present, and every cached output file for this
-; sig to still exist in the target -- so a deleted/interrupted svg (or index)
-; re-materializes even with the stamp still around.
-(define (output-fresh? cache-root sig addr)
+; Does this target's on-disk output already correspond to out-sig? Requires the
+; stamp to match, the index to be present, and every output file cached under
+; the content sig to still exist in the target -- so a deleted/interrupted svg
+; (or index) re-materializes even with the stamp still around.
+(define (output-fresh? cache-root sig out-sig addr)
   (and (file-exists? (index-file addr))
        (file-exists? (stamp-file addr))
-       (string=? sig (call-with-input-file (stamp-file addr) port->string))
+       (string=? out-sig (call-with-input-file (stamp-file addr) port->string))
        (cached-outputs-present? cache-root sig addr)))
 
 (define (cached-outputs-present? cache-root sig addr)
