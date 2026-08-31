@@ -131,8 +131,21 @@ nav#toc {
   .top-wrapper > #backlinks {
     grid-column: 2;
   }
+  /* The sidebar stays put while the post scrolls past it: its corner holds the
+     back-to-top button, which is no use to a reader who has scrolled if it
+     scrolled away with them. `align-self: start` keeps its box only as tall as
+     its own content -- the grid row's default `stretch` would pin it to the
+     full post height, leaving nothing to scroll past. The sidebar starts level
+     with the post title, so `top: 0` locks it exactly when the title's own top
+     edge passes under the viewport top; a positive `top` would lock it while
+     the title is still fully visible. */
   nav#toc {
     display: block;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100dvh;
+    overflow-y: auto;
   }
 }
 nav#toc > h1 {
@@ -361,11 +374,10 @@ code {
     font-size: 0.82em;
     line-height: 1.4;
     color: #666;
-    /* Opaque, and above the sidebar that shares this band: a sidebar tall
-       enough to reach a note must not blank it out, since the note is the thing
-       being read. */
+    /* Opaque, and under the sidebar that shares this band -- see the sidebar's
+       own rule below for why that way round. */
     position: relative;
-    z-index: 2;
+    z-index: 1;
     background: #fff;
     transition: border-color 0.15s, color 0.15s;
   }
@@ -374,6 +386,18 @@ code {
   .sidenote-wrap:focus-within .sidenote {
     border-color: #9094fb;
     color: #333;
+  }
+  /* The sidebar occupies this same band, and being sticky it occupies it for
+     the whole scroll -- so the two *will* meet, and one of them has to win
+     cleanly. The sidebar does: opaque and on top, a note slides under it and
+     out of sight the way any scrolled-past thing does. The other way round
+     leaves a note's box printed across the sidebar's entries with both
+     unreadable, which is what a reader actually notices. Notes stay legible
+     everywhere below the sidebar's bottom edge, which is where one is when it
+     scrolls into view. */
+  .top-wrapper > nav#toc {
+    background: #fff;
+    z-index: 3;
   }
 }
 
