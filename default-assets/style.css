@@ -331,44 +331,49 @@ code {
 }
 
 @media (min-width: 74rem) {
-  .tr-body {
-    position: relative;
-  }
+  /* Fold a card and its notes fold with it: a note comments on the line beside
+     it, and when that line is off screen it has nothing to comment on. */
   details:not([open]) .sidenote {
     display: none;
   }
   .sidenote {
-    display: inline;
-    position: absolute;
-    left: calc(100% + 2em);
-    width: min(21rem, calc(100vw - 100% - 7em));
+    /* A right float with a negative right margin -- the classic way to write in
+       the margin. Floats are why this works with no script: one can only be
+       placed at or below the line it was written on, never on top of an earlier
+       one, so crowded notes space themselves apart. Absolute positioning would
+       hold every note exactly level with its own marker, which is prettier
+       until two notes want the same line and silently stack on each other. */
+    display: block;
+    float: right;
+    clear: right;
+    /* Held in a variable because the margin has to be derived from it: 21rem
+       normally, narrower if the webfont has not loaded and the 75ch column
+       falls back wider, since a fixed width would then hang off the edge and
+       scroll the whole page sideways. */
+    --sn-width: min(21rem, calc(100vw - 100% - 7em));
+    width: var(--sn-width);
+    /* Its own width plus the grid gap, which lands its left edge exactly where
+       the sidebar band begins -- no pixel hardcoded anywhere. */
+    margin-right: calc(-1 * var(--sn-width) - 2em);
+    margin-bottom: 0.6em;
     padding-left: 0.6rem;
     border-left: 2px solid #ddd;
     font-size: 0.82em;
     line-height: 1.4;
     color: #666;
-    background: #fff;
+    /* Opaque, and above the sidebar that shares this band: a sidebar tall
+       enough to reach a note must not blank it out, since the note is the thing
+       being read. */
+    position: relative;
     z-index: 2;
+    background: #fff;
     transition: border-color 0.15s, color 0.15s;
   }
+  /* Marker and note are still one subtree, so this needs no bookkeeping. */
   .sidenote-wrap:hover .sidenote,
   .sidenote-wrap:focus-within .sidenote {
     border-color: #9094fb;
     color: #333;
-  }
-  .sidenote-wrap:hover .sidenote,
-  .sidenote-wrap:focus-within .sidenote {
-    z-index: 9;
-    border-radius: 0 8px 8px 0;
-    box-shadow: 0 2px 12px rgba(20, 20, 50, 0.14);
-    margin-top: -0.35rem;
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
-    padding-right: 0.7rem;
-  }
-  .top-wrapper > nav#toc {
-    background: #fff;
-    z-index: 3;
   }
 }
 
