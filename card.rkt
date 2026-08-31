@@ -144,6 +144,11 @@
   (define entries (fetch-metadata (self-addr) 'transclude))
   (unless (empty? entries)
     (element 'nav 'id: "toc"
+             (a 'class: "toc-top" 'href: "#" 'title: "Back to top" 'aria-label: "Back to top"
+                (svg 'class: "toc-top-icon" 'viewBox: "0 0 16 16" 'width: "16" 'height: "16"
+                     'fill: "none" 'stroke: "currentColor" 'stroke-width: "1.6"
+                     'stroke-linecap: "round" 'stroke-linejoin: "round" 'aria-hidden: "true"
+                     (path 'd: "M8 13V4M4 8l4-4 4 4")))
              (h1 "Table of Contents")
              (ol (for/list ([addr entries])
                    (recur-toc addr (sub1 (toc/depth))))))))

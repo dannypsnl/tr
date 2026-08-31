@@ -42,6 +42,17 @@
   src: url("fonts/InriaSans-BoldItalic.woff2") format("woff2");
 }
 
+/* in-page jumps (the TOC's entries and its back-to-top button) glide instead
+   of teleporting, so you keep your bearings on where you landed. */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 .top-wrapper {
   display: grid;
   /* `minmax(0, 1fr)`, not `1fr`: a bare `1fr` track takes its minimum from the
@@ -106,6 +117,7 @@ article {
 
 nav#toc {
   display: none;
+  position: relative;
 }
 
 @media (min-width: 60rem) {
@@ -126,6 +138,26 @@ nav#toc {
 nav#toc > h1 {
   margin-top: 0;
   font-size: 16pt;
+  /* leave room for the back-to-top button parked in the corner */
+  padding-right: 2em;
+}
+nav#toc a.toc-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 4px;
+  color: #8c8c8c;
+  text-decoration: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+nav#toc a.toc-top:hover {
+  color: #333;
+  background-color: #9094fbff;
 }
 nav#toc a {
   color: #555;
@@ -270,7 +302,7 @@ code {
   text-autospace: no-autospace;
 }
 
-main {
+.top-wrapper {
   counter-reset: sidenote;
 }
 
