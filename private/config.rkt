@@ -102,14 +102,15 @@ When it returns #t, it eliminate the card from the further pipeline.
 ; stamp), so a config change that changes rendered output forces a rebuild
 ; instead of leaving a stale index.html/store entry in place.
 ;
-; Config reaching per-card HTML today: `head`, `html-lang`, and
+; Config reaching per-card HTML today: `head`, `header`, `html-lang`, and
 ; `extension-module` (see generate-index.rkt and build.rkt's embed-header).
-; `head` is keyed on its rendered bytes (xml->string) rather than the element
-; values, which print opaquely and unstably. `extension-module` is keyed on
-; its file content, not its path, so editing a card's macros invalidates the
-; store even though no .scrbl content hash changed.
+; `head`/`header` are keyed on their rendered bytes (xml->string) rather than
+; the element values, which print opaquely and unstably. `extension-module` is
+; keyed on its file content, not its path, so editing a card's macros
+; invalidates the store even though no .scrbl content hash changed.
 (define (render-config-tag)
   (define ext-mod (get-extension-module))
   (format "~s" (list (map xml->string (get-config 'head '()))
+                      (xml->string (get-config 'header '()))
                       (get-config 'html-lang "")
                       (and ext-mod (file-exists? ext-mod) (file->bytes ext-mod)))))

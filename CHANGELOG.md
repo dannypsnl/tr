@@ -19,6 +19,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `@note{...}` renders a Tufte-style margin note beside the line it comments on instead of at the foot of the page. `@mention["..."]` is treat specially in this form.
 - The table of contents gets an up arrow in its top-right corner to back to top.
 - `raco tr meta --all` dumps every card's metadata from the last `tr build`'s store as one JSON array, so a site's own index/feed step doesn't have to enumerate addrs itself.
+- config: new option `header`, the markup at the very top of every page's `<body>`:
+
+  ```racket
+  'header (header 'class: "site-nav"
+                  (a 'href: "/" "my site")
+                  (a 'href: "/about/" "about"))
+  ```
+
+  Unset, pages keep the current default: a `« Home` link on every page except the root card. Set, the given markup replaces it: including the root page, since a site's own header is usually wanted there too. Note the default's `a.link-home` styling comes from the bundled `style.css`; a custom header brings its own CSS (via `head`).
 
 ### Changed
 

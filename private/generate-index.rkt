@@ -71,6 +71,10 @@
       (link 'rel: "stylesheet" 'href: "/style.css")
       (get-config 'head '()))
     (body 'id: "whole"
-          (unless (generate-root?)
-            (a 'class: "link-home" 'href: "/" "« Home"))
+          ; A site owns its page header: `header` in site.rkt replaces the
+          ; default « Home link, and unlike the default it also renders on the
+          ; root page, since a site's own header is usually wanted there too.
+          (get-config 'header
+                      (unless (generate-root?)
+                        (a 'class: "link-home" 'href: "/" "« Home")))
           content)))
