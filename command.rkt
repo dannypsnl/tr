@@ -12,20 +12,15 @@
 
 (define-runtime-path default-assets-dir "default-assets")
 
-; katex.min.css/js/contrib are the official npm:katex@0.18.1 dist build —
-; the exact version katex-stdio-deno.ts's `renderToString` pins. Bump both
-; together; a CSS/JS version drifting from the renderer's HTML output breaks
-; math layout.
 (define (files-in subdir kind)
   (for/list ([f (directory-list (build-path default-assets-dir subdir))])
     (cons (path->string (build-path subdir f)) kind)))
 (define default-assets
   (append
     (list (cons "style.css" 'stylesheet)
-          (cons "katex.min.css" 'stylesheet)
-          (cons "katex.min.js" 'script))
-    (files-in "fonts" 'font)
-    (files-in "contrib" 'script)))
+          ; katex.min.css is the official npm:katex@0.18.1 dist build
+          (cons "katex.min.css" 'stylesheet))
+    (files-in "fonts" 'font)))
 
 (define (warn-shadowed-asset! name kind own-path)
   (define migrated-name (string-append "custom-" (path->string (file-name-from-path name))))
@@ -36,13 +31,6 @@
          "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
          "    To keep them: rename it to ~a, then add to site.rkt's 'head:\n"
          "      (link 'rel: \"stylesheet\" 'href: \"/~a\")\n")
-       name own-path own-path migrated-name migrated-name)]
-    [(script)
-     (eprintf
-       (string-append
-         "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
-         "    To keep them: rename it to ~a, then add to site.rkt's 'head:\n"
-         "      (script 'src: \"/~a\" 'defer: #t)\n")
        name own-path own-path migrated-name migrated-name)]
     [(font)
      (eprintf
