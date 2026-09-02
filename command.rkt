@@ -110,7 +110,7 @@
     #:once-each
     [("-c" "--config") config "Use not default configuration" (set! config-path config)]
     #:args _
-    (unless root-path (raise "You're not in a tr project"))
+    (unless root-path (raise-user-error 'tr "not in a tr project"))
     (setup-config! config-path)
 
     (define assets-directories (get-assets-path))
@@ -125,7 +125,7 @@
     #:once-each
     [("-c" "--config") config "Use not default configuration" (set! config-path config)]
     #:args _
-    (unless root-path (raise "You're not in a tr project"))
+    (unless root-path (raise-user-error 'tr "not in a tr project"))
     (setup-config! config-path)
     (define scrbl-list (find-files (lambda (x) (path-has-extension? x #".scrbl")) "content"))
     (thread-wait
@@ -166,7 +166,7 @@
     #:once-each
     [("--random") "Use not default configuration" (set! random? #t)]
     #:args (prefix)
-    (unless root-path (raise "You're not in a tr project"))
+    (unless root-path (raise-user-error 'tr "not in a tr project"))
 
     (displayln (compute-next-addr prefix random?))))
 
@@ -178,7 +178,7 @@
     #:once-each
     [("--all") "dump every card's metadata from the last `tr build`'s store, as a JSON array" (set! all? #t)]
     #:args args
-    (unless root-path (raise "You're not in a tr project"))
+    (unless root-path (raise-user-error 'tr "not in a tr project"))
     (cond
       [all?
        (open-metadata-store!)
@@ -195,6 +195,8 @@
          [stored (write-json stored)]
          [else
           (define scrbl-list (find-files (lambda (x) (string=? addr (path->string (path-replace-extension (basename x) "")))) "content"))
+          (when (empty? scrbl-list)
+            (raise-user-error 'tr "no card named ~a" addr))
           (write-json (compute-metadata addr (read-card-forms (first scrbl-list))))])])))
 
 (define (run-tr)

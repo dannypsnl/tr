@@ -223,9 +223,7 @@
   (define cc (card-counting))
   (define locals (fetch-metadata (self-addr) 'locals '()))
   (unless (< cc (length locals))
-    (raise-user-error 'tr
-                      (string-append
-                        "card ~a: @tr/card #~a has no matching metadata entry (~a found).")
+    (raise-user-error 'tr "card ~a: @tr/card #~a has no matching metadata entry (~a found)"
                       (self-addr) cc (length locals)))
   (define local-metadata (list-ref locals cc))
   (define title (hash-ref local-metadata 'title))

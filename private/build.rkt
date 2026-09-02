@@ -45,6 +45,11 @@
 
 (struct final-card (src-path addr path target-path) #:transparent)
 
+(define (referenced-meta table from addr)
+  (hash-ref table addr
+            (lambda ()
+              (raise-user-error 'tr "card ~a refers to an unknown address ~s" from addr))))
+
 (define (produce-scrbl addr-list addr->path mode)
   (define (tmp-scrbl-path addr content-hash mode)
     (build-path "_tmp"
@@ -156,23 +161,26 @@
     (hash-set! addr-maps-to-metajson addr (compute-metadata addr forms)))
   ; compute relations
   (for/async ([top-addr addr-list])
+    (define ((report! addr))
+      (raise-user-error 'tr "card ~a refers to an unknown address ~s" top-addr addr))
+
     (define meta-obj (hash-ref addr-maps-to-metajson top-addr))
     (define related-set (mutable-set))
     (define references-set (mutable-set))
 
     (for/async ([addr (transclude-deps meta-obj)])
-      (define obj (hash-ref addr-maps-to-metajson addr))
+      (define obj (hash-ref addr-maps-to-metajson addr (report! addr)))
       (define ctx-set (list->set (hash-ref obj 'context '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'context (set->sorted-list (set-add ctx-set top-addr)))))
     (for/async ([addr (hash-ref meta-obj 'related)])
-      (define obj (hash-ref addr-maps-to-metajson addr))
+      (define obj (hash-ref addr-maps-to-metajson addr (report! addr)))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->sorted-list (set-add links-set top-addr))))
       (match (hash-ref obj 'taxon)
         ["Reference" (set-add! references-set addr)]
         [_ (set-add! related-set addr)]))
     (for/async ([addr (hash-ref meta-obj 'authors)])
-      (define obj (hash-ref addr-maps-to-metajson addr))
+      (define obj (hash-ref addr-maps-to-metajson addr (report! addr)))
       (define links-set (list->set (hash-ref obj 'backlinks '())))
       (hash-set! addr-maps-to-metajson addr (hash-set obj 'backlinks (set->sorted-list (set-add links-set top-addr)))))
 
@@ -184,8 +192,10 @@
     (define meta-obj (hash-ref addr-maps-to-metajson addr))
     (define refs (list->mutable-set (hash-ref meta-obj 'references)))
 
-    (for/async ([addr (transclude-deps meta-obj)])
-      (define obj (hash-ref addr-maps-to-metajson addr))
+    (for/async ([child (transclude-deps meta-obj)])
+      (define obj (hash-ref addr-maps-to-metajson child
+                            (lambda ()
+                              (raise-user-error 'tr "card ~a refers to an unknown address ~s" addr child))))
       (define references (hash-ref obj 'references))
       (for ([ref references])
         (set-add! refs ref)))

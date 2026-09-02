@@ -25,7 +25,7 @@
     (raise-user-error 'tr
                       (string-append
                         "card ~a: @~a needs a literal address\n"
-                        "  got: ~s\n")
+                        "  got: ~s")
                       card-addr form-name addr))
   addr)
 
