@@ -229,7 +229,8 @@ For help on these, use 'build --help', 'next --help', etc."
         ["build" (call-command run-tr-build)]
         ["watch" (call-command run-tr-watch)]
         ["next" (call-command run-tr-next)]
-        ["meta" (call-command run-tr-meta)]))))
+        ["meta" (call-command run-tr-meta)]
+        [cmd (eprintf "Unknown command ~a\n" cmd)]))))
 
 (module+ main
   (run-tr))
