@@ -26,6 +26,13 @@ and then load the freshly written .rkt so this very build keeps working.
 (define (setup-config! filepath)
   (define path-str (if (path? filepath) (path->string filepath) filepath))
   (define rkt-cfg-path (path-replace-extension filepath #".rkt"))
+  (unless (or (file-exists? filepath) (file-exists? rkt-cfg-path))
+    (raise-user-error 'tr
+                      (string-append
+                        "no site configuration found\n"
+                        "  looked for: ~a\n"
+                        "  hint: `raco tr init` writes one, or pass -c <config>")
+                      rkt-cfg-path))
   (cond
     [(path-has-extension? filepath #".rkt") (void)]
     [(and (path-has-extension? filepath #".json")

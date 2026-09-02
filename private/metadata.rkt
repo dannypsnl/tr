@@ -20,7 +20,17 @@
     [`(code ,text) (code text)]
     [t t]))
 
+(define (check-addr card-addr form-name addr)
+  (unless (string? addr)
+    (raise-user-error 'tr
+                      (string-append
+                        "card ~a: @~a needs a literal address\n"
+                        "  got: ~s\n")
+                      card-addr form-name addr))
+  addr)
+
 (define (compute-metadata addr forms)
+  (define card-addr addr)
   (define self-title (make-parameter #f))
   (define self-taxon (make-parameter #f))
   (define self-lang (make-parameter #f))
@@ -50,8 +60,8 @@
            ; These four must be take over to make sure metadata is correct
            [`(title ,@forms) (set! local-card-title (for/list ([f forms]) (execute f)))]
            [`(taxon ,text) (set! local-card-taxon text)]
-           [`(transclude ,addr) (enqueue! local-transclude-queue addr)]
-           [`(transclude ,@_ ,addr) (enqueue! local-transclude-queue addr)]
+           [`(transclude ,addr) (enqueue! local-transclude-queue (check-addr card-addr 'transclude addr))]
+           [`(transclude ,@_ ,addr) (enqueue! local-transclude-queue (check-addr card-addr 'transclude addr))]
            [`(tr/card ,@forms)
             (handle-card-form `(tr/card ,@forms) local-transclude-queue)]
            [form (handle-form form)]))
@@ -71,21 +81,21 @@
       [`(date ,text) (self-date text)]
       [`(doi ,text) (self-doi text)]
       [`(orcid ,text) (self-orcid text)]
-      [`(author ,addr) (enqueue! author-queue addr)]
+      [`(author ,addr) (enqueue! author-queue (check-addr card-addr 'author addr))]
       [`(author/literal ,name) (enqueue! literal-author-queue name)]
       [`(meta/text ,@forms) (enqueue! meta-queue (for/list ([f forms]) (execute f)))]
       [`(meta/link ,@forms) (enqueue! metalink-queue (for/list ([f forms]) (execute f)))]
       [`(bibtex ,_text) (void)]
       [`(toc/depth ,num) (self-toc/depth num)]
-      [`(transclude ,addr) (enqueue! transclude-queue addr)]
-      [`(transclude ,@_ ,addr) (enqueue! transclude-queue addr)]
-      [`(mention ,addr) (enqueue! related-queue addr)]
-      [`(mention ,addr ,@_) (enqueue! related-queue addr)]
+      [`(transclude ,addr) (enqueue! transclude-queue (check-addr card-addr 'transclude addr))]
+      [`(transclude ,@_ ,addr) (enqueue! transclude-queue (check-addr card-addr 'transclude addr))]
+      [`(mention ,addr) (enqueue! related-queue (check-addr card-addr 'mention addr))]
+      [`(mention ,addr ,@_) (enqueue! related-queue (check-addr card-addr 'mention addr))]
       ; metadata-only mention: feeds the backlink graph (related) but renders
       ; nothing, because the real clickable link lives in @include'd external
       ; html (e.g. agda output).
-      [`(mention/hidden ,addr) (enqueue! related-queue addr)]
-      [`(mention/hidden ,addr ,@_) (enqueue! related-queue addr)]
+      [`(mention/hidden ,addr) (enqueue! related-queue (check-addr card-addr 'mention/hidden addr))]
+      [`(mention/hidden ,addr ,@_) (enqueue! related-queue (check-addr card-addr 'mention/hidden addr))]
       [`(tr/code ,form) (void)]
       [`(tr/code ,@forms) (void)]
       [`(tr/card ,@forms) (handle-card-form `(tr/card ,@forms) transclude-queue)]

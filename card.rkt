@@ -89,6 +89,14 @@
   (if (hash-ref cached-metadata addr #f)
       (hash-ref (hash-ref cached-metadata addr) key default)
       (let ([json (metadata-store-ref addr)])
+        (unless json
+          (raise-user-error 'tr
+                            (string-append
+                              "no metadata for address ~s\n"
+                              "  referenced while rendering card ~a\n"
+                              "  hint: no card of that address was built; if you just deleted one,\n"
+                              "        remove _tmp and rebuild")
+                            addr (or (self-addr) "?")))
         (hash-set! cached-metadata addr json)
         (hash-ref json key default))))
 (define (footer-common title key)
@@ -196,12 +204,29 @@
              (span 'class: "metadata"
                    (span (fetch-metadata addr 'date))
                    (span (fetch-metadata addr 'author))))
-           (disable-prefix (file->string (string-append "_tmp/" addr ".embed.html")))))
+           (disable-prefix (transcluded-embed addr))))
+
+(define (transcluded-embed addr)
+  (define embed-path (string-append "_tmp/" addr ".embed.html"))
+  (unless (file-exists? embed-path)
+    (raise-user-error 'tr
+                      (string-append
+                        "card ~a transcludes ~a, but ~a has not been rendered yet\n"
+                        "  expected: ~a\n"
+                        "  hint: a transclusion cycle, or an interrupted build; removing _tmp and\n"
+                        "        rebuilding recovers from the latter")
+                      (or (self-addr) "?") addr addr embed-path))
+  (file->string embed-path))
 
 (define card-counting (make-parameter 0))
 (define (tr/card #:open [open? #t] . content)
   (define cc (card-counting))
   (define locals (fetch-metadata (self-addr) 'locals '()))
+  (unless (< cc (length locals))
+    (raise-user-error 'tr
+                      (string-append
+                        "card ~a: @tr/card #~a has no matching metadata entry (~a found).")
+                      (self-addr) cc (length locals)))
   (define local-metadata (list-ref locals cc))
   (define title (hash-ref local-metadata 'title))
   (define taxon (hash-ref local-metadata 'taxon))
