@@ -115,6 +115,11 @@ article {
   display: block;
 }
 
+nav#toc {
+  display: none;
+  position: relative;
+}
+
 @media (min-width: 60rem) {
   .top-wrapper > main,
   .top-wrapper > details {
@@ -142,10 +147,6 @@ article {
     max-height: 100dvh;
     overflow-y: auto;
   }
-}
-nav#toc {
-  display: none;
-  position: relative;
 }
 nav#toc > h1 {
   margin-top: 0;
