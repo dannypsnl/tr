@@ -43,7 +43,8 @@ into _tmp, which transcluding parents may still read.
 (define (index-file addr) (build-path (out-dir addr) "index.html"))
 
 ; non-content files in an output dir: regenerated/managed per target, never cached
-(define (per-target-file? name) (or (equal? name "index.html") (equal? name ".sig")))
+; (embed.html is already cached at the store entry's top level)
+(define (per-target-file? name) (member name '("index.html" "embed.html" ".sig")))
 
 (define (init-store! cache-root)
   (make-directory* (store-root cache-root)))
@@ -93,6 +94,7 @@ into _tmp, which transcluding parents may still read.
 ; (or index) re-materializes even with the stamp still around.
 (define (output-fresh? cache-root sig out-sig addr)
   (and (file-exists? (index-file addr))
+       (file-exists? (build-path (out-dir addr) "embed.html"))
        (file-exists? (stamp-file addr))
        (string=? out-sig (call-with-input-file (stamp-file addr) port->string))
        (cached-outputs-present? cache-root sig addr)))

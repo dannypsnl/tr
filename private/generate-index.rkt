@@ -26,6 +26,9 @@
 (define (produce-index! addr addr-maps-to-metajson)
   (define output-dir (build-path (get-output-path) addr))
   (make-directory* output-dir)
+  (define embed-path (build-path "_tmp" (string-append addr ".embed.html")))
+  ; published so other pages' footers can fetch it on demand (see tr.js)
+  (copy-file embed-path (build-path output-dir "embed.html") #t)
   (define out
     (open-output-file #:exists 'truncate/replace (index-output-path addr)))
 
@@ -42,11 +45,11 @@
           [(root? addr)
            (common-share #:title title #:lang lang
                          (div 'class: "top-wrapper"
-                              (tree (build-path "_tmp" (string-append addr ".embed.html")))))]
+                              (tree embed-path)))]
           [else
            (common-share #:title title #:lang lang
                          (div 'class: "top-wrapper"
-                              (main (tree (build-path "_tmp" (string-append addr ".embed.html"))))
+                              (main (tree embed-path))
                               (generate-toc))
                          (footer
                            (generate-context)
@@ -69,6 +72,7 @@
       (title this-title)
       (link 'rel: "stylesheet" 'href: "/katex.min.css")
       (link 'rel: "stylesheet" 'href: "/style.css")
+      (script 'src: "/tr.js" 'defer: #t)
       (get-config 'head '()))
     (body 'id: "whole"
           ; A site owns its page header: `header` in site.rkt replaces the

@@ -19,7 +19,8 @@
   (append
     (list (cons "style.css" 'stylesheet)
           ; katex.min.css is the official npm:katex@0.18.1 dist build
-          (cons "katex.min.css" 'stylesheet))
+          (cons "katex.min.css" 'stylesheet)
+          (cons "tr.js" 'script))
     (files-in "fonts" 'font)))
 
 (define (warn-shadowed-asset! name kind own-path)
@@ -31,6 +32,13 @@
          "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a, so its customizations won't show up on the site (~a itself is untouched on disk).\n"
          "    To keep them: rename it to ~a, then add to site.rkt's 'head:\n"
          "      (link 'rel: \"stylesheet\" 'href: \"/~a\")\n")
+       name own-path own-path migrated-name migrated-name)]
+    [(script)
+     (eprintf
+       (string-append
+         "tr: ~a is bundled with tr now; the build output uses tr's version instead of ~a (~a itself is untouched on disk).\n"
+         "    To keep it: rename it to ~a, then add to site.rkt's 'head:\n"
+         "      (script 'src: \"/~a\" 'defer: #t)\n")
        name own-path own-path migrated-name migrated-name)]
     [(font)
      (eprintf

@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
   Unset, pages keep the current default: a `« Home` link on every page except the root card. Set, the given markup replaces it: including the root page, since a site's own header is usually wanted there too. Note the default's `a.link-home` styling comes from the bundled `style.css`; a custom header brings its own CSS (via `head`).
 
+- Footer entries (Context/References/Backlinks/Related) expand in place: each is a collapsed `<tr-lazy>` whose card content is fetched on first open, like forester's footer but without inlining every neighbor at build time. Every card's embed is now published as `<output>/<addr>/embed.html` for this, and `tr.js` is bundled and loaded on every page. Without JS (or from `file://`) the entries stay plain heading links as before.
+
 ### Changed
 
 - A card's build signature now digests each referenced neighbour's date, authors and DOI alongside its title and taxon, because `@mention` in `@note` calling card renders those fields.

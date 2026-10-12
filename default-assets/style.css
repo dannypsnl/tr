@@ -245,11 +245,12 @@ a.colored-link {
   margin-right: auto;
 }
 
-#references > h1,
-#related > h1,
-#backlinks > h1,
-#context > h1 {
+tr-lazy {
+  display: block;
+}
+tr-lazy > details {
   margin-left: 0.5rem;
+  padding-bottom: 0.5em;
 }
 
 .metadata {

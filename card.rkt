@@ -105,7 +105,13 @@
     (details 'open: #t 'id: (symbol->string key)
              (summary (h1 title))
              (for/list ([addr addr-list])
-               (tr-h1 addr (literal (fetch-metadata addr 'title)) (fetch-metadata addr 'taxon))))))
+               ; content is fetched only when opened (tr.js): inlining it at
+               ; build time would make every neighbor's content a dependency
+               ; of this page's signature, not just its heading
+               (element 'tr-lazy 'src: (string-append "/" addr "/embed.html")
+                        (details
+                          (summary
+                            (tr-h1 addr (literal (fetch-metadata addr 'title)) (fetch-metadata addr 'taxon)))))))))
 (define (generate-context) (footer-common "Context" 'context))
 (define (generate-references) (footer-common "References" 'references))
 (define (generate-backlinks) (footer-common "Backlinks" 'backlinks))

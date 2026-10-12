@@ -217,6 +217,22 @@
     (check-true (and (file-exists? idx) (regexp-match? #rx"healed" (output-index "_build" "hl")))
                 "the missing index.html was regenerated"))
 
+  (test-case "the embed is published for footers to fetch, and re-materializes if deleted"
+    (fresh-project!)
+    (parameterize ([current-directory proj])
+      (write-file! (build-path "content" "post" "fa.scrbl")
+                   "@title{FA}" "@date{2024-01-01}" "@p{from} @mention{fb}")
+      (write-file! (build-path "content" "post" "fb.scrbl")
+                   "@title{FB}" "@date{2024-01-01}" "@p{target body}"))
+    (build!)
+    (define embed (build-path proj "_build" "fb" "embed.html"))
+    (check-true (regexp-match? #rx"target body" (file->string embed)))
+    (check-true (regexp-match? #rx"<tr-lazy src=\"/fa/embed.html\">" (output-index "_build" "fb"))
+                "the backlink is a lazy footer entry pointing at the published embed")
+    (delete-file embed)
+    (check-equal? (build!) (set) "still a store hit -- no re-render")
+    (check-true (file-exists? embed) "the missing embed.html was republished"))
+
   (test-case "a shell-only config change (header) re-emits index.html without re-rendering any card"
     ;; `header`/`head`/`html-lang` reach only the page shell, never the embed --
     ;; so they key the per-target stamp, not the content store. Editing one must
