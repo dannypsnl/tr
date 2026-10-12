@@ -81,9 +81,12 @@ html {
   margin-inline: clamp(1rem, 4vw, 2em);
 }
 
+/* Same width as the post column, whatever is open inside: a shrink-to-fit
+   box (e.g. a float) would grow as lazily loaded cards fill in (tr.js) and
+   shrink back when they fold, never matching the post above it. */
 footer {
   display: block;
-  float: left;
+  max-width: 75ch;
 }
 
 h1 {
