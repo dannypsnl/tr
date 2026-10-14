@@ -13,7 +13,7 @@
 (define build-deps '("scribble-lib" "racket-doc" "rackunit-lib" "gui-doc" "rackcheck"))
 (define scribblings '(("scribblings/tr.scrbl" (multi-page) ("site generator"))))
 (define pkg-desc "A site generator")
-(define version "1.4")
+(define version "1.5")
 (define license '(Apache-2.0 OR MIT))
 (define pkg-authors '(dannypsnl))
 
