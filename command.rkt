@@ -61,7 +61,11 @@
       (define own-path (build-path dir name))
       (unless (equal? (file->bytes own-path) (file->bytes src))
         (warn-shadowed-asset! name kind own-path)))
-    (copy-file src target #t)))
+    ; write the bytes instead of `copy-file` which keeps src's permissions,
+    ; then a read-only installed package (e.g. raco mod's cache) would leave a
+    ; read-only target that the next build cannot overwrite
+    (call-with-output-file target #:exists 'truncate/replace
+      (λ (out) (write-bytes (file->bytes src) out)))))
 
 (define (find-root-dir dir)
   (cond
