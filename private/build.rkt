@@ -275,12 +275,21 @@
          (let ([out (with-output-to-string
                       (lambda () (apply system* kpsewhich args)))])
            (string-trim out))))
-  (define cnf (kpse "texmf.cnf"))
+  ; Vanilla TeX Live chains two texmf.cnf files (<root>/texmf.cnf holds local
+  ; overrides, texmf-dist/web2c/texmf.cnf the real config). Pointing TEXMFCNF
+  ; at only the first one breaks latex itself ("can't find latex.fmt"), so
+  ; keep every directory kpsewhich reports.
+  (define cnfs (let ([out (kpse "--all" "texmf.cnf")])
+                 (if out (string-split out "\n") '())))
   (define root (kpse "--var-value=TEXMFROOT"))
-  (when (and cnf (not (string=? cnf "")))
-    ; TEXMFCNF wants the directory containing texmf.cnf.
-    (define-values (dir _name _dir?) (split-path (string->path cnf)))
-    (putenv "TEXMFCNF" (path->string dir)))
+  (unless (null? cnfs)
+    ; TEXMFCNF wants the directories containing texmf.cnf, `:`-separated.
+    (putenv "TEXMFCNF"
+            (string-join
+              (for/list ([cnf cnfs])
+                (define-values (dir _name _dir?) (split-path (string->path cnf)))
+                (path->string dir))
+              ":")))
   (when (and root (not (string=? root "")))
     (putenv "TEXMFROOT" root)))
 
