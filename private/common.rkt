@@ -16,7 +16,7 @@
   (write-json json out)
   (close-output-port out))
 
-(define-runtime-path katex-stdio-deno "../katex-stdio-deno.ts")
+(define-runtime-path katex-stdio-node "../katex-stdio-node.cjs")
 
 (define katex-worker-lock (make-semaphore 1))
 (define katex-worker-stdout #f)
@@ -25,7 +25,7 @@
 
 (define (start-katex-worker!)
   (match-define (list out in _pid _err ctrl)
-    (process* (find-executable-path "deno") "run" katex-stdio-deno))
+    (process* (find-executable-path "node") katex-stdio-node))
   (set! katex-worker-stdout out)
   (set! katex-worker-stdin in)
   (set! katex-worker-ctrl ctrl)

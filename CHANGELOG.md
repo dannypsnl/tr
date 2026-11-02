@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** KaTeX rendering now runs on Node.js instead of Deno: `tr` spawns `node katex-stdio-node.cjs`, so `node` must be on `PATH` (`deno` is no longer needed). The official `katex@0.18.1` dist build is vendored as `private/katex/katex.min.js` (matching the bundled `katex.min.css`), so no `npm install` is required and read-only installs keep working.
+
 ## [1.5] 2026-10-14
 
 ### Added
